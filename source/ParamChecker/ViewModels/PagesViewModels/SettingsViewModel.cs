@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 using ParamChecker.Configuration;
+using ParamChecker.Services;
 using ToadTools.UI.Services;
 using Wpf.Ui.Appearance;
 
@@ -16,6 +17,8 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private string? _logFilePath;
 
     [ObservableProperty] private string _reportFilePath;
+
+    [ObservableProperty] private string _reportsPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
 
     [ObservableProperty] private bool _updateGeneralReport;
 
@@ -54,6 +57,19 @@ public sealed partial class SettingsViewModel : ObservableObject
         };
 
         if (openFileDialog.ShowDialog() == true) ReportFilePath = openFileDialog.FileName;
+    }
+
+    [RelayCommand]
+    private void OpenReportsFolder()
+    {
+        var selectedFolder = FolderPicker.PickFolder(
+            ReportsPath,
+            "Выберите папку для сохранения отчетов");
+
+        if (selectedFolder != null)
+        {
+            ReportsPath = selectedFolder;
+        }
     }
 
     [RelayCommand]

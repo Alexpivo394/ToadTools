@@ -9,6 +9,7 @@
         <PackageReference Include="System.Runtime.CompilerServices.Unsafe"/>
         <PackageReference Include="WPF-UI"/>
         <PackageReference Include="WPF-UI.Abstractions"/>
+        <PackageReference Include="Polyfill"/>
     </ItemGroup>
 
     <ItemGroup>

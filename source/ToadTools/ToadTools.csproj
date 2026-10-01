@@ -49,7 +49,6 @@
       <ProjectReference Include="..\CreateCover\CreateCover.csproj" />
       <ProjectReference Include="..\CreateSpaces\CreateSpaces.csproj" />
       <ProjectReference Include="..\DoorSide\DoorSide.csproj" />
-      <ProjectReference Include="..\Length\Length.csproj" />
       <ProjectReference Include="..\ModelTransplanter\ModelTransplanter.csproj" />
       <ProjectReference Include="..\ParamChecker\ParamChecker.csproj" />
       <ProjectReference Include="..\ParamToFinish\ParamToFinish.csproj" />

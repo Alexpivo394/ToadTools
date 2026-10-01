@@ -170,11 +170,11 @@ public class ExportService
 
                 totalworksheet.Cells[totalworksheet.Dimension.Address].AutoFitColumns();
 
-                var desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                var reportsPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
 
                 var fileName = $"{ProcessDocTitle(doc?.Title ?? throw new InvalidOperationException())}_LOIReport.xlsx";
 
-                var filePath = Path.Combine(desktopPath, fileName);
+                var filePath = Path.Combine(reportsPath, fileName);
                 var file = new FileInfo(filePath);
                 excelDoc.SaveAs(file);
                 _logger.Log($"Отчет сохранен: {filePath}");

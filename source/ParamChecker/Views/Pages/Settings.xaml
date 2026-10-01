@@ -43,6 +43,19 @@
                        Height="35"
                        Command="{Binding SelectReportFilePathCommand}" />
         </StackPanel>
+        <TextBlock Text="Путь для сохранения отчетов:" FontStyle="Italic" VerticalAlignment="Center" Margin="0,10,0,0" />
+        <StackPanel Orientation="Horizontal" Margin="0,12,0,0" VerticalAlignment="Center">
+            <TextBox Text="{Binding ReportsPath, Mode=TwoWay}"
+                     IsReadOnly="False"
+                     Height="35"
+                     Width="350"
+                     VerticalContentAlignment="Center"
+                     Margin="0,0,8,0" />
+            <ui:Button Icon="{ui:SymbolIcon MoreHorizontal24}"
+                       Width="40"
+                       Height="35"
+                       Command="{Binding OpenReportsFolderCommand}" />
+        </StackPanel>
         <TextBlock Text="Путь к логам работы плагина:" FontStyle="Italic" VerticalAlignment="Center" Margin="0,10,0,0" />
         <StackPanel Orientation="Horizontal" Margin="0,12,0,0" VerticalAlignment="Center">
             <TextBox Text="{Binding LogFilePath, Mode=TwoWay}"
@@ -56,6 +69,7 @@
                        Height="35"
                        Command="{Binding SelectLogPathCommand}" />
         </StackPanel>
+
 
         <TextBlock
             Margin="0,24,0,0"
