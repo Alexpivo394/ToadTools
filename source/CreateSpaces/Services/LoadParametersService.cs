@@ -18,7 +18,7 @@ public class LoadParametersService
         var detect = _roomProvider.DetectRooms();
         if (detect == false)
             return Array.Empty<ParameterDescriptor>();
-        var room = _roomProvider.GetRoomsFromLink().FirstOrDefault();
+        var room = _roomProvider.GetRoomsFromLink()?.FirstOrDefault();
         var roomParameters = _getParameterService.GetFromRoom(room);
         
         return roomParameters;

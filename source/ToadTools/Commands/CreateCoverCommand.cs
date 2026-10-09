@@ -25,7 +25,7 @@ public class CreateCoverCommand : ExternalCommand
     {
         try
         {
-            var doc = Document;
+            var doc = Application.ActiveUIDocument.Document;
 
             var paramService = new GetParamService(doc);
             var familyService = new FamilyService(doc, FamilyName, FamilyPath);

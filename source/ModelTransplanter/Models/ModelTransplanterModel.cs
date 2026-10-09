@@ -134,8 +134,8 @@ namespace ModelTransplanter.Models
         private Transform GetCoordinateSystemTransform(Document sourceDoc, Document targetDoc)
         {
             // 1. Получаем точки съемки
-            BasePoint sourceSurvey = GetSurveyPoint(sourceDoc);
-            BasePoint targetSurvey = GetSurveyPoint(targetDoc);
+            BasePoint? sourceSurvey = GetSurveyPoint(sourceDoc);
+            BasePoint? targetSurvey = GetSurveyPoint(targetDoc);
 
             if (sourceSurvey == null || targetSurvey == null)
                 throw new InvalidOperationException("Не найдены точки съемки в одном из документов");
@@ -165,7 +165,8 @@ namespace ModelTransplanter.Models
 
         private Transform GetInternalOriginTransform(Document doc)
         {
-            BasePoint survey = GetSurveyPoint(doc);
+            BasePoint survey = GetSurveyPoint(doc)
+                               ?? throw new InvalidOperationException($"Не найдена точка съемки в документе {doc.Title}");
             XYZ position = survey.Position;
 
             _logger.Log($"📌 Точка съемки документа {doc.Title}:");
@@ -196,7 +197,7 @@ namespace ModelTransplanter.Models
             return Transform.CreateRotation(XYZ.BasisZ, angle);
         }
 
-        private BasePoint GetSurveyPoint(Document doc)
+        private BasePoint? GetSurveyPoint(Document doc)
         {
             return new FilteredElementCollector(doc)
                 .OfClass(typeof(BasePoint))

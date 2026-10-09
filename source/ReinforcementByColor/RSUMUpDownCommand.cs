@@ -54,7 +54,7 @@ public class RSUMUpDown
                 var type = doc.GetElement(region.GetTypeId());
                 string regionName = type.Name;
 
-                if (!map.TryGetValue(regionName, out string targetName)) continue;
+                if (!map.TryGetValue(regionName, out var targetName)) continue;
 
                 var targetFamilyName = "R-SUM - Распределение по прямой - стержень";
 

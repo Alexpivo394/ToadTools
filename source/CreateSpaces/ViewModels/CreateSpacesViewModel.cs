@@ -21,10 +21,10 @@ public partial class CreateSpacesViewModel : ObservableObject
     [ObservableProperty] private ObservableCollection<ParameterMappingModel> _models = new();
     public ObservableCollection<LinkDescriptor> LinkedModels { get; set; }
     [ObservableProperty] private LinkDescriptor? _selectedLink;
-    private LoadParametersService? _loadParameterService;
+    private readonly LoadParametersService _loadParameterService;
     private RevitRoomProvider _roomProvider;
     private readonly ISpaceCreationService _spaceCreationService;
-    public CreateSpacesViewModel(RevitLinkProvider linkProvider, LoadParametersService? loadParameterService, RevitRoomProvider roomProvider, ISpaceCreationService spaceCreationService)
+    public CreateSpacesViewModel(RevitLinkProvider linkProvider, LoadParametersService loadParameterService, RevitRoomProvider roomProvider, ISpaceCreationService spaceCreationService)
     {
         LinkedModels = new ObservableCollection<LinkDescriptor>(linkProvider.GetLinks(RevitContext.ActiveDocument!));
         Models = new ObservableCollection<ParameterMappingModel>();
@@ -53,19 +53,19 @@ public partial class CreateSpacesViewModel : ObservableObject
     private void LoadRoomParameters(LinkDescriptor link)
     {
         _roomProvider.Initialize(link);
-        var roomParameters = _loadParameterService?.GetRoomParameters();
-        if (roomParameters!.Count == 0)
+        var roomParameters = _loadParameterService.GetRoomParameters();
+        if (roomParameters.Count == 0)
         {
             Models.Clear();
             return;
         }
-        var spaceParameters = _loadParameterService?.GetSpaceParameters();
+        var spaceParameters = _loadParameterService.GetSpaceParameters();
         
         UpdateModels(spaceParameters, roomParameters);
     }
 
     private void UpdateModels(
-        IEnumerable<ParameterDescriptor>? spaceParameters,
+        IEnumerable<ParameterDescriptor> spaceParameters,
         IEnumerable<ParameterDescriptor> roomParameters)
     {
         Models = new ObservableCollection<ParameterMappingModel>(
@@ -161,12 +161,13 @@ public partial class CreateSpacesViewModel : ObservableObject
             return;
 
         var map = config.Items
-            .GroupBy(i => i.SpaceParameterName)
+            .Where(i => i.SpaceParameterName != null)
+            .GroupBy(i => i.SpaceParameterName!)
             .ToDictionary(g => g.Key, g => g.First().RoomParameterName);
 
         foreach (var model in Models)
         {
-            if (!map.TryGetValue(model.SpaceParameter.Name, out var roomParamName))
+            if (model.SpaceParameter.Name == null || !map.TryGetValue(model.SpaceParameter.Name, out var roomParamName))
                 continue;
 
             if (string.IsNullOrEmpty(roomParamName))

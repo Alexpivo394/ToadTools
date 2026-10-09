@@ -16,8 +16,9 @@ public class LengthCommand : ExternalCommand
 {
     public override void Execute()
     {
-        var selection = UiDocument.Selection.GetElementIds()
-            .Select(elId => Document.GetElement(elId))
+        var uiDocument = Application.ActiveUIDocument;
+        var selection = uiDocument.Selection.GetElementIds()
+            .Select(elId => uiDocument.Document.GetElement(elId))
             .ToList();
 
         double summ = 0;

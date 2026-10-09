@@ -15,7 +15,7 @@ public class ChangeSharedFamiliesCommand : ExternalCommand
 {
     public override void Execute()
     {
-        var uiDoc = UiDocument;
+        var uiDoc = Application.ActiveUIDocument;
 
         if (uiDoc == null)
         {

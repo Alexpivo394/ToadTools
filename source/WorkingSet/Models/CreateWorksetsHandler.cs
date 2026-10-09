@@ -10,7 +10,7 @@ namespace WorkingSet.Models
     public class CreateWorksetsHandler : IExternalEventHandler
     {
         
-        public List<string> Worksets { get; set; }
+        public List<string> Worksets { get; set; } = new();
 
         public void Execute(UIApplication app)
         {

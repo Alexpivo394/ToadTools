@@ -61,7 +61,7 @@ namespace WarmSync;
                         {
                             try
                             {
-                                string roomNumber = GetParam(room, "Номер помещения") 
+                                string? roomNumber = GetParam(room, "Номер помещения") 
                                                     ?? GetParam(room, "Номер");
 
                                 if (string.IsNullOrWhiteSpace(roomNumber))
@@ -72,11 +72,11 @@ namespace WarmSync;
 
                                 string corpus = CleanDigits(GetParam(room, "Корпус"));
                                 string floor = CleanDigits(RemoveFloorLetters(GetParam(room, "Этаж")));
-                                string apartment = GetParam(room, "Номер квартиры на этаже");
+                                string? apartment = GetParam(room, "Номер квартиры на этаже");
 
                                 string newNumber = CreateSpaceNumber(corpus, floor, apartment, roomNumber);
 
-                                Space found = FindSpace(room, spaces, transform);
+                                Space? found = FindSpace(room, spaces, transform);
                                 if (found != null)
                                 {
                                     Parameter p = found.LookupParameter("Номер");
@@ -112,7 +112,7 @@ namespace WarmSync;
             ShowResult(updatedCount, errorCount, log);
         }
 
-        private string GetParam(Element e, string name)
+        private string? GetParam(Element e, string name)
         {
             var p = e.LookupParameter(name);
             if (p == null || !p.HasValue) return null;
@@ -122,24 +122,24 @@ namespace WarmSync;
                 : p.AsValueString();
         }
 
-        private string CleanDigits(string s)
+        private string CleanDigits(string? s)
         {
-            if (string.IsNullOrEmpty(s)) return "";
+            if (s is not { Length: > 0 }) return "";
             return string.Concat(s.Where(char.IsDigit));
         }
 
-        private string RemoveFloorLetters(string s)
+        private string RemoveFloorLetters(string? s)
         {
-            if (string.IsNullOrEmpty(s)) return "";
+            if (s is not { Length: > 0 }) return "";
             return s.Replace("Э", "").Replace("э", "").Trim();
         }
 
-        private string CreateSpaceNumber(string c, string f, string a, string r)
+        private string CreateSpaceNumber(string c, string f, string? a, string? r)
         {
             return string.Concat(new[] { c, f, a, r }.Where(x => !string.IsNullOrEmpty(x)));
         }
 
-        private Space FindSpace(Room room, List<Space> spaces, Transform tr)
+        private Space? FindSpace(Room room, List<Space> spaces, Transform tr)
         {
             foreach (var s in spaces)
             {

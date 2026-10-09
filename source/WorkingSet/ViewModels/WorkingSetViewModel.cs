@@ -29,7 +29,14 @@ public partial class WorkingSetViewModel : ObservableObject
 
     partial void OnExcelFilePathChanged(string? value)
     {
-        _model = new WorkingSetModel(value);
+        if (string.IsNullOrEmpty(value))
+        {
+            _model = null;
+            Sections = null;
+            return;
+        }
+
+        _model = new WorkingSetModel(value!);
         _createWorksetsHandler = new CreateWorksetsHandler();
         _externalEvent = ExternalEvent.Create(_createWorksetsHandler);
 
@@ -47,7 +54,7 @@ public partial class WorkingSetViewModel : ObservableObject
     [RelayCommand]
     private void CreateWorksets()
     {
-        if (string.IsNullOrEmpty(SelectedSection))
+        if (SelectedSection is not { Length: > 0 } section)
         {
             string? dial1 = ToadDialogService.Show(
                 "Внимание!",
@@ -58,14 +65,19 @@ public partial class WorkingSetViewModel : ObservableObject
             return;
         }
         
-        var worksets = _model?.GetWorksetsFromSection(SelectedSection);
-
-        if (_createWorksetsHandler != null)
+        if (_model == null || _createWorksetsHandler == null || _externalEvent == null)
         {
-            _createWorksetsHandler.Worksets = worksets;
+            ToadDialogService.Show(
+                "Внимание!",
+                "Пожалуйста, выберите Excel файл с рабочими наборами.",
+                DialogButtons.OK,
+                DialogIcon.Warning
+            );
+            return;
         }
 
-        _externalEvent?.Raise();
+        _createWorksetsHandler.Worksets = _model.GetWorksetsFromSection(section);
+        _externalEvent.Raise();
         
         string? dial2 = ToadDialogService.Show(
             "Успех!",
@@ -101,10 +113,10 @@ public partial class WorkingSetViewModel : ObservableObject
 
     public Settings ToSettings()
     {
-        return new Settings
-        {
-            DarkTheme = DarkTheme,
-            ExcelFilePath = ExcelFilePath
-        };
+        var settings = new Settings { DarkTheme = DarkTheme };
+        if (ExcelFilePath != null)
+            settings.ExcelFilePath = ExcelFilePath;
+
+        return settings;
     }
 }

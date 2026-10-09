@@ -17,11 +17,11 @@ public class ParamCheckerCommand : ExternalCommand
     public override void Execute()
     {
         var logger = new Logger();
-        var doc = Document;
+        var doc = Application.ActiveUIDocument.Document;
         var categoryService = new CategoryService();
         categoryService.Initialize(doc);
         var setvm = new SettingsViewModel();
-        var exportService = new ExportService(ExternalCommandData, categoryService, setvm, logger);
+        var exportService = new ExportService(Application, categoryService, setvm, logger);
         var vm = new ParamCheckerViewModel(categoryService, exportService, setvm, logger);
         var view = new ParamCheckerView(vm, setvm);
         view.ShowDialog();

@@ -51,7 +51,6 @@ public partial class CustomNavItem : ObservableObject
 
 
     public Page Page { get; }
-    public object ViewModel { get; }
 
     public object ViewModelInstance { get; }
 

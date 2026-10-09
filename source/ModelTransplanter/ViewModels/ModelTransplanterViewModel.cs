@@ -15,8 +15,8 @@ public partial class ModelTransplanterViewModel : ObservableObject
     private readonly UIApplication _uiApp;
     private Logger _logger;
 
-    [ObservableProperty] private Document _selectedSourceDoc;
-    [ObservableProperty] private Document _selectedTargetDoc;
+    [ObservableProperty] private Document? _selectedSourceDoc;
+    [ObservableProperty] private Document? _selectedTargetDoc;
     [ObservableProperty] private string _logFilePath;
     [ObservableProperty] private int _progressValue;
     [ObservableProperty] private bool _darkTheme = true;
@@ -33,8 +33,9 @@ public partial class ModelTransplanterViewModel : ObservableObject
         _uiApp = RevitContext.UiApplication!;
         OpenDocuments = _uiApp.Application.Documents.Cast<Document>().ToList();
 
-        _logger = new Logger(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "\\TransferElementsLog.txt");
-        LogFilePath = _logger.ToString();
+        var logFilePath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "\\TransferElementsLog.txt";
+        _logger = new Logger(logFilePath);
+        LogFilePath = logFilePath;
     }
 
     [RelayCommand]

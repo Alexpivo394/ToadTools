@@ -66,7 +66,11 @@ public class WriteFromExcel
                             continue;
                         }
 
+#if REVIT2024_OR_GREATER
+                        if (!long.TryParse(idVal.ToString(), out long idInt))
+#else
                         if (!int.TryParse(idVal.ToString(), out int idInt))
+#endif
                         {
                             logger.Log($"Строка {row}: ID '{idVal}' — не число.");
                             errors++;

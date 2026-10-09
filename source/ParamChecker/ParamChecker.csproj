@@ -5,11 +5,14 @@
         <PackageReference Include="EPPlus"/>
         <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf"/>
         <PackageReference Include="Newtonsoft.Json"/>
-        <PackageReference Include="System.Buffers"/>
-        <PackageReference Include="System.Runtime.CompilerServices.Unsafe"/>
         <PackageReference Include="WPF-UI"/>
         <PackageReference Include="WPF-UI.Abstractions"/>
-        <PackageReference Include="Polyfill"/>
+    </ItemGroup>
+
+    <!-- net48 facade assemblies; on .NET they ship with the runtime -->
+    <ItemGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))' == '.NETFramework'">
+        <PackageReference Include="System.Buffers"/>
+        <PackageReference Include="System.Runtime.CompilerServices.Unsafe"/>
     </ItemGroup>
 
     <ItemGroup>

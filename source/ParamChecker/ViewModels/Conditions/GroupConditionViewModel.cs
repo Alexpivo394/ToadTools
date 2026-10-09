@@ -11,7 +11,7 @@ public partial class GroupConditionViewModel : ConditionViewModelBase
 
     [ObservableProperty] private FilterParameterLogic groupLogic;
 
-    public Action<GroupConditionViewModel> RemoveGroupRequested { get; set; }
+    public Action<GroupConditionViewModel>? RemoveGroupRequested { get; set; }
 
     [RelayCommand]
     private void Add()

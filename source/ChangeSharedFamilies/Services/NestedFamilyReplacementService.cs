@@ -89,7 +89,7 @@ internal class NestedFamilyReplacementService
     private void ReplaceInstancesNotControlledByFamilyTypeLabel(
         List<NestedInstanceBindingSnapshot> bindingSnapshots,
         List<FamilyTypeValueSnapshot> familyTypeValueSnapshots,
-        Dictionary<string?, FamilySymbol> tempSymbolsByName,
+        Dictionary<string, FamilySymbol> tempSymbolsByName,
         string tempFamilyName)
     {
         foreach (var snapshot in bindingSnapshots)
@@ -118,7 +118,7 @@ internal class NestedFamilyReplacementService
     private static void ReplaceInstancesWithoutCapturedBindings(
         List<FamilyInstance> nestedInstances,
         List<NestedInstanceBindingSnapshot> bindingSnapshots,
-        Dictionary<string?, FamilySymbol> tempSymbolsByName,
+        Dictionary<string, FamilySymbol> tempSymbolsByName,
         string tempFamilyName)
     {
         var processedInstanceIds = new HashSet<ElementId>(

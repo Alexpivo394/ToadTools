@@ -26,7 +26,7 @@ public class GetParamService
 
     public IReadOnlyList<ParameterDescriptor> GetFromSymbol(FamilySymbol? symbol)
     {
-        var dict = new Dictionary<string?, ParameterDescriptor>();
+        var dict = new Dictionary<string, ParameterDescriptor>();
 
         if (symbol != null)
         {
@@ -41,7 +41,7 @@ public class GetParamService
             var instanceParams = GetInstanceParamsFromSymbol(symbol);
             foreach (var p in instanceParams)
             {
-                if (!dict.ContainsKey(p.Name))
+                if (p.Name != null && !dict.ContainsKey(p.Name))
                     dict[p.Name] = p;
             }
         }

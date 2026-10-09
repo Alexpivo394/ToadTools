@@ -5,7 +5,7 @@ namespace WorksetCheck.Services;
 
 public class FailureProcessorOpenDocument
 {
-    public void ApplicationOnFailuresProcessing(object sender, FailuresProcessingEventArgs e)
+    public void ApplicationOnFailuresProcessing(object? sender, FailuresProcessingEventArgs e)
     {
         var accessor = e.GetFailuresAccessor();
         accessor.DeleteAllWarnings();
@@ -27,7 +27,7 @@ public class FailureProcessorOpenDocument
         }
     }
 
-    public void UIApplicationOnDialogBoxShowing(object sender, DialogBoxShowingEventArgs e)
+    public void UIApplicationOnDialogBoxShowing(object? sender, DialogBoxShowingEventArgs e)
     {
         e.OverrideResult(1);
     }

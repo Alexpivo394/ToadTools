@@ -53,7 +53,7 @@ public sealed partial class ParamChecker : FluentWindow
         MainFrame.Navigate(page);
     }
 
-    private void ParamChecker_Closing(object sender, CancelEventArgs e)
+    private void ParamChecker_Closing(object? sender, CancelEventArgs e)
     {
         var settings = _settingsVm.ToSettings();
         Configuration.SaveSettings(settings);

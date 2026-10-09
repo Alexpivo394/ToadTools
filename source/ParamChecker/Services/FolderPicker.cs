@@ -31,13 +31,13 @@ public static class FolderPicker
 
             if (!string.IsNullOrWhiteSpace(title))
             {
-                dialog.SetTitle(title);
+                dialog.SetTitle(title!);
             }
 
             if (!string.IsNullOrWhiteSpace(initialDirectory) &&
                 Directory.Exists(initialDirectory))
             {
-                initialFolder = CreateShellItem(initialDirectory);
+                initialFolder = CreateShellItem(initialDirectory!);
 
                 // Именно DefaultFolder, а не SetFolder:
                 // Windows сможет учитывать последнюю использованную папку.

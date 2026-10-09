@@ -7,7 +7,7 @@ namespace ParamChecker.Models;
 
 public class FailureProcessorOpenDocument
 {
-    public void OnFailuresProcessing(object sender, FailuresProcessingEventArgs e)
+    public void OnFailuresProcessing(object? sender, FailuresProcessingEventArgs e)
     {
         var accessor = e.GetFailuresAccessor();
         var failures = accessor.GetFailureMessages();
@@ -40,7 +40,7 @@ public class FailureProcessorOpenDocument
         e.SetProcessingResult(FailureProcessingResult.Continue);
     }
 
-    public void OnDialogBoxShowing(object sender, DialogBoxShowingEventArgs e)
+    public void OnDialogBoxShowing(object? sender, DialogBoxShowingEventArgs e)
     {
         // ❗️ТОЛЬКО БЕЗОПАСНЫЕ ДИАЛОГИ
         switch (e.DialogId)

@@ -10,11 +10,14 @@ public class EnumDescriptionConverter : IValueConverter
     {
         if (value == null) return "";
 
-        var field = value.GetType().GetField(value.ToString());
+        var name = value.ToString();
+        if (name == null) return "";
+
+        var field = value.GetType().GetField(name);
         var attr = field?.GetCustomAttributes(typeof(DescriptionAttribute), false)
             .FirstOrDefault() as DescriptionAttribute;
 
-        return attr?.Description ?? value.ToString();
+        return attr?.Description ?? name;
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

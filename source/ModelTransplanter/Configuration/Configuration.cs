@@ -12,8 +12,8 @@ public class Configuration
 {
     private const string DirectoryName = "ModelTransplanterSettings";
 
-    private static readonly string DllPath = Assembly.GetExecutingAssembly().Location;
-    private static readonly string DllDirectory = Path.GetDirectoryName(DllPath);
+    // The add-in is always loaded from a file, so its location has a directory.
+    private static readonly string DllDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
 
     private readonly string _configFilePath = Path.Combine(DllDirectory, DirectoryName, "config.json");
 
@@ -23,31 +23,25 @@ public class Configuration
         var directoryName = DirectoryName;
         var configName = "config.json";
 
-        // path to dll
-        var dllPath = Assembly.GetExecutingAssembly().Location;
-        CreateDir(dllPath, directoryName);
-
-        // path to dll`s directory
-        var dllDir = Path.GetDirectoryName(dllPath);
+        CreateDir(directoryName);
 
         // path to cfg`s directory
-        var pathCfg = Path.Combine(dllDir, directoryName, configName);
+        var pathCfg = Path.Combine(DllDirectory, directoryName, configName);
 
         // path to cfg`s
 
-        var dirCfg = Path.Combine(dllDir, directoryName);
+        var dirCfg = Path.Combine(DllDirectory, directoryName);
 
         if (!File.Exists(pathCfg))
         {
             CreateEmptyJsonFile(dirCfg, configName);
         }
     }
-    
 
-    private static void CreateDir(string dllPath, string directoryName)
+
+    private static void CreateDir(string directoryName)
     {
-        var dllDirectory = Path.GetDirectoryName(dllPath);
-        var configDirectoryPath = Path.Combine(dllDirectory, directoryName);
+        var configDirectoryPath = Path.Combine(DllDirectory, directoryName);
         if (!Directory.Exists(configDirectoryPath))
         {
             var x = Directory.CreateDirectory(configDirectoryPath);

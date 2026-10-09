@@ -54,7 +54,7 @@ public class RSHPLeftRight
                 var type = doc.GetElement(region.GetTypeId());
                 string regionName = type.Name;
 
-                if (!map.TryGetValue(regionName, out string targetName)) continue;
+                if (!map.TryGetValue(regionName, out var targetName)) continue;
 
                 var targetFamilyName = "R-SHP-01 - Дополнительная";
 

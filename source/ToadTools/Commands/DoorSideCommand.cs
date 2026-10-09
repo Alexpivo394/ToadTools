@@ -20,7 +20,7 @@ public class DoorSideCommand : ExternalCommand
 
     public override void Execute()
     {
-        var doc = Document;
+        var doc = Application.ActiveUIDocument.Document;
 
         try
         {
@@ -78,7 +78,7 @@ public class DoorSideCommand : ExternalCommand
             parameterTypeId: ParameterType.Text,
 #endif
             categories: categories,
-#if REVIT2025_OR_GREATER
+#if REVIT2024_OR_GREATER
             parameterGroup: GroupTypeId.Data,
 #else
             parameterGroup: BuiltInParameterGroup.PG_DATA,

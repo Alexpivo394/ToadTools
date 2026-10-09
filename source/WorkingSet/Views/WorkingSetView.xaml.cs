@@ -26,7 +26,7 @@ namespace WorkingSet.Views
             Closing += OnClosing;
         }
         
-        private void OnClosing(object sender, System.ComponentModel.CancelEventArgs e)
+        private void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
         {
             var setting = _viewModel.ToSettings();
             if (setting != null)

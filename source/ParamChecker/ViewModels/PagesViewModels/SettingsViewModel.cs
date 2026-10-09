@@ -16,7 +16,7 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     [ObservableProperty] private string? _logFilePath;
 
-    [ObservableProperty] private string _reportFilePath;
+    [ObservableProperty] private string _reportFilePath = string.Empty;
 
     [ObservableProperty] private string _reportsPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
 

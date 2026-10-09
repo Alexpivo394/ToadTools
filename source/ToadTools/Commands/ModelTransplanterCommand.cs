@@ -16,7 +16,7 @@ public class ModelTransplanterCommand : ExternalCommand
 {
     public override void Execute()
     {
-        if (Document?.IsReadOnly == true)
+        if (Application.ActiveUIDocument?.Document.IsReadOnly == true)
         {
             ToadDialogService.Show(
                 "Ошибка!",

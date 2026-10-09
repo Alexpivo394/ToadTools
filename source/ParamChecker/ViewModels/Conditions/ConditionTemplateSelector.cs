@@ -5,8 +5,9 @@ namespace ParamChecker.ViewModels.Conditions;
 
 public class ConditionTemplateSelector : DataTemplateSelector
 {
-    public DataTemplate SimpleTemplate { get; set; }
-    public DataTemplate GroupTemplate { get; set; }
+    // Set from XAML
+    public DataTemplate SimpleTemplate { get; set; } = null!;
+    public DataTemplate GroupTemplate { get; set; } = null!;
 
     public override DataTemplate SelectTemplate(object item, DependencyObject container)
     {

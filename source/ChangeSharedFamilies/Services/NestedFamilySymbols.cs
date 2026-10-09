@@ -4,11 +4,11 @@ namespace ChangeSharedFamilies.Services;
 
 internal static class NestedFamilySymbols
 {
-    public static Dictionary<string?, FamilySymbol> GetFamilySymbolsByName(
+    public static Dictionary<string, FamilySymbol> GetFamilySymbolsByName(
         Document document,
         Family family)
     {
-        var result = new Dictionary<string?, FamilySymbol>(
+        var result = new Dictionary<string, FamilySymbol>(
             StringComparer.OrdinalIgnoreCase);
 
         foreach (var symbolId in family.GetFamilySymbolIds())
@@ -44,11 +44,11 @@ internal static class NestedFamilySymbols
     }
 
     public static FamilySymbol FindReplacementSymbol(
-        Dictionary<string?, FamilySymbol> tempSymbolsByName,
+        Dictionary<string, FamilySymbol> tempSymbolsByName,
         string? oldSymbolName,
         string tempFamilyName)
     {
-        if (tempSymbolsByName.TryGetValue(oldSymbolName, out var replacementSymbol))
+        if (oldSymbolName != null && tempSymbolsByName.TryGetValue(oldSymbolName, out var replacementSymbol))
             return replacementSymbol;
 
         if (tempSymbolsByName.Count == 1)

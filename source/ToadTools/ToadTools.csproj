@@ -5,10 +5,13 @@
     <EnableDynamicLoading>true</EnableDynamicLoading>
   </PropertyGroup>
 
+  <!-- Merged by ToadTools.Repack.targets instead of the SDK's IsRepackable (see the comment there) -->
   <PropertyGroup Condition="'$(RevitVersion)' &lt; '2027'">
-    <IsRepackable>true</IsRepackable>
+    <RepackToadTools>true</RepackToadTools>
     <RepackBinariesExcludes>Wpf*.dll</RepackBinariesExcludes>
   </PropertyGroup>
+
+  <Import Project="ToadTools.Repack.targets"/>
 
     <ItemGroup>
       <None Remove="Resources\Icons\1Tray16.png" />

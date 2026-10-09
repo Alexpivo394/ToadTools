@@ -71,7 +71,7 @@ public class ParameterProcessorService
 
     private static void ProcessParameters(
         ParameterSet parameters,
-        HashSet<string?> parameterNames)
+        HashSet<string> parameterNames)
     {
         foreach (Parameter parameter in parameters)
         {

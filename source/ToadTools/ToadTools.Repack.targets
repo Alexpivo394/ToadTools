@@ -1,0 +1,72 @@
+<Project>
+
+    <!--
+    ============================================================
+                    Repack ToadTools into one assembly
+
+    The same merge as RepackAddinFiles from Nice3point.Revit.Sdk (same inputs, same ILRepack arguments),
+    except that ILRepack output is logged as plain messages instead of being parsed into build warnings.
+
+    Why: every project compiles its own internal copy of the source-only packages (Polyfill,
+    JetBrains.Annotations.Sources), and /union merges those copies into one type. For members whose
+    signature mentions another merged duplicate (Range.End returns Index, LanguageInjection takes the
+    InjectedLanguage enum, ...) ILRepack prints "Method ... not found in merged type", although the merged
+    references do bind: every member reference of the output that points to its own types resolves by name
+    and signature. Those lines are noise, not warnings. A non-zero ILRepack exit code still fails the build.
+
+    The SDK target can't be overridden in place (Sdk.targets imports it after Directory.Build.targets),
+    so ToadTools.csproj leaves IsRepackable unset and enables this target with RepackToadTools instead.
+    IsRepackable=false (used by the build pipeline for tests) still turns repacking off.
+    ============================================================
+    -->
+
+    <Target Name="RepackToadTools"
+            AfterTargets="Build"
+            BeforeTargets="PublishAddin"
+            Condition="'$(RepackToadTools)' == 'true' AND '$(IsRepackable)' != 'false'">
+
+        <ItemGroup>
+            <_ILRepackVersion Include="@(PackageVersion->WithMetadataValue('Identity', 'ILRepack'))"/>
+            <_ILRepackVersion Include="@(PackageReference->WithMetadataValue('Identity', 'ILRepack'))" Condition="'@(_ILRepackVersion)' == ''"/>
+        </ItemGroup>
+
+        <Error Condition="'@(_ILRepackVersion)' == ''"
+               Text="ILRepack is required but not installed. Ensure that ILRepack PackageReference added in your project."/>
+
+        <ItemGroup>
+            <_ILRepackInputNamesExcludes Include="$(RepackBinariesExcludes.Split(';'))"/>
+            <_ILRepackInputAssembliesExcludes Include="$(OutputPath)%(_ILRepackInputNamesExcludes.Identity)"/>
+        </ItemGroup>
+
+        <ItemGroup>
+            <_ILRepackInputAssemblies Include="$(OutputPath)$(AssemblyName).dll"/>
+            <_ILRepackInputAssemblies Include="$(OutputPath)*.dll"
+                                     Exclude="@(_ILRepackInputAssembliesExcludes)"/>
+        </ItemGroup>
+
+        <PropertyGroup>
+            <_ILRepackOutputName>$(AssemblyName)</_ILRepackOutputName>
+            <_ILRepackOutput>/out:&quot;$(OutputPath)$(_ILRepackOutputName).dll&quot;</_ILRepackOutput>
+            <_ILRepackInput>@(_ILRepackInputAssemblies -> '&quot;%(FullPath)&quot;', ' ')</_ILRepackInput>
+            <_ILRepackPath>&quot;$(NuGetPackageRoot)\ilrepack\%(_ILRepackVersion.Version)\tools\ILRepack.exe&quot;</_ILRepackPath>
+            <_ILRepackLib>@(ReferencePath->'%(RelativeDir)'->Distinct()->'/lib:&quot;%(identity) &quot;', ' ')</_ILRepackLib>
+            <_ILRepackOptions>/union /illink /parallel</_ILRepackOptions>
+            <_ILRepackOptions Condition="$(Configuration.Contains('Release'))">$(_ILRepackOptions) /noRepackRes</_ILRepackOptions>
+        </PropertyGroup>
+
+        <Message Text="Repacking $(MSBuildProjectDirectory)\$(OutputPath)$(AssemblyName).dll" Importance="high"/>
+
+        <Exec Command="$(_ILRepackPath) $(_ILRepackOptions) $(_ILRepackOutput) $(_ILRepackLib) $(_ILRepackInput)"
+              IgnoreStandardErrorWarningFormat="true"
+              StandardOutputImportance="Low"
+              StandardErrorImportance="High"/>
+
+        <ItemGroup>
+            <_RepackedFiles Include="@(_ILRepackInputAssemblies -> '%(RootDir)%(Directory)%(Filename).dll')" Condition="%(Filename) != $(_ILRepackOutputName)"/>
+            <_RepackedFiles Include="@(_ILRepackInputAssemblies -> '%(RootDir)%(Directory)%(Filename).pdb')" Condition="%(Filename) != $(_ILRepackOutputName)"/>
+        </ItemGroup>
+
+        <Delete Files="@(_RepackedFiles)"/>
+    </Target>
+
+</Project>

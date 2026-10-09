@@ -15,17 +15,17 @@ namespace ParamChecker.Services;
 
 public class ExportService
 {
-    private readonly ExternalCommandData _commandData = null!;
+    private readonly UIApplication _uiApplication;
     private readonly CategoryService _categoryService;
     private readonly SettingsViewModel? _settingsViewModel;
     private readonly Logger _logger;
 
-    public ExportService(ExternalCommandData? commandData, CategoryService categoryService,
+    public ExportService(UIApplication uiApplication, CategoryService categoryService,
         SettingsViewModel? settingsViewModel, Logger logger)
     {
         _logger = logger;
         _settingsViewModel = settingsViewModel;
-        if (commandData != null) _commandData = commandData;
+        _uiApplication = uiApplication;
         _categoryService = categoryService;
     }
 
@@ -38,7 +38,7 @@ public class ExportService
             foreach (var model in profile.Models)
             {
                 _logger.Log($"Обработка модели: {model.ServerPath}");
-                var doc = OpenDocumentAsDetach(_commandData, model.ServerPath, model.WorksetKeyword);
+                var doc = OpenDocumentAsDetach(model.ServerPath, model.WorksetKeyword);
                 int greenCount = 0, redCount = 0, yellowCount = 0;
 
                 ExcelPackage.License.SetNonCommercialPersonal("ToadTools");
@@ -255,9 +255,9 @@ public class ExportService
         return lastUnderscoreIndex > -1 ? docTitle.Substring(0, lastUnderscoreIndex) : docTitle;
     }
 
-    private Document? OpenDocumentAsDetach(ExternalCommandData commandData, string filePath, string badNameWorkset)
+    private Document? OpenDocumentAsDetach(string filePath, string badNameWorkset)
     {
-        var app = commandData.Application;
+        var app = _uiApplication;
         var modelPathServ = ModelPathUtils.ConvertUserVisiblePathToModelPath(filePath);
         var controlledApp = app.Application;
 

@@ -62,7 +62,7 @@ internal class FamilyTypeParameterValueService
 
     public void Remap(
         List<FamilyTypeValueSnapshot> snapshots,
-        Dictionary<string?, FamilySymbol> tempSymbolsByName)
+        Dictionary<string, FamilySymbol> tempSymbolsByName)
     {
         if (snapshots.Count == 0)
             return;

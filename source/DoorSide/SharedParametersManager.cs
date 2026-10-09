@@ -23,7 +23,7 @@ namespace DoorSide
             ParameterType parameterTypeId,
 #endif
             IList<BuiltInCategory> categories,
-#if REVIT2025_OR_GREATER
+#if REVIT2024_OR_GREATER
             ForgeTypeId parameterGroup,
 #else
             BuiltInParameterGroup parameterGroup,
@@ -35,7 +35,7 @@ namespace DoorSide
             bool createTempFile = false,
             Guid? guid = null)
         {
-            string tempFilePath = null;
+            string? tempFilePath = null;
 
             try
             {
@@ -195,7 +195,7 @@ namespace DoorSide
 
         private void BindParameterToDocument(Definition definition,
             Binding binding,
-#if REVIT2025_OR_GREATER
+#if REVIT2024_OR_GREATER
             ForgeTypeId group
 #else
             BuiltInParameterGroup group

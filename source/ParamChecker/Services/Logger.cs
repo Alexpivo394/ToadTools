@@ -4,18 +4,14 @@ namespace ParamChecker.Services;
 
 public class Logger
 {
-    private string? _logFilePath;
+    private static readonly string DefaultLogFilePath =
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "ParamCheckerLog.txt");
+
+    private string _logFilePath = DefaultLogFilePath;
     
     public void StartLog(string? logFilePath)
     {
-        if (!string.IsNullOrEmpty(logFilePath))
-        {
-            _logFilePath = logFilePath;
-        }
-        else
-        {
-            _logFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "ParamCheckerLog.txt");
-        }
+        _logFilePath = string.IsNullOrEmpty(logFilePath) ? DefaultLogFilePath : logFilePath!;
         File.WriteAllText(_logFilePath, $"Лог начат: {DateTime.Now}\n\n");
     }
     

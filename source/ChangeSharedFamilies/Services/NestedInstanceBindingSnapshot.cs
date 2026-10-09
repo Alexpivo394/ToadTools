@@ -4,7 +4,7 @@ namespace ChangeSharedFamilies.Services;
 
 internal class NestedInstanceBindingSnapshot
 {
-    public ElementId? InstanceId { get; set; }
+    public ElementId InstanceId { get; set; } = ElementId.InvalidElementId;
 
     public string? OldSymbolName { get; set; }
 
