@@ -8,49 +8,52 @@ using RevitApplication = Autodesk.Revit.ApplicationServices.Application;
 namespace ClassifierCode.Services;
 
 /// <summary>
-///     Добавляет в проект параметры "ADSK_Код по классификатору" и "ADSK_Описание по классификатору",
-///     если их нет: берёт из ФОП, подключённого к Revit, а если там их нет — из ФОП, выбранного пользователем.
-///     Параметры привязываются как параметры экземпляра к категориям ИОС.
+///     Готовит в проекте параметры "ADSK_Код по классификатору" и "ADSK_Описание по классификатору"
+///     для всех категорий <see cref="ClassifierCategories" />:
+///     отсутствующие параметры добавляет из ФОП, подключённого к Revit, а если там их нет — из ФОП,
+///     выбранного пользователем (привязка экземпляра); к уже привязанным параметрам добавляет недостающие
+///     категории, сохраняя тип привязки и уже привязанные категории.
 /// </summary>
 public sealed class ClassifierParameterLoader(RevitApplication app, Document doc)
 {
-    private const string Title = "Код по классификатору";
-
-    /// <summary>Категории, к которым привязываются параметры (те, что обрабатывает плагин).</summary>
-    private static readonly BuiltInCategory[] Categories =
-    [
-        BuiltInCategory.OST_PipeCurves,
-        BuiltInCategory.OST_FlexPipeCurves,
-        BuiltInCategory.OST_PipeFitting,
-        BuiltInCategory.OST_PipeAccessory,
-        BuiltInCategory.OST_PipeInsulations,
-        BuiltInCategory.OST_Sprinklers,
-        BuiltInCategory.OST_PlumbingFixtures,
-        BuiltInCategory.OST_MechanicalEquipment,
-        BuiltInCategory.OST_DuctCurves,
-        BuiltInCategory.OST_FlexDuctCurves,
-        BuiltInCategory.OST_DuctFitting,
-        BuiltInCategory.OST_DuctAccessory,
-        BuiltInCategory.OST_DuctTerminal,
-        BuiltInCategory.OST_DuctInsulations,
-        BuiltInCategory.OST_DuctLinings,
-        BuiltInCategory.OST_FireAlarmDevices,
-        BuiltInCategory.OST_ElectricalEquipment,
-        BuiltInCategory.OST_SpecialityEquipment,
-        BuiltInCategory.OST_GenericModel
-    ];
-
     /// <summary>
-    ///     true — параметры есть (или успешно добавлены), false — пользователь отменил или добавить не удалось
-    ///     (причина уже показана). note — что было сделано, для отчёта.
+    ///     true — параметры есть во всех категориях (или успешно добавлены), false — пользователь отменил
+    ///     или добавить не удалось (причина уже показана). note — что было сделано, для отчёта.
     /// </summary>
     public bool EnsureParameters(out string? note)
     {
         note = null;
-        var missing = ClassifierParameters.All.Where(name => !IsBound(name)).ToList();
-        if (missing.Count == 0)
-            return true;
+        var notes = new List<string>();
 
+        var missing = ClassifierParameters.All.Where(name => FindBinding(name) == null).ToList();
+        if (missing.Count > 0)
+        {
+            if (!AddMissingParameters(missing, out var addedNote))
+                return false;
+            notes.Add(addedNote!);
+        }
+
+        try
+        {
+            var extendedNote = ExtendBindings();
+            if (extendedNote != null)
+                notes.Add(extendedNote);
+        }
+        catch (Exception ex)
+        {
+            ShowError("Не удалось добавить категории к параметрам классификатора:" + Environment.NewLine + ex.Message);
+            return false;
+        }
+
+        if (notes.Count > 0)
+            note = string.Join(Environment.NewLine, notes);
+        return true;
+    }
+
+    /// <summary>Добавляет отсутствующие параметры из ФОП и привязывает их ко всем категориям.</summary>
+    private bool AddMissingParameters(List<string> missing, out string? note)
+    {
+        note = null;
         var originalFile = app.SharedParametersFilename;
         try
         {
@@ -66,11 +69,7 @@ public sealed class ClassifierParameterLoader(RevitApplication app, Document doc
         }
         catch (Exception ex)
         {
-            ToadDialogService.Show(
-                "Ошибка!",
-                "Не удалось добавить параметры классификатора в проект:" + Environment.NewLine + ex.Message,
-                DialogButtons.OK,
-                DialogIcon.Error);
+            ShowError("Не удалось добавить параметры классификатора в проект:" + Environment.NewLine + ex.Message);
             return false;
         }
         finally
@@ -79,17 +78,83 @@ public sealed class ClassifierParameterLoader(RevitApplication app, Document doc
         }
     }
 
-    /// <summary>Параметр уже привязан к проекту (как параметр проекта).</summary>
-    private bool IsBound(string name)
+    /// <summary>
+    ///     Добавляет к привязке параметров категории, которых в ней нет.
+    ///     null — все категории уже привязаны, иначе — что добавлено, для отчёта.
+    /// </summary>
+    private string? ExtendBindings()
+    {
+        var targetCategories = GetTargetCategories();
+        var changes = new List<(Definition Definition, ElementBinding Binding, List<Category> Added)>();
+        foreach (var name in ClassifierParameters.All)
+        {
+            if (FindBinding(name) is not { Binding: ElementBinding binding } found)
+                continue;
+
+            var boundIds = new HashSet<ElementId>();
+            foreach (Category category in binding.Categories)
+                boundIds.Add(category.Id);
+
+            var added = targetCategories.Where(category => !boundIds.Contains(category.Id)).ToList();
+            if (added.Count > 0)
+                changes.Add((found.Definition, binding, added));
+        }
+
+        if (changes.Count == 0)
+            return null;
+
+        using var transaction = new Transaction(doc, "Добавление категорий к параметрам классификатора");
+        transaction.Start();
+        foreach (var change in changes)
+        {
+            var categories = app.Create.NewCategorySet();
+            foreach (Category category in change.Binding.Categories)
+                categories.Insert(category);
+            foreach (var category in change.Added)
+                categories.Insert(category);
+
+            ElementBinding extended = change.Binding is TypeBinding
+                ? app.Create.NewTypeBinding(categories)
+                : app.Create.NewInstanceBinding(categories);
+            if (!doc.ParameterBindings.ReInsert(change.Definition, extended))
+                throw new InvalidOperationException("Revit не принял привязку параметра \"" + change.Definition.Name + "\".");
+        }
+
+        transaction.Commit();
+
+        var addedNames = changes
+            .SelectMany(change => change.Added)
+            .Select(category => category.Name)
+            .Distinct()
+            .OrderBy(categoryName => categoryName);
+        return "К параметрам классификатора добавлены категории: " + string.Join(", ", addedNames) + ".";
+    }
+
+    /// <summary>Привязка параметра проекта по имени; null — параметра в проекте нет.</summary>
+    private (Definition Definition, Binding Binding)? FindBinding(string name)
     {
         var iterator = doc.ParameterBindings.ForwardIterator();
         while (iterator.MoveNext())
         {
             if (iterator.Key != null && iterator.Key.Name == name)
-                return true;
+                return (iterator.Key, (Binding)iterator.Current);
         }
 
-        return false;
+        return null;
+    }
+
+    /// <summary>Категории плагина, которые есть в документе и допускают параметры проекта.</summary>
+    private List<Category> GetTargetCategories()
+    {
+        return ClassifierCategories.All
+            .Select(builtIn => Category.GetCategory(doc, builtIn))
+            .Where(category => category != null && category.AllowsBoundParameters)
+            .ToList();
+    }
+
+    private static void ShowError(string message)
+    {
+        ToadDialogService.Show("Ошибка!", message, DialogButtons.OK, DialogIcon.Error);
     }
 
     /// <summary>ФОП, подключённый в настройках Revit. null — файла нет или в нём нет нужных параметров.</summary>
@@ -191,12 +256,8 @@ public sealed class ClassifierParameterLoader(RevitApplication app, Document doc
     private void Bind(IEnumerable<ExternalDefinition> definitions)
     {
         var categories = app.Create.NewCategorySet();
-        foreach (var builtIn in Categories)
-        {
-            var category = Category.GetCategory(doc, builtIn);
-            if (category != null && category.AllowsBoundParameters)
-                categories.Insert(category);
-        }
+        foreach (var category in GetTargetCategories())
+            categories.Insert(category);
 
         using var transaction = new Transaction(doc, "Добавление параметров классификатора");
         transaction.Start();

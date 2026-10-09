@@ -3,14 +3,13 @@ using ClassifierCode.Models;
 namespace ClassifierCode.Services;
 
 /// <summary>
-///     Собирает модельные элементы, у которых есть параметр кода (в экземпляре или типе), —
-///     ровно то, что может попасть в спецификацию, независимо от категории.
+///     Собирает элементы категорий <see cref="ClassifierCategories" />, у которых есть параметр кода
+///     (в экземпляре или типе).
 /// </summary>
 public sealed class ElementCollector
 {
-    // Обобщённые модели и осевые линии в проекте не используются и в спецификации не попадают — не трогаем.
-    private static readonly ElementId CatGenericModel = new(BuiltInCategory.OST_GenericModel);
-    private static readonly ElementId CatCenterLines = new(BuiltInCategory.OST_CenterLines);
+    private static readonly HashSet<ElementId> CategoryIds =
+        new(ClassifierCategories.All.Select(category => new ElementId(category)));
 
     public List<Element> Collect(Document doc, View? activeView, RunScope scope, ICollection<ElementId> selection)
     {
@@ -24,7 +23,10 @@ public sealed class ElementCollector
             var collector = scope == RunScope.ActiveView && activeView != null
                 ? new FilteredElementCollector(doc, activeView.Id)
                 : new FilteredElementCollector(doc);
-            candidates = collector.WhereElementIsNotElementType().ToElements();
+            candidates = collector
+                .WherePasses(new ElementMulticategoryFilter(ClassifierCategories.All.ToList()))
+                .WhereElementIsNotElementType()
+                .ToElements();
         }
 
         var typeHasParameter = new Dictionary<ElementId, bool>();
@@ -34,23 +36,12 @@ public sealed class ElementCollector
             .ToList();
     }
 
-    private static bool IsExcludedCategory(Category category)
-    {
-        return category.Id == CatGenericModel || category.Id == CatCenterLines ||
-               string.Equals(category.Name, "Осевые линии", StringComparison.OrdinalIgnoreCase);
-    }
-
     private static bool IsCandidate(Element element)
     {
         return element is not ElementType &&
                !element.ViewSpecific &&
                element.Category != null &&
-               element.Category.CategoryType == CategoryType.Model &&
-               !IsExcludedCategory(element.Category) &&
-               element is not SpatialElement &&
-               element is not MEPSystem &&
-               element is not Group &&
-               element is not AssemblyInstance;
+               CategoryIds.Contains(element.Category.Id);
     }
 
     private static bool HasCodeParameter(Document doc, Element element, Dictionary<ElementId, bool> typeCache)
