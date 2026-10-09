@@ -134,6 +134,11 @@ namespace ToadTools
                 .SetToolTip("Заполняет прочерк в указанные параметры\nесли в них нет значения.")
                 .SetContextualHelp(new ContextualHelp(ContextualHelpType.Url, "https://bim-baza.yonote.ru/doc/zapisat-procherk-kfwUDj6TeL"));
 
+            panelGeneral.AddPushButton<Commands.ClassifierCodeCommand>("Код по\nклассификатору")
+                .SetImage("/ToadTools;component/Resources/Icons/ClassifierCode16.png")
+                .SetLargeImage("/ToadTools;component/Resources/Icons/ClassifierCode32.png")
+                .SetToolTip("Заполняет ADSK_Код по классификатору\nи ADSK_Описание по классификатору\nу элементов ИОС.");
+
             //Сети связи
             panelSs.AddPushButton<Commands.SSPlanCommand>("Структурная\nсхема")
                 .SetImage("/ToadTools;component/Resources/Icons/SSPlan16.png")

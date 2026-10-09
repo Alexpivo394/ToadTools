@@ -26,6 +26,7 @@ internal static class ServiceRegistration
         services.AddWorksetCheck();
         services.AddModelTransplanter();
         services.AddWorkingSet();
+        services.AddClassifierCode();
 
         return services;
     }
@@ -82,5 +83,13 @@ internal static class ServiceRegistration
     {
         services.AddScoped<WorkingSet.ViewModels.WorkingSetViewModel>();
         services.AddScoped<WorkingSet.Views.WorkingSetView>();
+    }
+
+    private static void AddClassifierCode(this IServiceCollection services)
+    {
+        services.AddScoped<ClassifierCode.Services.ElementCollector>();
+        services.AddScoped<ClassifierCode.Services.ClassifierCodeService>();
+        services.AddScoped<ClassifierCode.ViewModels.ClassifierCodeViewModel>();
+        services.AddScoped<ClassifierCode.Views.ClassifierCodeView>();
     }
 }

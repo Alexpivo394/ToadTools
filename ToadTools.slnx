@@ -99,6 +99,24 @@
     <Configuration Solution="Release.R26|Any CPU" Project="Debug.R26|Any CPU" />
     <Configuration Solution="Release.R27|Any CPU" Project="Debug.R27|Any CPU" />
   </Project>
+  <Project Path="source\ClassifierCode\ClassifierCode.csproj" Type="Classic C#">
+    <Configuration Solution="Debug.R20|Any CPU" Project="Debug.R20|Any CPU" />
+    <Configuration Solution="Debug.R21|Any CPU" Project="Debug.R21|Any CPU" />
+    <Configuration Solution="Debug.R22|Any CPU" Project="Debug.R22|Any CPU" />
+    <Configuration Solution="Debug.R23|Any CPU" Project="Debug.R23|Any CPU" />
+    <Configuration Solution="Debug.R24|Any CPU" Project="Debug.R24|Any CPU" />
+    <Configuration Solution="Debug.R25|Any CPU" Project="Debug.R25|Any CPU" />
+    <Configuration Solution="Debug.R26|Any CPU" Project="Debug.R26|Any CPU" />
+    <Configuration Solution="Debug.R27|Any CPU" Project="Debug.R27|Any CPU" />
+    <Configuration Solution="Release.R20|Any CPU" Project="Debug.R20|Any CPU" />
+    <Configuration Solution="Release.R21|Any CPU" Project="Debug.R21|Any CPU" />
+    <Configuration Solution="Release.R22|Any CPU" Project="Debug.R22|Any CPU" />
+    <Configuration Solution="Release.R23|Any CPU" Project="Debug.R23|Any CPU" />
+    <Configuration Solution="Release.R24|Any CPU" Project="Debug.R24|Any CPU" />
+    <Configuration Solution="Release.R25|Any CPU" Project="Debug.R25|Any CPU" />
+    <Configuration Solution="Release.R26|Any CPU" Project="Debug.R26|Any CPU" />
+    <Configuration Solution="Release.R27|Any CPU" Project="Debug.R27|Any CPU" />
+  </Project>
   <Project Path="source\CreateCover\CreateCover.csproj" Type="Classic C#">
     <Configuration Solution="Debug.R20|Any CPU" Project="Debug.R20|Any CPU" />
     <Configuration Solution="Debug.R21|Any CPU" Project="Debug.R21|Any CPU" />
