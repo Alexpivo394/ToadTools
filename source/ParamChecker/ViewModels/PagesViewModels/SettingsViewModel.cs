@@ -101,6 +101,8 @@ public sealed partial class SettingsViewModel : ObservableObject
         IsDarkTheme = settings.IsDarkTheme;
         LogFilePath = settings.LogFilePath;
         ReportFilePath = settings.ReportFilePath;
+        if (!string.IsNullOrWhiteSpace(settings.ReportsPath))
+            ReportsPath = settings.ReportsPath;
         UpdateGeneralReport = settings.UpdateGeneralReport;
     }
 
@@ -111,6 +113,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             IsDarkTheme = IsDarkTheme,
             LogFilePath = LogFilePath,
             ReportFilePath = ReportFilePath,
+            ReportsPath = ReportsPath,
             UpdateGeneralReport = UpdateGeneralReport
         };
     }

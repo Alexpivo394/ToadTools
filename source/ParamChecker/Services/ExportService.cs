@@ -170,7 +170,10 @@ public class ExportService
 
                 totalworksheet.Cells[totalworksheet.Dimension.Address].AutoFitColumns();
 
-                var reportsPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                var reportsPath = _settingsViewModel?.ReportsPath;
+                if (string.IsNullOrWhiteSpace(reportsPath))
+                    reportsPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                Directory.CreateDirectory(reportsPath!);
 
                 var fileName = $"{ProcessDocTitle(doc?.Title ?? throw new InvalidOperationException())}_LOIReport.xlsx";
 
