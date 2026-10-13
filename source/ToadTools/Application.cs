@@ -1,5 +1,6 @@
 ﻿using Nice3point.Revit.Toolkit.External;
 using System.Windows.Media;
+using MediaColor = System.Windows.Media.Color;
 using Autodesk.Revit.UI;
 using Nice3point.Revit.Extensions.UI;
 
@@ -11,6 +12,9 @@ namespace ToadTools
     [UsedImplicitly]
     public class Application : AsyncExternalApplication
     {
+        private const string TabName = "ToadTools";
+        private const string HelpUrl = "https://bim-baza.yonote.ru/doc/";
+
         public override async Task OnStartupAsync()
         {
             await Host.StartAsync();
@@ -22,177 +26,165 @@ namespace ToadTools
             await Host.StopAsync();
         }
 
+        /// <summary>
+        ///     BIM — основные команды крупными кнопками, остальные стопкой маленьких с подписью.
+        ///     Общие — маленькие кнопки с короткой подписью, по три в столбик.
+        ///     Панели разделов (Лотки, Сети связи, ОВ, АР, КР) — полноразмерные кнопки.
+        /// </summary>
         private void CreateRibbon()
         {
-            //Добавляем панели
-            var panelBim = Application.CreatePanel("BIM", "ToadTools");
-            var panelBackgroundBrushDustyBlue =
-                new SolidColorBrush(System.Windows.Media.Color.FromRgb(173, 216, 230));
-            panelBim.SetTitleBarBackground(panelBackgroundBrushDustyBlue);
+            CreateBimPanel();
+            CreateGeneralPanel();
+            CreateDisciplinePanels();
+        }
 
+        private void CreateBimPanel()
+        {
+            var panel = CreatePanel("BIM", MediaColor.FromRgb(173, 216, 230));
 
-            var panelTray = Application.CreatePanel("Лотки", "ToadTools");
-            var panelBackgroundBrushMutedOlive =
-                new SolidColorBrush(System.Windows.Media.Color.FromRgb(152, 168, 124));
-            panelTray.SetTitleBarBackground(panelBackgroundBrushMutedOlive);
+            var worksets = panel.AddSplitButton("Worksets", "Рабочие\nнаборы");
+            worksets.AddPushButton<Commands.WorkingSetCommand>("Создание\nнаборов")
+                .WithIcon("Create")
+                .WithInfo("Создает в модели рабочие наборы\nдля выбранного раздела.",
+                    "sozdanie-rabochih-naborov-plaginom-rptools-j3Ycy39HVW");
+            worksets.AddPushButton<Commands.WorksetCheckCommand>("Проверка\nнаборов")
+                .WithIcon("WorksetsCheck")
+                .WithInfo("Позволяет проверить заданные\nмодели на соответствие элементов\nрабочим наборам.",
+                    "worksetcheck-rfycq6j0Bd");
 
-            var panelGeneral = Application.CreatePanel("Общие", "ToadTools");
-            var panelBackgroundBrushSoftTerracotta =
-                new SolidColorBrush(System.Windows.Media.Color.FromRgb(204, 153, 102));
-            panelGeneral.SetTitleBarBackground(panelBackgroundBrushSoftTerracotta);
-            
-            var panelSs = Application.CreatePanel("Сети связи", "ToadTools");
-            var panelBackgroundBrushPlum =
-                new SolidColorBrush(System.Windows.Media.Color.FromRgb(155, 242, 222));
-            panelSs.SetTitleBarBackground(panelBackgroundBrushPlum);
-            
-            var panelOv = Application.CreatePanel("ОВ", "ToadTools");
-            var panelBackgroundBrushRose = new SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 209, 220));
-            panelOv.SetTitleBarBackground(panelBackgroundBrushRose);
-            
-            var panelAr = Application.CreatePanel("АР", "ToadTools");
-            var panelBackgroundBrushBezheviy = new SolidColorBrush(System.Windows.Media.Color.FromRgb(245, 245, 220));
-            panelAr.SetTitleBarBackground(panelBackgroundBrushBezheviy);
-            
-            var panelKr = Application.CreatePanel("КР", "ToadTools");
-            var panelBackgroundBrushSnowBlue = new SolidColorBrush(System.Windows.Media.Color.FromRgb(172, 229, 238));
-            panelKr.SetTitleBarBackground(panelBackgroundBrushSnowBlue);
+            panel.AddPushButton<Commands.ParamCheckerCommand>("Param\nChecker")
+                .WithIcon("Export")
+                .WithInfo("Выгружает из моделей на сервере\nотчет по заполнению параметров.",
+                    "paramchecker-movFIkYSwy");
 
-            //Добавляем кнопки на панели
-            //BIM
-            panelBim.AddPushButton<Commands.ParamCheckerCommand>("ParamChecker")
-                .SetImage("/ToadTools;component/Resources/Icons/Export16.png")
-                .SetLargeImage("/ToadTools;component/Resources/Icons/Export32.png")
-                .SetToolTip("Выгружает из моделей на сервере\nотчет по заполнению параметров.")
-                .SetContextualHelp(new ContextualHelp(ContextualHelpType.Url, "https://bim-baza.yonote.ru/doc/paramchecker-movFIkYSwy"));
+            var stack = panel.AddStackPanel();
+            stack.AddPushButton<Commands.ModelTransplanterCommand>("Копирование элементов")
+                .WithIcon("Transplanter")
+                .WithInfo("Позволяет копировать элементы\nиз модели в модель.",
+                    "kopirovanie-soderzhimogo-modeli-7q8Wf296FB");
+            stack.AddPushButton<Commands.ChangeSharedFamiliesCommand>("Общие → необщие")
+                .WithIcon("ChangeSharedFamilies")
+                .WithInfo("Заменяет общие вложенные семейства\nна необщие. Работает только с\nредактором семейства.",
+                    "zamenit-obshie-semejstva-neobshimi-BDbyQvBJH7");
+        }
 
-            panelBim.AddPushButton<Commands.WorkingSetCommand>("Создание Рабочих\nнаборов")
-                .SetImage("/ToadTools;component/Resources/Icons/Create16.png")
-                .SetLargeImage("/ToadTools;component/Resources/Icons/Create32.png")
-                .SetToolTip("Создает в модели рабочие наборы\nдля выбранного раздела.")  
-                .SetContextualHelp(new ContextualHelp(ContextualHelpType.Url, "https://bim-baza.yonote.ru/doc/sozdanie-rabochih-naborov-plaginom-rptools-j3Ycy39HVW"));
-            
+        private void CreateGeneralPanel()
+        {
+            var panel = CreatePanel("Общие", MediaColor.FromRgb(204, 153, 102));
 
-            panelBim.AddPushButton<Commands.ModelTransplanterCommand>("Копирование элементов")
-                .SetImage("/ToadTools;component/Resources/Icons/Transplanter16.png")
-                .SetLargeImage("/ToadTools;component/Resources/Icons/Transplanter32.png")
-                .SetToolTip("Позволяет копировать элементы\nиз модели в модель.")
-                .SetContextualHelp(new ContextualHelp(ContextualHelpType.Url, "https://bim-baza.yonote.ru/doc/kopirovanie-soderzhimogo-modeli-7q8Wf296FB"));
-            
-            panelBim.AddPushButton<Commands.WorksetCheckCommand>("Проверка рабочих\nнаборов")
-                .SetImage("/ToadTools;component/Resources/Icons/WorksetsCheck16.png")
-                .SetLargeImage("/ToadTools;component/Resources/Icons/WorksetsCheck32.png")
-                .SetToolTip("Позволяет проверить заданные\nмодели на соответствие элементов\nрабочим наборам.")
-                .SetContextualHelp(new ContextualHelp(ContextualHelpType.Url, "https://bim-baza.yonote.ru/doc/worksetcheck-rfycq6j0Bd"));
+            // Маленькие кнопки с короткой подписью; после трёх стопка сама переносится в новый столбец
+            var stack = panel.AddStackPanel();
+            stack.AddPushButton<Commands.SmartTagsCommand>("Умные выноски")
+                .WithIcon("SmartTags")
+                .WithInfo("Расставляет марки на видимых элементах\nактивного вида без пересечений текста\nи выносок. Весь запуск отменяется\nодним Ctrl+Z.");
+            stack.AddPushButton<Commands.QuantityCheckCommand>("Запись количества")
+                .WithIcon("QuantityCheck")
+                .WithInfo("Заполняет параметр количества\nв элементах модели.",
+                    "zapolnenie-parametra-kolichestvo-beinN88LwP");
+            stack.AddPushButton<Commands.WriteDashCommand>("Запись прочерков")
+                .WithIcon("WriteDash")
+                .WithInfo("Заполняет прочерк в указанные параметры\nесли в них нет значения.",
+                    "zapisat-procherk-kfwUDj6TeL");
+            stack.AddPushButton<Commands.ClassifierCodeCommand>("Код классификатора")
+                .WithIcon("ClassifierCode")
+                .WithInfo("Заполняет ADSK_Код по классификатору\nи ADSK_Описание по классификатору\nу элементов ИОС.");
+            stack.AddPushButton<Commands.LengthCommand>("Длина элементов")
+                .WithIcon("Ruler")
+                .WithInfo("Посчитать суммарную длину выбранных элементов.");
+            stack.AddPushButton<Commands.CreateSpacesCommand>("Создание пространств")
+                .WithIcon("Spaces")
+                .WithInfo("Создает в проекте пространства на основе помещений из раздела АР.",
+                    "sozdanie-prostranstv-Bia5rDOjqY");
+        }
 
-            panelBim.AddPushButton<Commands.ChangeSharedFamiliesCommand>("Заменить общие\nсемейства необщими")
-                .SetImage("/ToadTools;component/Resources/Icons/ChangeSharedFamilies16.png")
-                .SetLargeImage("/ToadTools;component/Resources/Icons/ChangeSharedFamilies32.png")
-                .SetToolTip("Заменяет общие вложенные семейства\nна необщие. Работает только с\nредактором семейства.")
-                .SetContextualHelp(new ContextualHelp(ContextualHelpType.Url, "https://bim-baza.yonote.ru/doc/zamenit-obshie-semejstva-neobshimi-BDbyQvBJH7"));
-
+        private void CreateDisciplinePanels()
+        {
             //Лотки
-            var pullButtonTray = panelTray.AddPullDownButton("Кабельные лотки", "Кабельные лотки");
+            var panelTray = CreatePanel("Лотки", MediaColor.FromRgb(152, 168, 124));
 
-            pullButtonTray.SetImage("/ToadTools;component/Resources/Icons/1Tray16.png");
-            pullButtonTray.SetLargeImage("/ToadTools;component/Resources/Icons/1Tray32.png");
-            pullButtonTray.SetContextualHelp(new ContextualHelp(ContextualHelpType.Url,
-                "https://bim-baza.yonote.ru/doc/kabelnye-lotki-hSP8BFIW8g"));
+            var trays = panelTray.AddPullDownButton("Кабельные лотки", "Кабельные лотки");
+            trays.WithIcon("1Tray").SetContextualHelp(Help("kabelnye-lotki-hSP8BFIW8g"));
+            trays.AddPushButton<Commands.CableTrayArticulCommand>("Артикулы и наименования").WithIcon("1Tray");
+            trays.AddPushButton<Commands.CableTrayColorPerforationCommand>("Покрасить по перфорации").WithIcon("1Tray");
+            trays.AddPushButton<Commands.CableTrayColorVariantCommand>("Покрасить по исполнению").WithIcon("1Tray");
+            trays.AddPushButton<Commands.CableTrayColorCoverCommand>("Покрасить крышки").WithIcon("1Tray");
 
-            pullButtonTray.AddPushButton<Commands.CableTrayArticulCommand>("Артикулы и наименования");
-            pullButtonTray.AddPushButton<Commands.CableTrayColorPerforationCommand>("Покрасить по перфорации");
-            pullButtonTray.AddPushButton<Commands.CableTrayColorVariantCommand>("Покрасить по исполнению");
-            pullButtonTray.AddPushButton<Commands.CableTrayColorCoverCommand>("Покрасить крышки");
-            
             panelTray.AddPushButton<Commands.CreateCoverCommand>("Разместить\nкрышки")
-                .SetImage("/ToadTools;component/Resources/Icons/CreateCover16.png")
-                .SetLargeImage("/ToadTools;component/Resources/Icons/CreateCover32.png")
-                .SetToolTip("Разместить в модели крышки на кабельные лотки")
-                .SetContextualHelp(new ContextualHelp(ContextualHelpType.Url, "https://bim-baza.yonote.ru/doc/razmestit-kryshki-pJSWjFkyzL"));
-            
-            //Общие
-            panelGeneral.AddPushButton<Commands.LengthCommand>("Длина элементов\nмодели")
-                .SetImage("/ToadTools;component/Resources/Icons/Ruler16.png")
-                .SetLargeImage("/ToadTools;component/Resources/Icons/Ruler32.png")
-                .SetToolTip("Посчитать суммарную длину выбранных элементов.");
-            
-            panelGeneral.AddPushButton<Commands.CreateSpacesCommand>("Создание\nпространств")
-                .SetImage("/ToadTools;component/Resources/Icons/Spaces16.png")
-                .SetLargeImage("/ToadTools;component/Resources/Icons/Spaces32.png")
-                .SetToolTip("Создает в проекте пространства на основе помещений из раздела АР.")
-                .SetContextualHelp(new ContextualHelp(ContextualHelpType.Url, "https://bim-baza.yonote.ru/doc/sozdanie-prostranstv-Bia5rDOjqY"));
-            
-            panelGeneral.AddPushButton<Commands.QuantityCheckCommand>("Записать количество")
-                .SetImage("/ToadTools;component/Resources/Icons/QuantityCheck16.png")
-                .SetLargeImage("/ToadTools;component/Resources/Icons/QuantityCheck32.png")
-                .SetToolTip("Заполняет параметр количества\nв элементах модели.")
-                .SetContextualHelp(new ContextualHelp(ContextualHelpType.Url, "https://bim-baza.yonote.ru/doc/zapolnenie-parametra-kolichestvo-beinN88LwP"));
-            
-            panelGeneral.AddPushButton<Commands.WriteDashCommand>("Записать прочерк")
-                .SetImage("/ToadTools;component/Resources/Icons/WriteDash16.png")
-                .SetLargeImage("/ToadTools;component/Resources/Icons/WriteDash32.png")
-                .SetToolTip("Заполняет прочерк в указанные параметры\nесли в них нет значения.")
-                .SetContextualHelp(new ContextualHelp(ContextualHelpType.Url, "https://bim-baza.yonote.ru/doc/zapisat-procherk-kfwUDj6TeL"));
-
-            panelGeneral.AddPushButton<Commands.ClassifierCodeCommand>("Код по\nклассификатору")
-                .SetImage("/ToadTools;component/Resources/Icons/ClassifierCode16.png")
-                .SetLargeImage("/ToadTools;component/Resources/Icons/ClassifierCode32.png")
-                .SetToolTip("Заполняет ADSK_Код по классификатору\nи ADSK_Описание по классификатору\nу элементов ИОС.");
-
-            panelGeneral.AddPushButton<Commands.SmartTagsCommand>("Умные\nвыноски")
-                .SetImage("/ToadTools;component/Resources/Icons/SmartTags16.png")
-                .SetLargeImage("/ToadTools;component/Resources/Icons/SmartTags32.png")
-                .SetToolTip("Расставляет марки на видимых элементах\nактивного вида без пересечений текста\nи выносок. Весь запуск отменяется\nодним Ctrl+Z.");
+                .WithIcon("CreateCover")
+                .WithInfo("Разместить в модели крышки на кабельные лотки", "razmestit-kryshki-pJSWjFkyzL");
 
             //Сети связи
+            var panelSs = CreatePanel("Сети связи", MediaColor.FromRgb(155, 242, 222));
+
             panelSs.AddPushButton<Commands.SSPlanCommand>("Структурная\nсхема")
-                .SetImage("/ToadTools;component/Resources/Icons/SSPlan16.png")
-                .SetLargeImage("/ToadTools;component/Resources/Icons/SSPlan32.png")
-                .SetToolTip("Создать структурную схему.")
-                .SetContextualHelp(new ContextualHelp(ContextualHelpType.Url, "https://bim-baza.yonote.ru/doc/strukturnaya-shema-yO3TQrgqVS"));
-            
-            //Панель ОВ
-            var pullButtonWarm = panelOv.AddPullDownButton("Теплопотери", "Теплопотери");
-            
-            pullButtonWarm.SetImage("/ToadTools;component/Resources/Icons/WarmSync16.png");
-            pullButtonWarm.SetLargeImage("/ToadTools;component/Resources/Icons/WarmSync32.png");
-            pullButtonWarm.SetContextualHelp(new ContextualHelp(ContextualHelpType.Url,
-                "https://bim-baza.yonote.ru/doc/sinhronizaciya-teplopoter-RWMUuxZBdq"));
-            
-            pullButtonWarm.AddPushButton<Commands.RenameSpacesCommand>("Заполнение имен пространств");
-            pullButtonWarm.AddPushButton<Commands.WriteSpaceIdToParamCommand>("Запись ID пространств");
-            pullButtonWarm.AddPushButton<Commands.ExportSpacesToExcelCommand>("Экспорт пространств в Excel");
-            pullButtonWarm.AddPushButton<Commands.WriteFromExcelCommand>("Импорт значений из Excel");
-            
-            //Панель АР
-            
+                .WithIcon("SSPlan")
+                .WithInfo("Создать структурную схему.", "strukturnaya-shema-yO3TQrgqVS");
+
+            //ОВ
+            var panelOv = CreatePanel("ОВ", MediaColor.FromRgb(255, 209, 220));
+
+            var warm = panelOv.AddPullDownButton("Теплопотери", "Теплопотери");
+            warm.WithIcon("WarmSync").SetContextualHelp(Help("sinhronizaciya-teplopoter-RWMUuxZBdq"));
+            warm.AddPushButton<Commands.RenameSpacesCommand>("Заполнение имен пространств").WithIcon("WarmSync");
+            warm.AddPushButton<Commands.WriteSpaceIdToParamCommand>("Запись ID пространств").WithIcon("WarmSync");
+            warm.AddPushButton<Commands.ExportSpacesToExcelCommand>("Экспорт пространств в Excel").WithIcon("WarmSync");
+            warm.AddPushButton<Commands.WriteFromExcelCommand>("Импорт значений из Excel").WithIcon("WarmSync");
+
+            //АР
+            var panelAr = CreatePanel("АР", MediaColor.FromRgb(245, 245, 220));
+
             panelAr.AddPushButton<Commands.DoorSideCommand>("Открывание\nдверей")
-                .SetImage("/ToadTools;component/Resources/Icons/DoorSide16.png")
-                .SetLargeImage("/ToadTools;component/Resources/Icons/DoorSide32.png")
-                .SetToolTip("Записать сторону открывания двери в параметр Открывание")
-                .SetContextualHelp(new ContextualHelp(ContextualHelpType.Url, "https://bim-baza.yonote.ru/doc/otkryvanie-dveri-JJyZ1390oD"));
-            
+                .WithIcon("DoorSide")
+                .WithInfo("Записать сторону открывания двери в параметр Открывание", "otkryvanie-dveri-JJyZ1390oD");
             panelAr.AddPushButton<Commands.ParamToFinishCommand>("Основание\nотделки")
-                .SetImage("/ToadTools;component/Resources/Icons/ParamToFinish16.png")
-                .SetLargeImage("/ToadTools;component/Resources/Icons/ParamToFinish32.png")
-                .SetToolTip("Позволяет записать основание отделки в выбранный параметр")
-                .SetContextualHelp(new ContextualHelp(ContextualHelpType.Url, "https://bim-baza.yonote.ru/doc/osnovanie-otdelki-EcPw4yHPWP"));
+                .WithIcon("ParamToFinish")
+                .WithInfo("Позволяет записать основание отделки в выбранный параметр", "osnovanie-otdelki-EcPw4yHPWP");
 
-            //Панель КР
+            //КР
+            var panelKr = CreatePanel("КР", MediaColor.FromRgb(172, 229, 238));
 
-            var pullButtonRei = panelKr.AddPullDownButton("Армирование", "Армирование");
-            
-            pullButtonRei.SetImage("/ToadTools;component/Resources/Icons/Rei16.png");
-            pullButtonRei.SetLargeImage("/ToadTools;component/Resources/Icons/Rei32.png");
-            pullButtonRei.SetToolTip("Размещает семейства армирования взамен цветовых областей");
+            var reinforcement = panelKr.AddPullDownButton("Армирование", "Армирование");
+            reinforcement.WithIcon("Rei").WithInfo("Размещает семейства армирования взамен цветовых областей");
+            reinforcement.AddPushButton<Commands.RSHPLeftRightCommand>("R-SHP-Армирование по Y").WithIcon("Rei");
+            reinforcement.AddPushButton<Commands.RSHPUpDownCommand>("R-SHP-Армирование по X").WithIcon("Rei");
+            reinforcement.AddPushButton<Commands.RSUMLeftRightCommand>("R-SUM-Армирование по Y").WithIcon("Rei");
+            reinforcement.AddPushButton<Commands.RSUMUpDownCommand>("R-SUM-Армирование по X").WithIcon("Rei");
+        }
 
-            pullButtonRei.AddPushButton<Commands.RSHPLeftRightCommand>("R-SHP-Армирование по Y");
-            pullButtonRei.AddPushButton<Commands.RSHPUpDownCommand>("R-SHP-Армирование по X");
-            pullButtonRei.AddPushButton<Commands.RSUMLeftRightCommand>("R-SUM-Армирование по Y");
-            pullButtonRei.AddPushButton<Commands.RSUMUpDownCommand>("R-SUM-Армирование по X");
+        private RibbonPanel CreatePanel(string name, MediaColor titleColor)
+        {
+            var panel = Application.CreatePanel(name, TabName);
+            panel.SetTitleBarBackground(new SolidColorBrush(titleColor));
+            return panel;
+        }
 
+        internal static string IconPath(string icon, int size) =>
+            $"/ToadTools;component/Resources/Icons/{icon}{size}.png";
 
-        }        
+        internal static ContextualHelp Help(string page) =>
+            new(ContextualHelpType.Url, HelpUrl + page);
+    }
 
+    internal static class RibbonButtonExtensions
+    {
+        /// <summary>
+        ///     Ставит иконки 16 и 32 px из Resources/Icons по общему имени (например "Ruler" → Ruler16.png, Ruler32.png).
+        /// </summary>
+        public static T WithIcon<T>(this T button, string icon) where T : RibbonButton
+        {
+            button.SetImage(Application.IconPath(icon, 16));
+            button.SetLargeImage(Application.IconPath(icon, 32));
+            return button;
+        }
+
+        /// <summary>
+        ///     Подсказка и, если есть, ссылка на страницу справки (открывается по F1).
+        /// </summary>
+        public static T WithInfo<T>(this T item, string toolTip, string? helpPage = null) where T : RibbonItem
+        {
+            item.SetToolTip(toolTip);
+            if (helpPage is not null) item.SetContextualHelp(Application.Help(helpPage));
+            return item;
+        }
     }
 }
