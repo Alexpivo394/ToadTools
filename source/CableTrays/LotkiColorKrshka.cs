@@ -1,18 +1,26 @@
 ﻿//Command running revit application
 
 using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Electrical;
+using CableTrays;
 using Nice3point.Revit.Toolkit;
-using ToadTools.UI.Models;
-using ToadTools.UI.Services;
 
 namespace LotkiColorKrshka;
 
 public class LotkiColorKrshkaService
 {
-    public void Run()
+    private const string ParamCover = "ADSK_Крышка";
+
+    public void Run() => TrayReport.Run("Покраска лотков с крышкой", Execute);
+
+    private static void Execute()
     {
         var uidoc = RevitContext.ActiveUiDocument!;
         var doc = uidoc.Document;
+        var view = doc.ActiveView;
+
+        if (!TrayGraphics.CheckView(view)) return;
+
         var allsoed = new FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_CableTrayFitting)
             .WhereElementIsNotElementType()
             .ToList();
@@ -20,53 +28,54 @@ public class LotkiColorKrshkaService
             .WhereElementIsNotElementType()
             .ToList();
 
+        if (alllotkirealall.Count == 0 && allsoed.Count == 0)
+        {
+            TrayReport.ShowWarning("В модели нет кабельных лотков и соединительных деталей — красить нечего.");
+            return;
+        }
 
+        var ogs4 = TrayGraphics.Black();
+        var ogs1 = TrayGraphics.Colored(255, 0, 0);
 
-        foreach (var soed in allsoed) alllotkirealall.Add(soed);
+        var withCover = 0;
+        var withoutCover = 0;
+        var fittingsNoParam = 0;
+        var traysNoParam = new List<string>();
 
-        using (var t = new Transaction(doc, "Покраска"))
+        using (var t = new Transaction(doc, "Покраска лотков с крышкой"))
         {
             t.Start();
 
-                foreach (var a in alllotkirealall)
+            foreach (var element in alllotkirealall.Concat(allsoed))
+            {
+                var param = element.LookupParameter(ParamCover);
+
+                if (param is not null && param.AsInteger() == 1)
                 {
-                    var color4 = new Color(0, 0, 0);
-
-                    var ogs4 = new OverrideGraphicSettings();
-                    ogs4.SetProjectionLineColor(color4);
-                    ogs4.SetCutForegroundPatternColor(color4);
-                    ogs4.SetSurfaceForegroundPatternColor(color4);
-                    ogs4.SetCutLineColor(color4);
-
-                    doc.ActiveView.SetElementOverrides(a.Id, ogs4);
-                    
+                    view.SetElementOverrides(element.Id, ogs1);
+                    withCover++;
+                    continue;
                 }
 
-                foreach (var lotok in alllotkirealall)
-                {
-                    var color1 = new Color(255, 0, 0);
+                view.SetElementOverrides(element.Id, ogs4);
+                if (param is not null)
+                    withoutCover++;
+                else if (element is CableTray)
+                    traysNoParam.Add(TrayReport.Describe(element));
+                else
+                    fittingsNoParam++;
+            }
 
-                    var ogs1 = new OverrideGraphicSettings();
-                    ogs1.SetProjectionLineColor(color1);
-                    ogs1.SetCutForegroundPatternColor(color1);
-                    ogs1.SetCutLineColor(color1);
-
-                    var paramName = "ADSK_Крышка";
-                    var param = lotok.LookupParameter(paramName);
-                    
-                    if (param is not null && param.AsInteger() == 1)
-                        doc.ActiveView.SetElementOverrides(lotok.Id, ogs1);
-
-                }
-        
             t.Commit();
         }
 
-        var dial = ToadDialogService.Show(
-            "Успех!",
-            $"Лотки покрашены.",
-            DialogButtons.OK,
-            DialogIcon.Info
-        );
+        var report = new TrayReport($"Покрашено на виде «{view.Name}» (лотки и соединительные детали):");
+        report.Count("С крышкой (красные)", withCover);
+        report.Count("Без крышки (чёрные)", withoutCover);
+        report.Count($"Соединительные детали без «{ParamCover}» (чёрные)", fittingsNoParam);
+        report.Warning($"Лотки без параметра «{ParamCover}», покрашены в чёрный", traysNoParam);
+        if (withCover == 0 && !report.HasWarnings)
+            report.Line("\nЛотков с крышкой не найдено.");
+        report.Show();
     }
 }

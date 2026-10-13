@@ -1,95 +1,86 @@
 ﻿//Command running revit application
 
 using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Electrical;
+using CableTrays;
 using Nice3point.Revit.Toolkit;
-using ToadTools.UI.Models;
-using ToadTools.UI.Services;
 
 namespace LotkiColorIsp;
 
 public class LotkiColorIspService
 {
-    public void Run()
+    private const string ParamIsp = "ADSK_Исполнение";
+
+    public void Run() => TrayReport.Run("Покраска лотков по исполнению", Execute);
+
+    private static void Execute()
     {
-        try
+        var uidoc = RevitContext.ActiveUiDocument!;
+        var doc = uidoc.Document;
+        var view = doc.ActiveView;
+
+        if (!TrayGraphics.CheckView(view)) return;
+
+        var allsoed = new FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_CableTrayFitting)
+            .WhereElementIsNotElementType()
+            .ToList();
+        var alllotkirealall = new FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_CableTray)
+            .WhereElementIsNotElementType()
+            .ToList();
+
+        if (alllotkirealall.Count == 0 && allsoed.Count == 0)
         {
-            var uidoc = RevitContext.ActiveUiDocument!;
-            var doc = uidoc.Document;
-            var allsoed = new FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_CableTrayFitting)
-                .WhereElementIsNotElementType()
-                .ToList();
-            var alllotkirealall = new FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_CableTray)
-                .WhereElementIsNotElementType()
-                .ToList();
-            foreach (var soed in allsoed) alllotkirealall.Add(soed);
+            TrayReport.ShowWarning("В модели нет кабельных лотков и соединительных деталей — красить нечего.");
+            return;
+        }
 
-            var t0 = new Transaction(doc);
+        var ogs4 = TrayGraphics.Black();
 
-            t0.Start("Modify color1");
-            foreach (var lotok in alllotkirealall)
+        //цвет и подпись для каждого значения ADSK_Исполнение
+        var colors = new Dictionary<int, (string Name, OverrideGraphicSettings Ogs)>
+        {
+            [1] = ("Исполнение 1 — Сендзимир", TrayGraphics.Colored(255, 128, 192)),
+            [2] = ("Исполнение 2 — горячее цинкование", TrayGraphics.Colored(0, 128, 192)),
+            [3] = ("Исполнение 3 — нержавеющая сталь", TrayGraphics.Colored(0, 128, 0)),
+        };
+        var counts = colors.Keys.ToDictionary(k => k, _ => 0);
+        var other = 0;
+        var fittingsNoParam = 0;
+        var traysNoParam = new List<string>();
+
+        using (var t0 = new Transaction(doc, "Покраска лотков по исполнению"))
+        {
+            t0.Start();
+
+            foreach (var element in alllotkirealall.Concat(allsoed))
             {
-                var color4 = new Color(0, 0, 0);
+                var ispParam = element.LookupParameter(ParamIsp);
 
-                var ogs4 = new OverrideGraphicSettings();
-                ogs4.SetProjectionLineColor(color4);
-                ogs4.SetCutForegroundPatternColor(color4);
-                ogs4.SetSurfaceForegroundPatternColor(color4);
-                ogs4.SetCutLineColor(color4);
-
-                doc.ActiveView.SetElementOverrides(lotok.Id, ogs4);
-
-            }
-            t0.Commit();
-
-            t0.Start("Modify color2");
-            foreach (var lotok in alllotkirealall)
-            {
-                var color1 = new Color(255, 128, 192);
-
-                var ogs1 = new OverrideGraphicSettings();
-                ogs1.SetProjectionLineColor(color1);
-                ogs1.SetCutForegroundPatternColor(color1);
-                ogs1.SetCutLineColor(color1);
-
-                var color2 = new Color(0, 128, 192);
-                var ogs2 = new OverrideGraphicSettings();
-                ogs2.SetProjectionLineColor(color2);
-                ogs2.SetCutForegroundPatternColor(color2);
-                ogs2.SetCutLineColor(color2);
-
-                var color3 = new Color(0, 128, 0);
-                var ogs3 = new OverrideGraphicSettings();
-                ogs3.SetProjectionLineColor(color3);
-                ogs3.SetCutForegroundPatternColor(color3);
-                ogs3.SetCutLineColor(color3);
-
-                if (lotok.LookupParameter("ADSK_Исполнение") != null)
+                if (ispParam != null && colors.TryGetValue(ispParam.AsInteger(), out var color))
                 {
-                    if (lotok.LookupParameter("ADSK_Исполнение").AsInteger() == 1)
-                        doc.ActiveView.SetElementOverrides(lotok.Id, ogs1);
-                    if (lotok.LookupParameter("ADSK_Исполнение").AsInteger() == 2)
-                        doc.ActiveView.SetElementOverrides(lotok.Id, ogs2);
-                    if (lotok.LookupParameter("ADSK_Исполнение").AsInteger() == 3)
-                        doc.ActiveView.SetElementOverrides(lotok.Id, ogs3);
+                    view.SetElementOverrides(element.Id, color.Ogs);
+                    counts[ispParam.AsInteger()]++;
+                    continue;
                 }
-            } 
-            t0.Commit();
 
-            var dial = ToadDialogService.Show(
-                "Успех!",
-                $"Лотки покрашены.",
-                DialogButtons.OK,
-                DialogIcon.Info
-            );
+                view.SetElementOverrides(element.Id, ogs4);
+                if (ispParam != null)
+                    other++;
+                else if (element is CableTray)
+                    traysNoParam.Add(TrayReport.Describe(element));
+                else
+                    fittingsNoParam++;
+            }
+
+            t0.Commit();
         }
-        catch (Exception e)
-        {
-            var dial = ToadDialogService.Show(
-                "Ошибка!",
-                $"Ошибка, {e.Message}\n{e.StackTrace}",
-                DialogButtons.OK,
-                DialogIcon.Error
-            );
-        }
+
+        var report = new TrayReport($"Покрашено на виде «{view.Name}» (лотки и соединительные детали):");
+        foreach (var pair in counts)
+            report.Count(colors[pair.Key].Name, pair.Value);
+        report.Count("Исполнение 0 или другое (чёрные)", other);
+        report.Count($"Соединительные детали без «{ParamIsp}» (чёрные)", fittingsNoParam);
+        report.Warning($"Лотки без параметра «{ParamIsp}», покрашены в чёрный", traysNoParam);
+        report.Show();
     }
 }

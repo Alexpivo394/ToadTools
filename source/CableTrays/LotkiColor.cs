@@ -1,18 +1,25 @@
-﻿//Command running revit application
+//Command running revit application
 
 using Autodesk.Revit.DB;
+using CableTrays;
 using Nice3point.Revit.Toolkit;
-using ToadTools.UI.Models;
-using ToadTools.UI.Services;
 
 namespace LotkiColor;
 
 public class LotkiColorService
 {
-    public void Run()
+    private const string ParamTypeName = "ADSK_Наименование (по типу)";
+
+    public void Run() => TrayReport.Run("Покраска лотков по типу", Execute);
+
+    private static void Execute()
     {
         var uidoc = RevitContext.ActiveUiDocument!;
         var doc = uidoc.Document;
+        var view = doc.ActiveView;
+
+        if (!TrayGraphics.CheckView(view)) return;
+
         var allsoed = new FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_CableTrayFitting)
             .WhereElementIsNotElementType()
             .ToList();
@@ -20,77 +27,60 @@ public class LotkiColorService
             .WhereElementIsNotElementType()
             .ToList();
 
-        var t0 = new Transaction(doc);
-
-        var color3 = new Color(0, 0, 0);
-        var ogs3 = new OverrideGraphicSettings();
-        ogs3.SetProjectionLineColor(color3);
-        ogs3.SetCutForegroundPatternColor(color3);
-        ogs3.SetSurfaceForegroundPatternColor(color3);
-        ogs3.SetCutLineColor(color3);
-
-
-        t0.Start("Modify color1");
-        foreach (var lotok in alllotkirealall)
+        if (alllotkirealall.Count == 0 && allsoed.Count == 0)
         {
-
-            doc.ActiveView.SetElementOverrides(lotok.Id, ogs3);
-
+            TrayReport.ShowWarning("В модели нет кабельных лотков и соединительных деталей — красить нечего.");
+            return;
         }
-        t0.Commit();
 
-        t0.Start("Modify color1");
-        foreach (var soed in allsoed)
+        var ogs3 = TrayGraphics.Black();
+
+        //цвет для каждого значения ADSK_Наименование (по типу)
+        var colors = new Dictionary<string, OverrideGraphicSettings>
         {
+            ["Лоток перфорированный"] = TrayGraphics.Colored(0, 174, 152),
+            ["Лоток неперфорированный"] = TrayGraphics.Colored(152, 76, 152),
+            ["Лоток проволочный"] = TrayGraphics.Colored(255, 255, 0),
+        };
+        var counts = colors.Keys.ToDictionary(k => k, _ => 0);
+        var other = 0;
+        var noTypeName = new List<string>();
 
-            doc.ActiveView.SetElementOverrides(soed.Id, ogs3);
-
-        }
-        t0.Commit();
-
-        t0.Start("Modify color2");
-        foreach (var lotok in alllotkirealall)
+        using (var t0 = new Transaction(doc, "Покраска лотков по типу"))
         {
+            t0.Start();
 
-            var color1 = new Color(0, 174, 152);
-            var ogs1 = new OverrideGraphicSettings();
-            ogs1.SetProjectionLineColor(color1);
-            ogs1.SetCutForegroundPatternColor(color1);
-            ogs1.SetCutLineColor(color1);
+            foreach (var soed in allsoed)
+                view.SetElementOverrides(soed.Id, ogs3);
 
-            var drugoycvet = new Color(152, 76, 152);
-            var ogs2 = new OverrideGraphicSettings();
-            ogs2.SetProjectionLineColor(drugoycvet);
-            ogs2.SetCutForegroundPatternColor(drugoycvet);
-            ogs2.SetCutLineColor(drugoycvet);
+            foreach (var lotok in alllotkirealall)
+            {
+                var typeName = doc.GetElement(lotok.GetTypeId())?.LookupParameter(ParamTypeName)?.AsString();
 
-            var blin = new Color(255, 255, 0);
-            var ogsBlin = new OverrideGraphicSettings();
-            ogsBlin.SetProjectionLineColor(blin);
-            ogsBlin.SetCutForegroundPatternColor(blin);
-            ogsBlin.SetCutLineColor(blin);
+                if (typeName != null && colors.TryGetValue(typeName, out var ogs))
+                {
+                    view.SetElementOverrides(lotok.Id, ogs);
+                    counts[typeName]++;
+                }
+                else
+                {
+                    view.SetElementOverrides(lotok.Id, ogs3);
+                    if (string.IsNullOrEmpty(typeName))
+                        noTypeName.Add(TrayReport.Describe(lotok));
+                    else
+                        other++;
+                }
+            }
 
-            if (doc.GetElement(lotok.GetTypeId()).LookupParameter("ADSK_Наименование (по типу)").AsString() ==
-                "Лоток перфорированный")
-                doc.ActiveView.SetElementOverrides(lotok.Id, ogs1);
-
-            if (doc.GetElement(lotok.GetTypeId()).LookupParameter("ADSK_Наименование (по типу)").AsString() ==
-                "Лоток неперфорированный")
-                doc.ActiveView.SetElementOverrides(lotok.Id, ogs2);
-
-            if (doc.GetElement(lotok.GetTypeId()).LookupParameter("ADSK_Наименование (по типу)").AsString() ==
-                "Лоток проволочный")
-                doc.ActiveView.SetElementOverrides(lotok.Id, ogsBlin);
-
+            t0.Commit();
         }
-        t0.Commit();
 
-
-        var dial = ToadDialogService.Show(
-            "Успех!",
-            $"Лотки покрашены.",
-            DialogButtons.OK,
-            DialogIcon.Info
-        );
+        var report = new TrayReport($"Покрашено на виде «{view.Name}»:");
+        foreach (var pair in counts)
+            report.Count(pair.Key, pair.Value);
+        report.Count("Другие типы лотков (чёрные)", other);
+        report.Count("Соединительные детали (чёрные)", allsoed.Count);
+        report.Warning($"Не заполнен «{ParamTypeName}», лотки покрашены в чёрный", noTypeName);
+        report.Show();
     }
 }
