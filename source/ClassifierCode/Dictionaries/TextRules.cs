@@ -219,6 +219,9 @@ public static class TextRules
     /// <summary>Задания на отверстия, пересечения, заглушки проёмов — в ЭОМ не кодируются.</summary>
     public static readonly Regex OpeningTask = new Regex(@"пересечени|отверсти|\bпро[её]м|\bшахт|заглушк", Opts);
 
+    /// <summary>"Не учитывать", "Неучитывать", "НЕ_УЧИТЫВАТЬ", "не учитывается"... — элемент не идёт в спецификацию.</summary>
+    public static readonly Regex Excluded = new Regex(@"\bне[\s_\-]*учитыв", Opts);
+
     // Группирование спецификации ЭОМ. "УЭРМ" решает сразу, остальные — только если по наименованию не определилось.
     private static readonly List<Rule<Role>> ElectricalGroupRules = new List<Rule<Role>>
     {

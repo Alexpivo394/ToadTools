@@ -14,6 +14,9 @@ public static class ClassifierTable
     private static readonly Dictionary<Discipline, ClassifierItem> Sections =
         new Dictionary<Discipline, ClassifierItem>();
 
+    /// <summary>Элемент помечен "Не учитывать" — код 999, описание прочерк (во всех разделах).</summary>
+    public static readonly ClassifierItem Excluded = new ClassifierItem("999", "-");
+
     // Если роли нет в разделе — пробуем по очереди эти замены.
     private static readonly Dictionary<Role, Role[]> Fallbacks = new Dictionary<Role, Role[]>
     {

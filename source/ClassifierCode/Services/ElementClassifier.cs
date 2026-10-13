@@ -72,6 +72,11 @@ public sealed class ElementClassifier
     public Classification Classify(Element element)
     {
         Classification result = new Classification();
+        if (IsExcluded(element))
+        {
+            result.Item = ClassifierTable.Excluded;
+            return result;
+        }
         if ((_fixedSection == Discipline.Electrical || _fixedSection == Discipline.LowCurrent) && IsOpeningTask(element))
         {
             result.Skip = true;
@@ -375,6 +380,23 @@ public sealed class ElementClassifier
         if (!TextRules.OpeningTask.IsMatch(family ?? string.Empty))
             return false;
         return TextRules.ElectricalRoleByName(GetPrimaryName(element)) == Role.None;
+    }
+
+    private static readonly string[] ExcludeMarkerParameters =
+        ["ADSK_Наименование", "ADSK_Марка", "ADSK_Обозначение", "ADSK_Код изделия"];
+
+    /// <summary>В наименовании, марке, обозначении или коде изделия (экземпляра или типа) написано "Не учитывать".</summary>
+    private bool IsExcluded(Element element)
+    {
+        Element? type = _doc.GetElement(element.GetTypeId());
+        foreach (string name in ExcludeMarkerParameters)
+        {
+            if (TextRules.Excluded.IsMatch(GetString(element.LookupParameter(name))))
+                return true;
+            if (type != null && TextRules.Excluded.IsMatch(GetString(type.LookupParameter(name))))
+                return true;
+        }
+        return false;
     }
 
     private string GetTypeOrInstanceString(Element element, string name)
