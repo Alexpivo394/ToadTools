@@ -11,13 +11,20 @@ namespace ToadTools.UI.Services;
 public class ThemeWatcherService
 {
     private static readonly List<FrameworkElement> ObservedElements = new List<FrameworkElement>();
+    private static bool _subscribed;
+
     public static void Initialize()
     {
         UiApplication.Current.Resources = new ResourceDictionary
         {
             Source = new Uri("pack://application:,,,/ToadTools.UI;component/Styles/App.Resources.xaml", UriKind.Absolute)
         };
+
+        // Initialize вызывается каждым окном и каждым диалогом — подписываемся один раз,
+        // иначе обработчики копятся и тема применяется ко всем окнам много раз подряд.
+        if (_subscribed) return;
         ApplicationThemeManager.Changed += OnApplicationThemeManagerChanged;
+        _subscribed = true;
     }
 
     public static void ApplyTheme(ApplicationTheme theme)
@@ -28,11 +35,26 @@ public class ThemeWatcherService
 
     private static void OnApplicationThemeManagerChanged(ApplicationTheme currentapplicationtheme, System.Windows.Media.Color systemaccent)
     {
-        foreach (var frameworkElement in ObservedElements)
+        // Копия списка: применение темы может вызвать Loaded/Unloaded и изменить его.
+        foreach (var frameworkElement in ObservedElements.ToArray())
         {
-            ApplicationThemeManager.Apply(frameworkElement);
+            // Закрытое окно (или элемент, убранный с экрана) больше не обновляем.
+            if (PresentationSource.FromVisual(frameworkElement) is null)
+            {
+                ObservedElements.Remove(frameworkElement);
+                continue;
+            }
 
-            UpdateDictionary(frameworkElement);
+            try
+            {
+                ApplicationThemeManager.Apply(frameworkElement);
+                UpdateDictionary(frameworkElement);
+            }
+            catch
+            {
+                // Одно проблемное окно не должно ронять смену темы (и команду, которая её вызвала).
+                ObservedElements.Remove(frameworkElement);
+            }
         }
     }
 
@@ -56,6 +78,9 @@ public class ThemeWatcherService
         frameworkElement.Loaded += OnWatchedElementLoaded;
         frameworkElement.Unloaded += OnWatchedElementUnloaded;
 
+        // У окна Unloaded при закрытии приходит не всегда — снимаем с наблюдения и по Closed.
+        if (frameworkElement is Window window)
+            window.Closed += (_, _) => ObservedElements.Remove(window);
     }
     private static void OnWatchedElementLoaded(object sender, RoutedEventArgs e)
     {
@@ -75,9 +100,18 @@ public class ThemeWatcherService
     }
     private static void UpdateBackground(ApplicationTheme theme)
     {
-        foreach (var window in ObservedElements.Select(Window.GetWindow).Distinct())
+        foreach (var window in ObservedElements.Select(Window.GetWindow).Where(w => w != null).Distinct().ToArray())
         {
-            WindowBackgroundManager.UpdateBackground(window, theme, WindowBackdropType.Mica);
+            if (PresentationSource.FromVisual(window) is null) continue;
+
+            try
+            {
+                WindowBackgroundManager.UpdateBackground(window, theme, WindowBackdropType.Mica);
+            }
+            catch
+            {
+                // Фон не обновился — окно останется со старым фоном, это не повод падать.
+            }
         }
     }
 }

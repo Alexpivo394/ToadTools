@@ -16,7 +16,7 @@ internal static class ServiceRegistration
     {
         // Command-only tools (Length, DoorSide, CableTrays, ReinforcementByColor, WarmSync,
         // ChangeSharedFamilies) read the active document via the ExternalCommand base or
-        // RevitContext and need no registration. SSPlan, CreateCover and ParamChecker build
+        // RevitContext and need no registration. SSPlan, CreateCover, ParamChecker and SmartTags build
         // their view graph inside the command (bespoke runtime construction).
 
         services.AddParamToFinish();

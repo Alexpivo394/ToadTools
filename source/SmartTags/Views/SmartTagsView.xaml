@@ -1,0 +1,293 @@
+<ui:FluentWindow
+    x:Class="SmartTags.Views.SmartTagsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:viewModels="clr-namespace:SmartTags.ViewModels"
+    xmlns:models="clr-namespace:SmartTags.Models"
+    xmlns:converters="clr-namespace:SmartTags.Converters"
+    xmlns:uiConverters="clr-namespace:ToadTools.UI.Converters;assembly=ToadTools.UI"
+    d:DataContext="{d:DesignInstance Type=viewModels:SmartTagsViewModel}"
+    mc:Ignorable="d"
+    Title="Умные выноски"
+    WindowStartupLocation="CenterScreen"
+    WindowBackdropType="Mica"
+    WindowCornerPreference="Round"
+    Height="800"
+    Width="940"
+    MinHeight="620"
+    MinWidth="820"
+    ExtendsContentIntoTitleBar="True">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <!-- Title Bar -->
+        <ui:TitleBar Grid.Row="0" Title="Умные выноски" Icon="TagMultiple24" />
+
+        <!-- Content -->
+        <Grid Grid.Row="1" Margin="10,0,10,10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0"
+                       Margin="10,0,0,10"
+                       Opacity="0.7"
+                       TextTrimming="CharacterEllipsis"
+                       Text="{Binding ViewDescription}" />
+
+            <ui:InfoBar Grid.Row="1"
+                        Margin="0,0,0,10"
+                        Severity="Warning"
+                        IsClosable="False"
+                        IsOpen="{Binding ShowLockWarning, Mode=OneWay}"
+                        Message="{Binding LockWarning}" />
+
+            <!-- Scope: whole view or selected elements -->
+            <ui:Card Grid.Row="2"
+                     Margin="0,0,0,10"
+                     Padding="12,8">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <ui:SymbolIcon Symbol="CursorClick24" Margin="0,0,10,0" />
+                        <TextBlock Text="{Binding ScopeTitle}" FontWeight="SemiBold" TextWrapping="Wrap" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <ui:Button Content="{Binding ScopeButtonText}"
+                                   Command="{Binding ToggleScopeCommand}"
+                                   Visibility="{Binding HasSelection, Converter={uiConverters:BooleanCollapsedVisibilityConverter}}"
+                                   MinWidth="140"
+                                   Margin="0,0,8,0" />
+                        <ui:Button Content="Выбрать на виде"
+                                   Icon="{ui:SymbolIcon SelectObject24}"
+                                   ToolTip="Окно скроется — выберите элементы на виде и нажмите «Готово»"
+                                   Command="{Binding PickElementsCommand}" />
+                    </StackPanel>
+                </Grid>
+            </ui:Card>
+
+            <Grid Grid.Row="3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="320" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Categories and tag types -->
+                <Grid Grid.Column="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0" Margin="10,0,0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Категории и марки" FontWeight="Bold" VerticalAlignment="Center" />
+                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                            <ui:Button Content="Выбрать все" Appearance="Transparent" Command="{Binding SelectAllCommand}" />
+                            <ui:Button Content="Снять все" Appearance="Transparent" Command="{Binding ClearAllCommand}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <ui:Card Grid.Row="1" Padding="8,6" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <ItemsControl ItemsSource="{Binding Rows}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type viewModels:CategoryRowViewModel}">
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="250" />
+                                            </Grid.ColumnDefinitions>
+                                            <CheckBox Grid.Column="0"
+                                                      MinWidth="0"
+                                                      IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" />
+                                            <TextBlock Grid.Column="1"
+                                                       Margin="4,0,10,0"
+                                                       VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       Text="{Binding Title}"
+                                                       ToolTip="{Binding Title}" />
+                                            <ComboBox Grid.Column="2"
+                                                      ItemsSource="{Binding TagTypes}"
+                                                      SelectedItem="{Binding SelectedTagType}"
+                                                      DisplayMemberPath="DisplayName"
+                                                      IsEnabled="{Binding IsSelected}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </ui:Card>
+
+                    <!-- Options for pipes, ducts, trays -->
+                    <StackPanel Grid.Row="2"
+                                Margin="10,10,0,0"
+                                Visibility="{Binding ShowRunOptions, Converter={uiConverters:BooleanCollapsedVisibilityConverter}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Не маркировать участки короче, мм" VerticalAlignment="Center" />
+                            <ui:TextBox Grid.Column="1" Width="90" ClearButtonEnabled="False"
+                                        Text="{Binding MinRunLength, UpdateSourceTrigger=PropertyChanged}" />
+                        </Grid>
+                        <CheckBox Margin="0,6,0,0"
+                                  Content="Маркировать вертикальные участки (стояки)"
+                                  IsChecked="{Binding TagVerticalRuns}" />
+                        <CheckBox Margin="0,4,0,0"
+                                  Content="Не подписывать воздуховоды с тем же расходом и сечением"
+                                  ToolTip="Если участки воздуховодов соединены фитингами и у них одинаковые расход и сечение, марка ставится только на самый длинный."
+                                  IsChecked="{Binding SkipSameDuctSection}"
+                                  Visibility="{Binding ShowSameSection, Converter={uiConverters:BooleanCollapsedVisibilityConverter}}" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- Placement -->
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="Уже стоящие марки" FontWeight="Bold" Margin="10,0,0,5" />
+                    <ui:Card Padding="12,8">
+                        <StackPanel>
+                            <RadioButton GroupName="Existing"
+                                         Content="Пропустить подписанные элементы"
+                                         IsChecked="{Binding ExistingMode, Converter={converters:EnumRadioConverter}, ConverterParameter={x:Static models:ExistingTagMode.Skip}}" />
+                            <RadioButton GroupName="Existing"
+                                         Content="Переразместить вместе с новыми"
+                                         IsChecked="{Binding ExistingMode, Converter={converters:EnumRadioConverter}, ConverterParameter={x:Static models:ExistingTagMode.Relayout}}" />
+                            <RadioButton GroupName="Existing"
+                                         Content="Удалить и создать заново"
+                                         IsChecked="{Binding ExistingMode, Converter={converters:EnumRadioConverter}, ConverterParameter={x:Static models:ExistingTagMode.Recreate}}" />
+                        </StackPanel>
+                    </ui:Card>
+
+                    <TextBlock Text="Размещение" FontWeight="Bold" Margin="10,10,0,5" />
+                    <ui:Card Padding="12,8">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Text="Длина выноски, мм" VerticalAlignment="Center" />
+                                <ui:TextBox Grid.Row="0" Grid.Column="1" Width="80" ClearButtonEnabled="False"
+                                            Text="{Binding PreferredLeader, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock Grid.Row="1" Text="Не длиннее, мм" VerticalAlignment="Center" Margin="0,6,0,0" />
+                                <ui:TextBox Grid.Row="1" Grid.Column="1" Width="80" ClearButtonEnabled="False" Margin="0,6,0,0"
+                                            Text="{Binding MaxLeader, UpdateSourceTrigger=PropertyChanged}" />
+                            </Grid>
+                            <TextBlock Text="Качество раскладки" Margin="0,12,0,4" />
+                            <Slider Minimum="0" Maximum="2" TickFrequency="1" IsSnapToTickEnabled="True"
+                                    TickPlacement="BottomRight" Value="{Binding Quality}" />
+                            <Grid Opacity="0.7">
+                                <TextBlock Text="Быстро" HorizontalAlignment="Left" FontSize="12" />
+                                <TextBlock Text="Стандарт" HorizontalAlignment="Center" FontSize="12" />
+                                <TextBlock Text="Максимум" HorizontalAlignment="Right" FontSize="12" />
+                            </Grid>
+                            <TextBlock Margin="0,10,0,0" Opacity="0.7" FontSize="12" TextWrapping="Wrap"
+                                       Text="Все отмеченные категории раскладываются за один проход — марки разных категорий не перекроют друг друга." />
+                        </StackPanel>
+                    </ui:Card>
+                </StackPanel>
+            </Grid>
+
+            <!-- Advanced -->
+            <ui:CardExpander Grid.Row="4"
+                             Margin="0,10,0,0"
+                             Header="Расширенные настройки"
+                             Icon="{ui:SymbolIcon Options24}"
+                             IsExpanded="{Binding AdvancedExpanded}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="24" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="Зазор между марками, мм" VerticalAlignment="Center" />
+                            <ui:TextBox Grid.Row="0" Grid.Column="1" Width="80" ClearButtonEnabled="False"
+                                        Text="{Binding Gap, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Grid.Row="1" Text="Минимальная длина выноски, мм" VerticalAlignment="Center" Margin="0,6,0,0" />
+                            <ui:TextBox Grid.Row="1" Grid.Column="1" Width="80" ClearButtonEnabled="False" Margin="0,6,0,0"
+                                        Text="{Binding MinLeader, UpdateSourceTrigger=PropertyChanged}" />
+                        </Grid>
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <TextBlock Text="Углы выноски:" VerticalAlignment="Center" Margin="0,0,10,0" />
+                            <CheckBox Content="30°" IsChecked="{Binding Angle30}" MinWidth="0" Margin="0,0,10,0" />
+                            <CheckBox Content="45°" IsChecked="{Binding Angle45}" MinWidth="0" Margin="0,0,10,0" />
+                            <CheckBox Content="60°" IsChecked="{Binding Angle60}" MinWidth="0" />
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <CheckBox Content="Не ставить текст поверх элементов" IsChecked="{Binding AvoidTextOverElements}" />
+                        <CheckBox Content="Не выходить за подрезку вида" IsChecked="{Binding UseCrop}" Margin="0,4,0,0" />
+                        <CheckBox Content="Писать журнал (для разбора проблем)" IsChecked="{Binding WriteLog}" Margin="0,4,0,0" />
+                        <ui:Button Content="Сбросить настройки"
+                                   Icon="{ui:SymbolIcon ArrowReset24}"
+                                   Command="{Binding ResetSettingsCommand}"
+                                   Margin="0,8,0,0" />
+                    </StackPanel>
+                </Grid>
+            </ui:CardExpander>
+
+            <ui:InfoBar Grid.Row="5"
+                        Margin="0,10,0,0"
+                        Severity="Error"
+                        IsClosable="False"
+                        IsOpen="{Binding HasError, Mode=OneWay}"
+                        Message="{Binding Error}" />
+        </Grid>
+
+        <!-- Footer -->
+        <Grid Grid.Row="2" Margin="10,0,10,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Тема:" VerticalAlignment="Center" Margin="0,0,10,0" />
+                <ui:ToggleSwitch
+                    IsChecked="{Binding DataContext.DarkTheme, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}, Mode=TwoWay}"
+                    OffContent="Светлая"
+                    OnContent="Темная" />
+            </StackPanel>
+            <ui:Button Grid.Column="1"
+                       Content="Запустить"
+                       Icon="{ui:SymbolIcon Rocket24}"
+                       Command="{Binding StartCommand}"
+                       Appearance="Primary" />
+        </Grid>
+    </Grid>
+</ui:FluentWindow>

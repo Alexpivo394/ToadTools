@@ -58,7 +58,7 @@ public sealed class ClassifierParameterWriter(Document doc, bool keepExisting, C
         if (!_typeRequests.TryGetValue(typeId, out var requests))
         {
             requests = [];
-            _typeRequests[typeId] = requests;
+            _typeRequests[typeId] = requests;   
         }
 
         requests.Add(item);

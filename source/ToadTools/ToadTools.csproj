@@ -58,6 +58,7 @@
       <ProjectReference Include="..\ParamToFinish\ParamToFinish.csproj" />
       <ProjectReference Include="..\QuantityCheck\QuantityCheck.csproj" />
       <ProjectReference Include="..\ReinforcementByColor\ReinforcementByColor.csproj" />
+      <ProjectReference Include="..\SmartTags\SmartTags.csproj" />
       <ProjectReference Include="..\SSPlan\SSPlan.csproj" />
       <ProjectReference Include="..\WarmSync\WarmSync.csproj" />
       <ProjectReference Include="..\WorkingSet\WorkingSet.csproj" />
@@ -144,6 +145,10 @@
       <Resource Include="Resources\Icons\ClassifierCode16.png" />
       <None Remove="Resources\Icons\ClassifierCode32.png" />
       <Resource Include="Resources\Icons\ClassifierCode32.png" />
+      <None Remove="Resources\Icons\SmartTags16.png" />
+      <Resource Include="Resources\Icons\SmartTags16.png" />
+      <None Remove="Resources\Icons\SmartTags32.png" />
+      <Resource Include="Resources\Icons\SmartTags32.png" />
     </ItemGroup>
 
 </Project>

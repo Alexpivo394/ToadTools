@@ -139,6 +139,11 @@ namespace ToadTools
                 .SetLargeImage("/ToadTools;component/Resources/Icons/ClassifierCode32.png")
                 .SetToolTip("Заполняет ADSK_Код по классификатору\nи ADSK_Описание по классификатору\nу элементов ИОС.");
 
+            panelGeneral.AddPushButton<Commands.SmartTagsCommand>("Умные\nвыноски")
+                .SetImage("/ToadTools;component/Resources/Icons/SmartTags16.png")
+                .SetLargeImage("/ToadTools;component/Resources/Icons/SmartTags32.png")
+                .SetToolTip("Расставляет марки на видимых элементах\nактивного вида без пересечений текста\nи выносок. Весь запуск отменяется\nодним Ctrl+Z.");
+
             //Сети связи
             panelSs.AddPushButton<Commands.SSPlanCommand>("Структурная\nсхема")
                 .SetImage("/ToadTools;component/Resources/Icons/SSPlan16.png")
