@@ -255,7 +255,7 @@ public sealed partial class SmartTagsViewModel : ObservableObject
     {
         var selected = Rows.Where(row => row.IsSelected).ToList();
         ShowRunOptions = selected.Any(row => row.Category.IsLinear);
-        ShowSameSection = selected.Any(row => row.Category.IsDucts);
+        ShowSameSection = selected.Any(row => row.Category.IsDucts || row.Category.IsPipes);
         Error = null;
         OnPropertyChanged(nameof(CanStart));
         StartCommand.NotifyCanExecuteChanged();

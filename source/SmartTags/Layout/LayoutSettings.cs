@@ -21,10 +21,10 @@ public sealed class LayoutSettings
     public double MaxLeader { get; set; } = 35;
 
     /// <summary>Длина горизонтальной полки между изломом выноски и текстом.</summary>
-    public double Shelf { get; set; } = 5;
+    public double Shelf { get; set; } = 1.5;
 
-    public double MinShelf { get; set; } = 3;
-    public double MaxShelf { get; set; } = 8;
+    public double MinShelf { get; set; } = 0.5;
+    public double MaxShelf { get; set; } = 4;
 
     /// <summary>Предпочтительные углы наклона выноски к горизонтали.</summary>
     public List<double> PreferredAngles { get; set; } = [30, 45, 60];
@@ -39,11 +39,17 @@ public sealed class LayoutSettings
     /// <summary>На сколько можно сдвинуть текст ради выравнивания с соседями.</summary>
     public double AlignSnap { get; set; } = 6;
 
+    /// <summary>Марки элементов, чьи точки привязки ближе этого расстояния, выстраиваются в общий столбик/строку.</summary>
+    public double ArrangeRadius { get; set; } = 8;
+
+    /// <summary>На сколько (мягких штрафов на марку) упорядоченная группа может быть «хуже» разбросанной.</summary>
+    public double ArrangeTolerance { get; set; } = 1.5;
+
     // Веса мягких штрафов.
     public double WeightLongLeader { get; set; } = 1;
     public double WeightShortLeader { get; set; } = 0.6;
-    public double WeightAnglePerDegree { get; set; } = 0.02;
-    public double WeightLeaderOverElement { get; set; } = 3;
+    public double WeightAnglePerDegree { get; set; } = 0.04;
+    public double WeightLeaderOverElement { get; set; } = 2;
     public double WeightTextOverElement { get; set; } = 6;
     public double WeightDensity { get; set; } = 0.35;
     public double WeightAlignment { get; set; } = 1.2;
@@ -51,10 +57,12 @@ public sealed class LayoutSettings
     public double WeightSharedAnchor { get; set; } = 2;
     public double WeightTooClose { get; set; } = 1;
     public double WeightAnchorRank { get; set; } = 0.15;
-    public double WeightReversedShelf { get; set; } = 0.4;
+    public double WeightReversedShelf { get; set; } = 1.5;
+    public double WeightFlatLeader { get; set; } = 1.5;
+    public double WeightParallel { get; set; } = 0.4;
 
     /// <summary>Сколько точек привязки перебирать у элемента.</summary>
-    public int AnchorSamples => Quality switch
+    public int AnchorSamples => Quality switch 
     {
         LayoutQuality.Fast => 3,
         LayoutQuality.Maximum => 7,
@@ -63,7 +71,7 @@ public sealed class LayoutSettings
 
     /// <summary>Шаг перебора направлений выноски, градусы.</summary>
     public double DirectionStep => Quality switch
-    {
+    { 
         LayoutQuality.Fast => 45,
         LayoutQuality.Maximum => 15,
         _ => 30

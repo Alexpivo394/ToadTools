@@ -74,7 +74,7 @@
                                    Margin="0,0,8,0" />
                         <ui:Button Content="Выбрать на виде"
                                    Icon="{ui:SymbolIcon SelectObject24}"
-                                   ToolTip="Окно скроется — выберите элементы на виде и нажмите «Готово»"
+                                   ToolTip="Окно скроется — выберите элементы на виде как обычно в Revit и нажмите «Готово» на панели выбора"
                                    Command="{Binding PickElementsCommand}" />
                     </StackPanel>
                 </Grid>
@@ -156,8 +156,8 @@
                                   Content="Маркировать вертикальные участки (стояки)"
                                   IsChecked="{Binding TagVerticalRuns}" />
                         <CheckBox Margin="0,4,0,0"
-                                  Content="Не подписывать воздуховоды с тем же расходом и сечением"
-                                  ToolTip="Если участки воздуховодов соединены фитингами и у них одинаковые расход и сечение, марка ставится только на самый длинный."
+                                  Content="Не повторять марку на соседних участках того же сечения"
+                                  ToolTip="Участки, соединённые отводами и тройниками, с тем же сечением и системой (у труб) или сечением и расходом (у воздуховодов) получают одну марку — на участке, который стоит свободнее, а не в пучке труб. Если элементы выбраны вручную, марку получает каждый выбранный участок."
                                   IsChecked="{Binding SkipSameDuctSection}"
                                   Visibility="{Binding ShowSameSection, Converter={uiConverters:BooleanCollapsedVisibilityConverter}}" />
                     </StackPanel>

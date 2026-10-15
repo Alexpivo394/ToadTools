@@ -76,6 +76,24 @@ public sealed class LayoutEngine(Action<string>? log = null)
             Log("Шлифовка: ходов {0}, {1}", moves, score);
         }
 
+        // 5. Марки соседних элементов — в ровные столбики и строки, затем остальные подстраиваются под них.
+        var arranger = new GroupArranger(scene, scorer, optimizer.Relocate, message => Log("{0}", message));
+        if (!cancelled())
+        {
+            progress?.Invoke(new LayoutProgress("Упорядочивание групп", 0, 1));
+            arranger.Run(state, cancelled);
+            score = optimizer.Total(state, null);
+            Log("Группы: {0}, {1}, {2} мс", arranger.Arranged, score, clock.ElapsedMilliseconds);
+
+            if (arranger.Arranged > 0 && !cancelled())
+            {
+                var deadline = clock.ElapsedMilliseconds + Math.Max(100, stats.BudgetMs / 5);
+                var moves = optimizer.Polish(state, clock, deadline, cancelled, keepStacked: true);
+                if (moves > 0) score = optimizer.Total(state, null);
+                Log("Шлифовка вокруг групп: ходов {0}, {1}", moves, score);
+            }
+        }
+
         if (!cancelled() && score.Hard > 0)
         {
             var before = stacks.Built;
@@ -83,7 +101,7 @@ public sealed class LayoutEngine(Action<string>? log = null)
             Log("Столбики (повтор): {0}, {1}", stacks.Built - before, optimizer.Total(state, null));
         }
 
-        // 5. Выравнивание текстов в линию.
+        // 6. Выравнивание текстов в линию.
         var alignment = new AlignmentPass(scene, scorer);
         if (!cancelled())
         {
@@ -94,6 +112,7 @@ public sealed class LayoutEngine(Action<string>? log = null)
         Validate(scene, scorer, state, result);
         stats.Iterations = optimizer.Iterations;
         stats.Stacks = stacks.Built;
+        stats.Groups = arranger.Arranged;
         stats.AlignMoves = alignment.Moves;
         stats.Cancelled = cancelled();
         stats.ElapsedMs = clock.ElapsedMilliseconds;

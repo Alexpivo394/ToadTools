@@ -41,6 +41,31 @@ public sealed class CategoryScanner(Document document, View view)
         return result;
     }
 
+    /// <summary>
+    ///     Выбор плюс изоляция и внутренняя изоляция выбранных труб, воздуховодов и фитингов: щелчок или рамка
+    ///     выбирают сам элемент, а его изоляция — отдельный элемент, который в выбор не попадает.
+    /// </summary>
+    public ICollection<ElementId> WithInsulation(ICollection<ElementId> selection)
+    {
+        if (selection.Count == 0) return selection;
+
+        var result = new HashSet<ElementId>(selection);
+        foreach (var id in selection)
+        {
+            try
+            {
+                result.UnionWith(InsulationLiningBase.GetInsulationIds(document, id));
+                result.UnionWith(InsulationLiningBase.GetLiningIds(document, id));
+            }
+            catch
+            {
+                // Элемент не может нести изоляцию (марка, аннотация и т. п.).
+            }
+        }
+
+        return result;
+    }
+
     private List<TaggableCategory> Build(IEnumerable<Element> elements)
     {
         var result = new List<TaggableCategory>();

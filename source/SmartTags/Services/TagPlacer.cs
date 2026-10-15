@@ -6,7 +6,7 @@ using SmartTags.Models;
 namespace SmartTags.Services;
 
 /// <summary>Создание, измерение и установка марок по результатам раскладки.</summary>
-internal sealed class TagPlacer(TagView view, Action<string>? log)
+internal sealed class TagPlacer(TagView view, Action<string>? log, TagTextMetrics? metrics = null)
 {
     private readonly ViewProjection _projection = view.Projection;
 
@@ -58,7 +58,38 @@ internal sealed class TagPlacer(TagView view, Action<string>? log)
         }
 
         // Отсекаем явный мусор: пустую марку или рамку, раздутую чем-то посторонним.
-        return !text.IsEmpty && text.Width is >= 0.5 and <= 300 && text.Height is >= 0.5 and <= 300;
+        if (text.IsEmpty || text.Width is < 0.5 or > 300 || text.Height is < 0.5 or > 300) return false;
+
+        text = TrimToLine(tag, text, head);
+        return true;
+    }
+
+    /// <summary>
+    ///     Рамка подписи бывает намного выше самого текста — оставляем по высоте только строки текста,
+    ///     если они найдены в семействе и лежат внутри рамки.
+    /// </summary>
+    private Box2D TrimToLine(IndependentTag tag, Box2D text, Vector2D head)
+    {
+        if (metrics?.LineOf(tag.GetTypeId()) is not { } line) return text;
+        var (bottom, top) = line;
+
+        const double tolerance = 0.5;
+        var lineHeight = top - bottom;
+        if (text.Height < lineHeight * 1.3) return text;
+
+        var lineMin = head.Y + bottom;
+        var lineMax = head.Y + top;
+        if (lineMin < text.MinY - tolerance || lineMax > text.MaxY + tolerance)
+        {
+            log?.Invoke(string.Format(CultureInfo.InvariantCulture,
+                "Марка {0}: строка текста {1:0.##}…{2:0.##} мм вне рамки {3:0.##}…{4:0.##} мм — берём рамку целиком",
+                RevitCompat.IdValue(tag.Id), bottom, top, text.MinY - head.Y, text.MaxY - head.Y));
+            return text;
+        }
+
+        lineMin = Math.Max(lineMin, text.MinY);
+        lineMax = Math.Min(lineMax, text.MaxY);
+        return new Box2D(text.MinX, lineMin, text.MaxX, lineMax);
     }
 
     /// <summary>Ставит голову марки и выноску по найденному положению.</summary>

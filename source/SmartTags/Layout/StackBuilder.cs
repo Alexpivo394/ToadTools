@@ -9,7 +9,6 @@ namespace SmartTags.Layout;
 internal sealed class StackBuilder(LayoutScene scene, PlacementScorer scorer)
 {
     private readonly LayoutSettings _s = scene.Settings;
-    private readonly List<int> _buffer = new(64);
 
     public int Built { get; private set; }
 
@@ -166,31 +165,7 @@ internal sealed class StackBuilder(LayoutScene scene, PlacementScorer scorer)
 
     private Score ClusterScore(LayoutState state, List<int> cluster, Placement?[] placements)
     {
-        var members = new HashSet<int>(cluster);
-        var score = Score.Zero;
-        for (var i = 0; i < cluster.Count; i++)
-        {
-            if (placements[i] is not { } placement) continue;
-
-            var item = scene.Items[cluster[i]];
-            score += scorer.Own(item, placement);
-
-            for (var j = i + 1; j < cluster.Count; j++)
-            {
-                if (placements[j] is { } other)
-                    score += scorer.Pair(item, placement, scene.Items[cluster[j]], other);
-            }
-
-            _buffer.Clear();
-            state.QueryNeighbors(placement.Bounds.Inflate(scorer.AlignRadius), _buffer);
-            foreach (var outsider in _buffer)
-            {
-                if (!members.Contains(outsider) && state[outsider] is { } other)
-                    score += scorer.Pair(item, placement, scene.Items[outsider], other);
-            }
-        }
-
-        return score;
+        return scorer.Group(state, cluster, placements);
     }
 }
 

@@ -25,6 +25,10 @@ public sealed class SmartTagsRunner(TagView view, SmartTagsSettings settings)
 
         try
         {
+            // Семейства марок открываются только вне транзакций — до начала запуска.
+            var metrics = new TagTextMetrics(_view.Document, _log.Writer);
+            metrics.Load(settings.Choices.Select(choice => choice.TagType.Id));
+
             using var transactions = new TransactionRunner(_view.Document, "Умные выноски", _log.Writer);
 
             if (_view.IsUnlocked3D)
@@ -40,8 +44,9 @@ public sealed class SmartTagsRunner(TagView view, SmartTagsSettings settings)
                 _log.Write($"{choice.Name}: элементов {elements.Count}, целей {built.Count}, марка «{choice.TagType.DisplayName}»");
             }
 
-            if (settings.SkipSameDuctSection)
-                SameSectionFilter.Apply(targets, _log.Writer);
+            // Участки, выбранные вручную, маркируются все — повторы убираем только при маркировке всего вида.
+            if (settings.SkipSameDuctSection && settings.OnlyElements is null)
+                SameSectionFilter.Apply(targets, _view.Projection, _log.Writer);
 
             var existing = ExistingTags.Collect(_view, _log.Writer);
             var toDelete = ExistingTags.Apply(targets, existing, settings.ExistingMode, _log.Writer);
@@ -49,7 +54,7 @@ public sealed class SmartTagsRunner(TagView view, SmartTagsSettings settings)
             CheckCancel(progress);
 
             Stage(progress, "Создание марок");
-            var placer = new TagPlacer(_view, _log.Writer);
+            var placer = new TagPlacer(_view, _log.Writer, metrics);
             transactions.Run("Создание марок", () =>
             {
                 DeleteTags(toDelete);

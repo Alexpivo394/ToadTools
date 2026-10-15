@@ -166,8 +166,11 @@ internal sealed class LayoutOptimizer(LayoutScene scene, PlacementScorer scorer,
         return Total(state, null);
     }
 
-    /// <summary>Шлифовка: каждой марке — лучший кандидат при неподвижных соседях, пока есть улучшения.</summary>
-    public int Polish(LayoutState state, Stopwatch clock, long deadlineMs, Func<bool> cancelled)
+    /// <summary>
+    ///     Шлифовка: каждой марке — лучший кандидат при неподвижных соседях, пока есть улучшения.
+    ///     <paramref name="keepStacked" /> — не трогать марки, собранные в столбики и строки.
+    /// </summary>
+    public int Polish(LayoutState state, Stopwatch clock, long deadlineMs, Func<bool> cancelled, bool keepStacked = false)
     {
         var moves = 0;
         for (var pass = 0; pass < 4; pass++)
@@ -177,6 +180,7 @@ internal sealed class LayoutOptimizer(LayoutScene scene, PlacementScorer scorer,
             {
                 if (clock.ElapsedMilliseconds >= deadlineMs || cancelled()) return moves;
                 if (state[item] is not { } placed || candidates[item].Count == 0) continue;
+                if (keepStacked && placed.Stacked) continue;
 
                 var layoutItem = scene.Items[item];
                 var bestScore = scorer.Full(layoutItem, placed, state);
@@ -225,6 +229,12 @@ internal sealed class LayoutOptimizer(LayoutScene scene, PlacementScorer scorer,
         }
 
         return new Score(own.Hard + pairs.Hard / 2, own.Soft + pairs.Soft / 2);
+    }
+
+    /// <summary>Лучшее положение марки при неподвижных соседях.</summary>
+    public Placement? Relocate(int item, LayoutState state)
+    {
+        return BestCandidate(item, state, candidates[item].Count)?.Placement;
     }
 
     private Candidate? BestCandidate(int item, LayoutState state, int limit)

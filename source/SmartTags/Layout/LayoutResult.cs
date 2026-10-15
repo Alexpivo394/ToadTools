@@ -49,6 +49,7 @@ public sealed class LayoutStats
     public int Candidates { get; set; }
     public int Iterations { get; set; }
     public int Stacks { get; set; }
+    public int Groups { get; set; }
     public int AlignMoves { get; set; }
     public int HardConflicts { get; set; }
     public int BudgetMs { get; set; }
