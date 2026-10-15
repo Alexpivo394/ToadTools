@@ -42,11 +42,12 @@ public class LotkiColorKrshkaService
         var fittingsNoParam = 0;
         var traysNoParam = new List<string>();
 
+        using (var progress = TrayReport.StartProgress("Покраска лотков с крышкой"))
         using (var t = new Transaction(doc, "Покраска лотков с крышкой"))
         {
             t.Start();
 
-            foreach (var element in alllotkirealall.Concat(allsoed))
+            foreach (var element in progress.Track(alllotkirealall.Concat(allsoed).ToList(), "Покраска лотков и деталей"))
             {
                 var param = element.LookupParameter(ParamCover);
 

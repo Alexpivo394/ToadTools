@@ -10,6 +10,7 @@ using ParamChecker.Models.ExportProfiles;
 using ParamChecker.Models.Filters;
 using ParamChecker.ViewModels.PagesViewModels;
 using ParamChecker.ViewModels.Windows;
+using ToadTools.UI.Progress;
 
 namespace ParamChecker.Services;
 
@@ -30,225 +31,318 @@ public class ExportService
     }
 
 
-    public void ExportProfile(ExportProfile profile)
+    /// <summary>
+    ///     Выгружает отчёты по всем моделям профиля. Каждая модель обрабатывается отдельно: если её пропустили
+    ///     кнопкой «Пропустить модель» или она упала с ошибкой, экспорт переходит к следующей.
+    /// </summary>
+    public void ExportProfile(ExportProfile profile, ToadProgress progress, ExportSummary summary)
     {
-        try
+        _logger.Log($"Начало экспорта профиля: {profile.ProfileName}");
+        foreach (var model in profile.Models)
         {
-            _logger.Log($"Начало экспорта профиля: {profile.ProfileName}");
-            foreach (var model in profile.Models)
+            if (progress.IsCancelled)
             {
-                _logger.Log($"Обработка модели: {model.ServerPath}");
-                var doc = OpenDocumentAsDetach(model.ServerPath, model.WorksetKeyword);
-                int greenCount = 0, redCount = 0, yellowCount = 0;
-
-                ExcelPackage.License.SetNonCommercialPersonal("ToadTools");
-                using var excelDoc = new ExcelPackage();
-                foreach (var rule in profile.Rules)
-                {
-                    _logger.Log($"Обработка правила: {rule.Title}");
-                    var worksheet = excelDoc.Workbook.Worksheets.Add(rule.Title);
-
-                    worksheet.Cells[1, 1].Value = "Имя элемента";
-                    worksheet.Cells[1, 2].Value = "ID элемента";
-
-                    var paramvm = new ParameterConfigViewModel();
-
-                    paramvm.LoadFromJson(rule.ParameterConfigJson);
-
-                    var parameters = paramvm.Parameters.Select(p => p.Value).ToList();
-
-                    for (var i = 0; i < parameters.Count; i++) worksheet.Cells[1, 3 + i].Value = parameters[i];
-
-                    var filtervm = new FilterConfigViewModel(_categoryService);
-                    var filterConfigModel = filtervm.ParseConfig(rule.FilterConfigJson);
-
-                    var elements = FilterElementsFromConfig(doc, model.ViewName, filterConfigModel);
-
-                    var row = 2;
-                    int redCountLocal = 0, yellowCountLocal = 0, greenCountLocal = 0;
-
-                    foreach (var element in elements)
-                    {
-                        worksheet.Cells[row, 1].Value = element.Name;
-#if REVIT2024_OR_GREATER
-                        worksheet.Cells[row, 2].Value = element.Id.Value;
-#else
-                        worksheet.Cells[row, 2].Value = element.Id.IntegerValue;
-#endif
-
-
-                        for (var i = 0; i < parameters.Count; i++)
-                        {
-                            var param = element.LookupParameter(parameters[i]);
-                            try
-                            {
-                                if (param == null)
-                                {
-                                    var typeId = element.GetTypeId();
-                                    if (typeId != ElementId.InvalidElementId)
-                                    {
-                                        var elementType = element.Document.GetElement(typeId) as ElementType;
-                                        if (elementType != null) param = elementType.LookupParameter(parameters[i]);
-                                    }
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger.LogError(
-                                    $"Ошибка при получении параметра {parameters[i]} для элемента {element.Id}", ex);
-                                Debug.WriteLine(ex.Message);
-                            }
-
-                            var cell = worksheet.Cells[row, 3 + i];
-                            if (param == null)
-                            {
-                                cell.Value = "N/A";
-                                cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                                cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Red);
-                                redCountLocal++;
-                            }
-                            else
-                            {
-                                cell.Value = param.AsValueString();
-                            }
-
-                            if (cell.Value == null ||
-                                (cell.Value is string && string.IsNullOrWhiteSpace((string)cell.Value)))
-                            {
-                                cell.Value = string.Empty;
-                                cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                                cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Yellow);
-                                yellowCountLocal++;
-                            }
-                            else if ((string)cell.Value == "N/A")
-                            {
-                                cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                                cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Red);
-                            }
-                            else
-                            {
-                                cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                                cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Green);
-                                greenCountLocal++;
-                            }
-                        }
-
-                        row++;
-                    }
-
-                    var totalCountLocal = redCountLocal + yellowCountLocal + greenCountLocal;
-                    worksheet.Cells[row + 1, 1].Value = "Итоги";
-                    worksheet.Cells[row + 2, 1].Value = "Отсутствующих параметров";
-                    worksheet.Cells[row + 2, 2].Value = redCountLocal;
-                    worksheet.Cells[row + 3, 1].Value = "Пустых параметров";
-                    worksheet.Cells[row + 3, 2].Value = yellowCountLocal;
-                    worksheet.Cells[row + 4, 1].Value = "Заполненных параметров";
-                    worksheet.Cells[row + 4, 2].Value = greenCountLocal;
-                    worksheet.Cells[row + 5, 1].Value = "Всего параметров";
-                    worksheet.Cells[row + 5, 2].Value = totalCountLocal;
-
-                    redCount += redCountLocal;
-                    yellowCount += yellowCountLocal;
-                    greenCount += greenCountLocal;
-
-                    worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
-                    _logger.Log(
-                        $"Правило {rule.Title} обработано: заполнено {greenCountLocal}, пустых {yellowCountLocal}, отсутствует {redCountLocal}");
-                }
-    
-                var totalworksheet = excelDoc.Workbook.Worksheets.Add("Итоги");
-                var totalCount = redCount + yellowCount + greenCount;
-                totalworksheet.Cells[1, 1].Value = "Итоги";
-                totalworksheet.Cells[2, 1].Value = "Отсутствующих параметров";
-                totalworksheet.Cells[2, 2].Value = redCount;
-                totalworksheet.Cells[3, 1].Value = "Пустых параметров";
-                totalworksheet.Cells[3, 2].Value = yellowCount;
-                totalworksheet.Cells[4, 1].Value = "Заполненных параметров";
-                totalworksheet.Cells[4, 2].Value = greenCount;
-                totalworksheet.Cells[5, 1].Value = "Всего параметров";
-                totalworksheet.Cells[5, 2].Value = totalCount;
-
-                totalworksheet.Cells[totalworksheet.Dimension.Address].AutoFitColumns();
-
-                var reportsPath = _settingsViewModel?.ReportsPath;
-                if (string.IsNullOrWhiteSpace(reportsPath))
-                    reportsPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-                Directory.CreateDirectory(reportsPath!);
-
-                var fileName = $"{ProcessDocTitle(doc?.Title ?? throw new InvalidOperationException())}_LOIReport.xlsx";
-
-                var filePath = Path.Combine(reportsPath, fileName);
-                var file = new FileInfo(filePath);
-                excelDoc.SaveAs(file);
-                _logger.Log($"Отчет сохранен: {filePath}");
-
-                if (_settingsViewModel is { UpdateGeneralReport: true })
-                {
-                    _logger.Log("Обновление общего отчета");
-                    string networkFilePath;
-                    if (_settingsViewModel != null && _settingsViewModel.ReportFilePath != String.Empty)
-                    {
-                        networkFilePath = _settingsViewModel.ReportFilePath;
-                    }
-                    else
-                    {
-                        networkFilePath = @"Y:\13-BIM (разработка)\07_Bim отдел\Проекты и модели.xlsx";
-                    }
-
-                    var fileInfo = new FileInfo(networkFilePath);
-
-                    using (var package = new ExcelPackage(fileInfo))
-                    {
-                        if (package.Workbook.Worksheets.Count == 0)
-                        {
-                            _logger.Log("Общий отчет не содержит листов");
-                            return;  
-                        }
-
-                        var worksheet = package.Workbook.Worksheets.First();
-
-                        var modelFound = false;
-                        var row = 2;
-
-                        while (worksheet.Cells[row, 5].Value != null)
-                        {
-                            if (worksheet.Cells[row, 5].Value.ToString() ==
-                                ProcessDocTitle(doc.Title ?? throw new InvalidOperationException()))
-                            {
-                                worksheet.Cells[row, 13].Value = totalCount;
-                                worksheet.Cells[row, 14].Value = greenCount;
-                                worksheet.Cells[row, 15].Value = yellowCount;
-                                worksheet.Cells[row, 16].Value = redCount;
-                                modelFound = true;
-                                _logger.Log($"Модель {ProcessDocTitle(doc.Title)} обновлены в общем отчете");
-                                break;
-                            }
-
-                            row++;
-                        }
-
-                        if (modelFound)
-                        {
-                            package.Save();
-                            _logger.Log("Общий отчет сохранен");
-                        }
-                        else
-                        {
-                            _logger.Log("Модель не найдена в общем отчете");
-                        }
-                    }
-                }
-
-                doc.Close(false);
-                _logger.Log($"Экспорт завершен для модели: {model.ServerPath}");
+                summary.Cancelled = true;
+                break;
             }
 
-            _logger.Log("Экспорт профиля завершен успешно");
+            summary.CurrentModel++;
+            var modelName = Path.GetFileNameWithoutExtension(model.ServerPath);
+            progress.Stage($"Профиль «{profile.ProfileName}»");
+            progress.Report(summary.CurrentModel - 1, summary.TotalModels,
+                $"Модель {summary.CurrentModel} из {summary.TotalModels}");
+            progress.BeginItem(modelName, canSkip: true);
+
+            Document? doc = null;
+            try
+            {
+                _logger.Log($"Обработка модели: {model.ServerPath}");
+                doc = OpenDocument(model, progress);
+                ExportModel(doc, model, profile, progress);
+                summary.Exported.Add(modelName);
+                _logger.Log($"Экспорт завершен для модели: {model.ServerPath}");
+            }
+            catch (Exception ex) when (progress.ShouldAbortItem)
+            {
+                // Revit прервал открытие по нашей просьбе (или модель бросили посреди обработки) —
+                // это не ошибка, а решение пользователя.
+                if (progress.IsCancelled)
+                {
+                    summary.Cancelled = true;
+                    summary.Skipped.Add($"{modelName} — экспорт прерван");
+                    _logger.Log($"Экспорт прерван пользователем на модели: {model.ServerPath}");
+                }
+                else
+                {
+                    summary.Skipped.Add(modelName);
+                    _logger.Log($"Модель пропущена пользователем: {model.ServerPath} ({ex.GetType().Name})");
+                }
+            }
+            catch (Exception ex)
+            {
+                summary.Failed.Add($"{modelName}: {ex.Message}");
+                _logger.LogError($"Ошибка при экспорте модели {model.ServerPath}", ex);
+            }
+            finally
+            {
+                CloseDocument(doc, progress);
+                progress.EndItem();
+            }
+        }
+
+        _logger.Log($"Экспорт профиля {profile.ProfileName} завершен");
+    }
+
+    /// <summary>
+    ///     Открывает модель, передавая ход открытия в окно прогресса. Пока модель открывается,
+    ///     «Пропустить модель» просит Revit прервать открытие.
+    /// </summary>
+    private Document OpenDocument(ExportModel model, ToadProgress progress)
+    {
+        progress.ItemStatus("Открытие модели");
+
+        Document? doc;
+        using (new RevitProgressBridge(_uiApplication.Application, progress, "Открытие модели"))
+        {
+            doc = OpenDocumentAsDetach(model.ServerPath, model.WorksetKeyword);
+        }
+
+        if (doc == null) throw new InvalidOperationException("Revit не смог открыть модель");
+
+        // Revit не дал прервать открытие и дождался его конца — пропускаем уже открытую модель.
+        if (progress.ShouldAbortItem)
+        {
+            CloseDocument(doc, progress);
+            throw new OperationCanceledException();
+        }
+
+        return doc;
+    }
+
+    private void CloseDocument(Document? doc, ToadProgress progress)
+    {
+        if (doc == null || !doc.IsValidObject) return;
+
+        progress.ItemStatus("Закрытие модели");
+        try
+        {
+            doc.Close(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError("Критическая ошибка при экспорте профиля", ex);
-            throw;
+            _logger.LogError("Не удалось закрыть модель", ex);
+        }
+    }
+
+    private void ExportModel(Document doc, ExportModel model, ExportProfile profile, ToadProgress progress)
+    {
+        int greenCount = 0, redCount = 0, yellowCount = 0;
+
+        ExcelPackage.License.SetNonCommercialPersonal("ToadTools");
+        using var excelDoc = new ExcelPackage();
+        var ruleIndex = 0;
+        foreach (var rule in profile.Rules)
+        {
+            ruleIndex++;
+            var ruleStatus = $"Правило {ruleIndex} из {profile.Rules.Count}: {rule.Title}";
+            progress.ItemStatus(ruleStatus);
+            _logger.Log($"Обработка правила: {rule.Title}");
+            var worksheet = excelDoc.Workbook.Worksheets.Add(rule.Title);
+
+            worksheet.Cells[1, 1].Value = "Имя элемента";
+            worksheet.Cells[1, 2].Value = "ID элемента";
+
+            var paramvm = new ParameterConfigViewModel();
+
+            paramvm.LoadFromJson(rule.ParameterConfigJson);
+
+            var parameters = paramvm.Parameters.Select(p => p.Value).ToList();
+
+            for (var i = 0; i < parameters.Count; i++) worksheet.Cells[1, 3 + i].Value = parameters[i];
+
+            var filtervm = new FilterConfigViewModel(_categoryService);
+            var filterConfigModel = filtervm.ParseConfig(rule.FilterConfigJson);
+
+            var elements = FilterElementsFromConfig(doc, model.ViewName, filterConfigModel);
+
+            var row = 2;
+            int redCountLocal = 0, yellowCountLocal = 0, greenCountLocal = 0;
+
+            foreach (var element in elements)
+            {
+                if (progress.ShouldAbortItem) throw new OperationCanceledException();
+                progress.ItemReport(row - 1, elements.Count, ruleStatus);
+
+                worksheet.Cells[row, 1].Value = element.Name;
+#if REVIT2024_OR_GREATER
+                worksheet.Cells[row, 2].Value = element.Id.Value;
+#else
+                worksheet.Cells[row, 2].Value = element.Id.IntegerValue;
+#endif
+
+
+                for (var i = 0; i < parameters.Count; i++)
+                {
+                    var param = element.LookupParameter(parameters[i]);
+                    try
+                    {
+                        if (param == null)
+                        {
+                            var typeId = element.GetTypeId();
+                            if (typeId != ElementId.InvalidElementId)
+                            {
+                                var elementType = element.Document.GetElement(typeId) as ElementType;
+                                if (elementType != null) param = elementType.LookupParameter(parameters[i]);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(
+                            $"Ошибка при получении параметра {parameters[i]} для элемента {element.Id}", ex);
+                        Debug.WriteLine(ex.Message);
+                    }
+
+                    var cell = worksheet.Cells[row, 3 + i];
+                    if (param == null)
+                    {
+                        cell.Value = "N/A";
+                        cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                        cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Red);
+                        redCountLocal++;
+                    }
+                    else
+                    {
+                        cell.Value = param.AsValueString();
+                    }
+
+                    if (cell.Value == null ||
+                        (cell.Value is string && string.IsNullOrWhiteSpace((string)cell.Value)))
+                    {
+                        cell.Value = string.Empty;
+                        cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                        cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Yellow);
+                        yellowCountLocal++;
+                    }
+                    else if ((string)cell.Value == "N/A")
+                    {
+                        cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                        cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Red);
+                    }
+                    else
+                    {
+                        cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                        cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.Green);
+                        greenCountLocal++;
+                    }
+                }
+
+                row++;
+            }
+
+            var totalCountLocal = redCountLocal + yellowCountLocal + greenCountLocal;
+            worksheet.Cells[row + 1, 1].Value = "Итоги";
+            worksheet.Cells[row + 2, 1].Value = "Отсутствующих параметров";
+            worksheet.Cells[row + 2, 2].Value = redCountLocal;
+            worksheet.Cells[row + 3, 1].Value = "Пустых параметров";
+            worksheet.Cells[row + 3, 2].Value = yellowCountLocal;
+            worksheet.Cells[row + 4, 1].Value = "Заполненных параметров";
+            worksheet.Cells[row + 4, 2].Value = greenCountLocal;
+            worksheet.Cells[row + 5, 1].Value = "Всего параметров";
+            worksheet.Cells[row + 5, 2].Value = totalCountLocal;
+
+            redCount += redCountLocal;
+            yellowCount += yellowCountLocal;
+            greenCount += greenCountLocal;
+
+            worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
+            _logger.Log(
+                $"Правило {rule.Title} обработано: заполнено {greenCountLocal}, пустых {yellowCountLocal}, отсутствует {redCountLocal}");
+        }
+
+        progress.ItemStatus("Сохранение отчёта");
+
+        var totalworksheet = excelDoc.Workbook.Worksheets.Add("Итоги");
+        var totalCount = redCount + yellowCount + greenCount;
+        totalworksheet.Cells[1, 1].Value = "Итоги";
+        totalworksheet.Cells[2, 1].Value = "Отсутствующих параметров";
+        totalworksheet.Cells[2, 2].Value = redCount;
+        totalworksheet.Cells[3, 1].Value = "Пустых параметров";
+        totalworksheet.Cells[3, 2].Value = yellowCount;
+        totalworksheet.Cells[4, 1].Value = "Заполненных параметров";
+        totalworksheet.Cells[4, 2].Value = greenCount;
+        totalworksheet.Cells[5, 1].Value = "Всего параметров";
+        totalworksheet.Cells[5, 2].Value = totalCount;
+
+        totalworksheet.Cells[totalworksheet.Dimension.Address].AutoFitColumns();
+
+        var reportsPath = _settingsViewModel?.ReportsPath;
+        if (string.IsNullOrWhiteSpace(reportsPath))
+            reportsPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+        Directory.CreateDirectory(reportsPath!);
+
+        var fileName = $"{ProcessDocTitle(doc.Title)}_LOIReport.xlsx";
+
+        var filePath = Path.Combine(reportsPath, fileName);
+        var file = new FileInfo(filePath);
+        excelDoc.SaveAs(file);
+        _logger.Log($"Отчет сохранен: {filePath}");
+
+        if (_settingsViewModel is { UpdateGeneralReport: true })
+            UpdateGeneralReport(doc, totalCount, greenCount, yellowCount, redCount);
+    }
+
+    private void UpdateGeneralReport(Document doc, int totalCount, int greenCount, int yellowCount, int redCount)
+    {
+        _logger.Log("Обновление общего отчета");
+        string networkFilePath;
+        if (_settingsViewModel != null && _settingsViewModel.ReportFilePath != String.Empty)
+        {
+            networkFilePath = _settingsViewModel.ReportFilePath;
+        }
+        else
+        {
+            networkFilePath = @"Y:\13-BIM (разработка)\07_Bim отдел\Проекты и модели.xlsx";
+        }
+
+        var fileInfo = new FileInfo(networkFilePath);
+
+        using var package = new ExcelPackage(fileInfo);
+        if (package.Workbook.Worksheets.Count == 0)
+        {
+            _logger.Log("Общий отчет не содержит листов");
+            return;
+        }
+
+        var worksheet = package.Workbook.Worksheets.First();
+
+        var modelFound = false;
+        var row = 2;
+
+        while (worksheet.Cells[row, 5].Value != null)
+        {
+            if (worksheet.Cells[row, 5].Value.ToString() == ProcessDocTitle(doc.Title))
+            {
+                worksheet.Cells[row, 13].Value = totalCount;
+                worksheet.Cells[row, 14].Value = greenCount;
+                worksheet.Cells[row, 15].Value = yellowCount;
+                worksheet.Cells[row, 16].Value = redCount;
+                modelFound = true;
+                _logger.Log($"Модель {ProcessDocTitle(doc.Title)} обновлены в общем отчете");
+                break;
+            }
+
+            row++;
+        }
+
+        if (modelFound)
+        {
+            package.Save();
+            _logger.Log("Общий отчет сохранен");
+        }
+        else
+        {
+            _logger.Log("Модель не найдена в общем отчете");
         }
     }
 

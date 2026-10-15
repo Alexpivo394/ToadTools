@@ -1,5 +1,7 @@
 using Autodesk.Revit.DB;
 using System.IO;
+using ToadTools.UI.Progress;
+using Wpf.Ui.Controls;
 
 namespace ChangeSharedFamilies.Services;
 
@@ -34,9 +36,28 @@ public class CurrentFamilyNestedUnshareService
 
         var report = new NestedFamilyConvertReport();
 
-        foreach (var oldNestedFamily in _familyFinder.GetSharedNestedFamilies())
+        // Каждое семейство заменяется своими транзакциями, поэтому «Прервать» останавливает работу
+        // после текущего семейства, а уже заменённые остаются.
+        using var progress = ToadProgress.Show("Замена общих семейств", new ProgressOptions
         {
+            Icon = SymbolRegular.ShareAndroid24,
+            CancelHint = "Остановимся после текущего семейства — уже заменённые останутся"
+        });
+        progress.Stage("Поиск общих вложенных семейств");
+
+        var families = _familyFinder.GetSharedNestedFamilies().ToList();
+        for (var i = 0; i < families.Count; i++)
+        {
+            if (progress.IsCancelled)
+            {
+                report.Cancelled = true;
+                break;
+            }
+
+            var oldNestedFamily = families[i];
             var oldFamilyName = oldNestedFamily.Name;
+            progress.Stage("Замена семейств");
+            progress.Report(i, families.Count, $"{i + 1} из {families.Count}: {oldFamilyName}");
 
             try
             {

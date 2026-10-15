@@ -61,6 +61,12 @@ public sealed partial class ClassifierCodeViewModel : ObservableObject
         {
             report = _service.Run(SelectedSection, Scope, KeepExisting);
         }
+        catch (OperationCanceledException)
+        {
+            ToadDialogService.Show("Прервано", "Заполнение прервано, изменения в модели откачены.",
+                DialogButtons.OK, DialogIcon.Info);
+            return;
+        }
         catch (Exception ex)
         {
             ToadDialogService.Show("Ошибка!", "Не удалось заполнить код по классификатору:\n" + ex.Message,

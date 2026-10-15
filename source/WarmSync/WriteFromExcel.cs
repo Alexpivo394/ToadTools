@@ -5,7 +5,9 @@ using Microsoft.Win32;
 using Nice3point.Revit.Toolkit;
 using OfficeOpenXml;
 using ToadTools.UI.Models;
+using ToadTools.UI.Progress;
 using ToadTools.UI.Services;
+using Wpf.Ui.Controls;
 
 namespace WarmSync;
 
@@ -30,6 +32,7 @@ public class WriteFromExcel
         };
 
         if (openFileDialog.ShowDialog() == true) excelPath = openFileDialog.FileName;
+        if (string.IsNullOrEmpty(excelPath)) return;
 
         // ✨ ЛОГГЕР
         Logger logger = new Logger();
@@ -43,64 +46,81 @@ public class WriteFromExcel
         int updated = 0;
         int errors = 0;
 
-        using (var package = new ExcelPackage(new FileInfo(excelPath)))
+        try
         {
-            var ws = package.Workbook.Worksheets[0];
-            int rowCount = ws.Dimension.Rows;
-
-            using (Transaction t = new Transaction(doc, "Запись параметров"))
+            using (var progress = ToadProgress.Show("Теплопотери из Excel",
+                       new ProgressOptions { Icon = SymbolRegular.TableArrowUp24 }))
+            using (var package = new ExcelPackage(new FileInfo(excelPath)))
             {
-                t.Start();
+                progress.Stage("Чтение Excel");
+                var ws = package.Workbook.Worksheets[0];
+                int rowCount = ws.Dimension.Rows;
 
-                for (int row = 2; row <= rowCount; row++)
+                using (Transaction t = new Transaction(doc, "Запись параметров"))
                 {
-                    try
+                    t.Start();
+                    progress.Stage("Запись параметров");
+
+                    for (int row = 2; row <= rowCount; row++)
                     {
-                        var idVal = ws.Cells[row, 1].Value;
-                        var tempVal = ws.Cells[row, 7].Value;
-                        var heatVal = ws.Cells[row, 8].Value;
+                        progress.ThrowIfCancelled();
+                        progress.Report(row - 1, rowCount - 1, $"Строка {row - 1} из {rowCount - 1}");
 
-                        if (idVal == null)
+                        try
                         {
-                            logger.Log($"Строка {row}: ID пустой — пропускаю.");
-                            continue;
+                            var idVal = ws.Cells[row, 1].Value;
+                            var tempVal = ws.Cells[row, 7].Value;
+                            var heatVal = ws.Cells[row, 8].Value;
+
+                            if (idVal == null)
+                            {
+                                logger.Log($"Строка {row}: ID пустой — пропускаю.");
+                                continue;
+                            }
+
+    #if REVIT2024_OR_GREATER
+                            if (!long.TryParse(idVal.ToString(), out long idInt))
+    #else
+                            if (!int.TryParse(idVal.ToString(), out int idInt))
+    #endif
+                            {
+                                logger.Log($"Строка {row}: ID '{idVal}' — не число.");
+                                errors++;
+                                continue;
+                            }
+
+                            ElementId elemId = new ElementId(idInt);
+                            Element? el = doc.GetElement(elemId);
+
+                            if (el == null)
+                            {
+                                logger.Log($"Строка {row}: элемент с ID {idInt} не найден.");
+                                errors++;
+                                continue;
+                            }
+
+                            if (!SetParam(el, "ADSK_Температура в помещении", tempVal, row, logger)) errors++;
+                            if (!SetParam(el, "ADSK_Теплопотери", heatVal, row, logger)) errors++;
+
+                            updated++;
                         }
-
-#if REVIT2024_OR_GREATER
-                        if (!long.TryParse(idVal.ToString(), out long idInt))
-#else
-                        if (!int.TryParse(idVal.ToString(), out int idInt))
-#endif
+                        catch (Exception ex)
                         {
-                            logger.Log($"Строка {row}: ID '{idVal}' — не число.");
                             errors++;
-                            continue;
+                            logger.LogError($"Строка {row}: Все сломалось(((", ex);
                         }
-
-                        ElementId elemId = new ElementId(idInt);
-                        Element? el = doc.GetElement(elemId);
-
-                        if (el == null)
-                        {
-                            logger.Log($"Строка {row}: элемент с ID {idInt} не найден.");
-                            errors++;
-                            continue;
-                        }
-
-                        if (!SetParam(el, "ADSK_Температура в помещении", tempVal, row, logger)) errors++;
-                        if (!SetParam(el, "ADSK_Теплопотери", heatVal, row, logger)) errors++;
-
-                        updated++;
                     }
-                    catch (Exception ex)
-                    {
-                        errors++;
-                        logger.LogError($"Строка {row}: Все сломалось(((", ex);
-                    }
+
+                    t.Commit();
                 }
-
-                t.Commit();
             }
+        }
+        catch (OperationCanceledException)
+        {
+            logger.Log("Запись прервана пользователем, изменения откачены.");
+            ToadDialogService.Show("Прервано", "Запись теплопотерь прервана, изменения в модели откачены.",
+                DialogButtons.OK, DialogIcon.Info);
+            return;
         }
 
         var dial = ToadDialogService.Show("Результат", $"Обновлено: {updated}\nОшибок: {errors}\n\nЛог:\n{logPath}",

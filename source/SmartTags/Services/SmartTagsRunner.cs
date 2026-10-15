@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Globalization;
 using SmartTags.Layout;
 using SmartTags.Models;
+using ToadTools.UI.Progress;
 
 namespace SmartTags.Services;
 
@@ -16,7 +17,7 @@ public sealed class SmartTagsRunner(TagView view, SmartTagsSettings settings)
     private readonly Stopwatch _clock = Stopwatch.StartNew();
     private TagView _view = view;
 
-    public RunResult Run(IRunProgress progress)
+    public RunResult Run(ToadProgress progress)
     {
         var result = new RunResult();
         var targets = new List<TagTarget>();
@@ -142,7 +143,7 @@ public sealed class SmartTagsRunner(TagView view, SmartTagsSettings settings)
         }
     }
 
-    private void CreateTags(List<TagTarget> active, TagPlacer placer, IRunProgress progress)
+    private void CreateTags(List<TagTarget> active, TagPlacer placer, ToadProgress progress)
     {
         var step = 0;
         foreach (var target in active)
@@ -163,7 +164,6 @@ public sealed class SmartTagsRunner(TagView view, SmartTagsSettings settings)
             if (step % 20 == 0)
             {
                 progress.Report(step, active.Count);
-                progress.Pump();
             }
         }
     }
@@ -265,7 +265,7 @@ public sealed class SmartTagsRunner(TagView view, SmartTagsSettings settings)
     }
 
     /// <summary>Раскладка — в фоновом потоке, чтобы окно прогресса жило и отмена срабатывала.</summary>
-    private LayoutResult Solve(LayoutRequest request, IRunProgress progress)
+    private LayoutResult Solve(LayoutRequest request, ToadProgress progress)
     {
         using var cancellation = new CancellationTokenSource();
         LayoutProgress? latest = null;
@@ -282,7 +282,6 @@ public sealed class SmartTagsRunner(TagView view, SmartTagsSettings settings)
                 progress.Report(info.Current, Math.Max(1, info.Total), detail);
             }
 
-            progress.Pump();
             if (progress.IsCancelled) cancellation.Cancel();
         }
 
@@ -297,7 +296,7 @@ public sealed class SmartTagsRunner(TagView view, SmartTagsSettings settings)
         return result;
     }
 
-    private void ApplyLayout(List<TagTarget> active, LayoutResult layout, TagPlacer placer, IRunProgress progress)
+    private void ApplyLayout(List<TagTarget> active, LayoutResult layout, TagPlacer placer, ToadProgress progress)
     {
         var step = 0;
         foreach (var target in active)
@@ -324,7 +323,6 @@ public sealed class SmartTagsRunner(TagView view, SmartTagsSettings settings)
             if (step % 25 == 0)
             {
                 progress.Report(step, active.Count);
-                progress.Pump();
             }
         }
     }
@@ -387,16 +385,14 @@ public sealed class SmartTagsRunner(TagView view, SmartTagsSettings settings)
             settings.MinLeader, settings.Gap, settings.Quality, _view.Crop?.ToString() ?? "нет"));
     }
 
-    private void Stage(IRunProgress progress, string stage)
+    private void Stage(ToadProgress progress, string stage)
     {
         _log.Write("--- " + stage + $" ({_clock.ElapsedMilliseconds} мс)");
         progress.Stage(stage);
-        progress.Pump();
     }
 
-    private static void CheckCancel(IRunProgress progress)
+    private static void CheckCancel(ToadProgress progress)
     {
-        progress.Pump();
         if (progress.IsCancelled) throw new OperationCanceledException();
     }
 }

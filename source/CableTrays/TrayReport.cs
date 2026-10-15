@@ -1,6 +1,8 @@
 using Autodesk.Revit.DB;
 using ToadTools.UI.Models;
+using ToadTools.UI.Progress;
 using ToadTools.UI.Services;
+using Wpf.Ui.Controls;
 
 namespace CableTrays;
 
@@ -57,6 +59,12 @@ internal sealed class TrayReport
 
     public static string Describe(Element element) => $"ID {element.Id} — {element.Name}";
 
+    /// <summary>Окно прогресса команды. «Прервать» откатывает транзакцию — изменения в модели не сохраняются.</summary>
+    public static ToadProgress StartProgress(string commandName)
+    {
+        return ToadProgress.Show(commandName, new ProgressOptions { Icon = SymbolRegular.LayerDiagonal24 });
+    }
+
     public static void ShowWarning(string message)
     {
         ToadDialogService.Show("Внимание", message, DialogButtons.OK, DialogIcon.Warning);
@@ -71,6 +79,11 @@ internal sealed class TrayReport
         try
         {
             action();
+        }
+        catch (OperationCanceledException)
+        {
+            ToadDialogService.Show("Прервано", $"Команда «{commandName}» прервана, изменения в модели откачены.",
+                DialogButtons.OK, DialogIcon.Info);
         }
         catch (Exception e)
         {

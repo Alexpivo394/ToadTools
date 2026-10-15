@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 using Autodesk.Revit.UI;
@@ -8,6 +7,7 @@ using SmartTags.Services;
 using SmartTags.ViewModels;
 using SmartTags.Views;
 using ToadTools.UI.Models;
+using ToadTools.UI.Progress;
 using ToadTools.UI.Services;
 
 namespace SmartTags;
@@ -143,24 +143,9 @@ public static class SmartTagsLauncher
 
     private static RunResult RunWithProgress(UIApplication application, TagView view, SmartTagsSettings settings)
     {
-        var progressViewModel = new ProgressViewModel();
-        var progress = new ProgressView(progressViewModel);
-        SetOwner(progress, application);
-
-        // Пока идёт работа, окно Revit недоступно — как при модальном окне. Иначе во время прокачки
-        // сообщений можно было бы нажать что-то в Revit посреди открытой транзакции.
-        var revitWindow = application.MainWindowHandle;
-        EnableWindow(revitWindow, false);
-        try
-        {
-            progress.Show();
-            return new SmartTagsRunner(view, settings).Run(progressViewModel);
-        }
-        finally
-        {
-            EnableWindow(revitWindow, true);
-            progress.Close();
-        }
+        // Окно прогресса само блокирует окна Revit на время работы и живёт в своём потоке.
+        using var progress = ToadProgress.Show(Title, new ProgressOptions { Icon = Wpf.Ui.Controls.SymbolRegular.TagMultiple24 });
+        return new SmartTagsRunner(view, settings).Run(progress);
     }
 
     private static bool ConfirmLock(TagView view)
@@ -182,8 +167,4 @@ public static class SmartTagsLauncher
     {
         new WindowInteropHelper(window).Owner = application.MainWindowHandle;
     }
-
-    [DllImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool EnableWindow(IntPtr window, [MarshalAs(UnmanagedType.Bool)] bool enable);
 }

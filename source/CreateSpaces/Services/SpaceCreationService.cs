@@ -4,6 +4,8 @@ using Autodesk.Revit.DB.Mechanical;
 using CreateSpaces.Models;
 using CreateSpaces.ViewModels;
 using Nice3point.Revit.Toolkit;
+using ToadTools.UI.Progress;
+using Wpf.Ui.Controls;
 
 namespace CreateSpaces.Services;
 
@@ -38,11 +40,13 @@ public sealed class SpaceCreationService : ISpaceCreationService
         int created = 0;
         int updated = 0;
 
+        using var progress = ToadProgress.Show("Создание пространств",
+            new ProgressOptions { Icon = SymbolRegular.Cube24 });
         using var tx = new Transaction(_doc, "Rooms → Spaces");
         tx.Start();
 
         if (rooms != null)
-            foreach (var room in rooms)
+            foreach (var room in progress.Track(rooms, "Помещения → пространства"))
             {
                 var location = GetLocation(room, transform);
 

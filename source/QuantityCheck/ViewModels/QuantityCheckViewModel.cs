@@ -38,8 +38,17 @@ public partial class QuantityCheckViewModel(Logger? logger) : ObservableObject
     [RelayCommand]
     private void WriteQuantity()
     {
-        _processor.Process(ParameterName, Reverse);
-        
+        try
+        {
+            _processor.Process(ParameterName, Reverse);
+        }
+        catch (OperationCanceledException)
+        {
+            ToadDialogService.Show("Прервано", "Запись количества прервана, изменения в модели откачены.",
+                DialogButtons.OK, DialogIcon.Info);
+            return;
+        }
+
         
         string? dildo = ToadDialogService.Show(
             "Готово",

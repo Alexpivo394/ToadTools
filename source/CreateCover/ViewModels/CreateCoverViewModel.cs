@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using ToadTools.UI.Models;
 using ToadTools.UI.Services;
 using Wpf.Ui.Appearance;
 using CreateCover.Models;
@@ -40,6 +41,14 @@ public sealed partial class CreateCoverViewModel : ObservableObject
     [RelayCommand]
     private void Start()
     {
-        _service.Create(Models.ToList());
+        try
+        {
+            _service.Create(Models.ToList());
+        }
+        catch (OperationCanceledException)
+        {
+            ToadDialogService.Show("Прервано", "Размещение крышек прервано, изменения в модели откачены.",
+                DialogButtons.OK, DialogIcon.Info);
+        }
     }
 }

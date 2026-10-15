@@ -4,6 +4,7 @@ using ModelTransplanter.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ToadTools.UI.Progress;
 
 namespace ModelTransplanter.Models
 {
@@ -62,13 +63,13 @@ namespace ModelTransplanter.Models
             _logger = logger;
         }
 
-        public void TransferElements(Document sourceDoc, Document targetDoc, IProgress<int> progress)
+        public void TransferElements(Document sourceDoc, Document targetDoc, ToadProgress progress)
         {
             try
             {
                 _logger.Log("🚀 Начало переноса элементов с учетом общего положения");
 
-                var elementsToCopy = GetValidElementsForTransfer(sourceDoc);
+                var elementsToCopy = GetValidElementsForTransfer(sourceDoc, progress);
                 _logger.Log($"🔍 Найдено элементов для переноса: {elementsToCopy.Count}");
 
                 if (elementsToCopy.Count == 0)
@@ -88,19 +89,36 @@ namespace ModelTransplanter.Models
                     t.Start();
                     try
                     {
-                        ElementTransformUtils.CopyElements(
-                            sourceDoc,
-                            elementsToCopy.Select(e => e.Id).ToList(),
-                            targetDoc,
-                            transform,
-                            options);
+                        // Копирование — один долгий вызов Revit: его ход берём из полосы прогресса Revit,
+                        // а «Прервать» просит Revit остановить копирование.
+                        progress.Stage($"Копирование элементов: {elementsToCopy.Count}");
+                        progress.BeginItem("Revit копирует элементы");
+                        using (new RevitProgressBridge(targetDoc.Application, progress))
+                        {
+                            ElementTransformUtils.CopyElements(
+                                sourceDoc,
+                                elementsToCopy.Select(e => e.Id).ToList(),
+                                targetDoc,
+                                transform,
+                                options);
+                        }
 
+                        progress.EndItem();
+                        progress.ThrowIfCancelled();
+
+                        progress.Stage("Сохранение изменений");
                         t.Commit();
                         _logger.Log($"🎉 Перенесено элементов: {elementsToCopy.Count}");
                     }
                     catch (Exception ex)
                     {
-                        t.RollBack();
+                        if (t.GetStatus() == TransactionStatus.Started) t.RollBack();
+                        if (progress.IsCancelled)
+                        {
+                            _logger.Log("⏹ Перенос прерван пользователем, изменения откачены");
+                            throw new OperationCanceledException();
+                        }
+
                         _logger.LogError("❌ Ошибка при копировании", ex);
                         throw;
                     }
@@ -112,6 +130,7 @@ namespace ModelTransplanter.Models
                     tRegen.Start();
                     try
                     {
+                        progress.Stage("Регенерация модели");
                         targetDoc.Regenerate();
                         tRegen.Commit();
                         _logger.Log("🔄 Модель успешно регенерирована");
@@ -123,6 +142,10 @@ namespace ModelTransplanter.Models
                         throw;
                     }
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -205,18 +228,24 @@ namespace ModelTransplanter.Models
                 .FirstOrDefault(bp => bp.IsShared);
         }
 
-        private List<Element> GetValidElementsForTransfer(Document doc)
+        private List<Element> GetValidElementsForTransfer(Document doc, ToadProgress progress)
         {
+            progress.Stage("Сбор элементов");
+
             var filters = _targetCategories
                 .Select(c => new ElementCategoryFilter(c) as ElementFilter)
                 .ToList();
 
             var orFilter = new LogicalOrFilter(filters);
 
-            return new FilteredElementCollector(doc)
+            var candidates = new FilteredElementCollector(doc)
                 .WhereElementIsNotElementType()
                 .WherePasses(orFilter)
                 .Where(e => !IsCoordinateElement(e))
+                .ToList();
+
+            // Проверка геометрии у каждого элемента — самая долгая часть подготовки.
+            return progress.Track(candidates, "Проверка элементов")
                 .Where(e => IsElementValidForTransfer(e))
                 .ToList();
         }

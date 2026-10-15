@@ -16,14 +16,13 @@ internal static class ServiceRegistration
     {
         // Command-only tools (Length, DoorSide, CableTrays, ReinforcementByColor, WarmSync,
         // ChangeSharedFamilies) read the active document via the ExternalCommand base or
-        // RevitContext and need no registration. SSPlan, CreateCover, ParamChecker and SmartTags build
-        // their view graph inside the command (bespoke runtime construction).
+        // RevitContext and need no registration. SSPlan, CreateCover, ParamChecker, SmartTags and
+        // WorksetCheck build their view graph inside the command (bespoke runtime construction).
 
         services.AddParamToFinish();
         services.AddQuantityCheck();
         services.AddWriteDash();
         services.AddCreateSpaces();
-        services.AddWorksetCheck();
         services.AddModelTransplanter();
         services.AddWorkingSet();
         services.AddClassifierCode();
@@ -64,13 +63,6 @@ internal static class ServiceRegistration
         services.AddScoped<CreateSpaces.Services.ISpaceCreationService, CreateSpaces.Services.SpaceCreationService>();
         services.AddScoped<CreateSpaces.ViewModels.CreateSpacesViewModel>();
         services.AddScoped<CreateSpaces.Views.CreateSpacesView>();
-    }
-
-    private static void AddWorksetCheck(this IServiceCollection services)
-    {
-        services.AddScoped<WorksetCheck.Models.WorksetCheckModel>();
-        services.AddScoped<WorksetCheck.ViewModels.WorksetCheckViewModel>();
-        services.AddScoped<WorksetCheck.Views.WorksetCheckView>();
     }
 
     private static void AddModelTransplanter(this IServiceCollection services)

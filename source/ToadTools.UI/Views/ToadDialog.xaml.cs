@@ -35,7 +35,8 @@ public partial class ToadDialog : FluentWindow
             };
             
             ThemeWatcherService.Initialize();
-            ThemeWatcherService.ApplyTheme(ApplicationTheme.Dark);
+            // Тема — та, что выбрана в окне плагина: иначе диалог перекрасил бы открытые окна в тёмную.
+            ThemeWatcherService.ApplyTheme(ThemeWatcherService.CurrentTheme);
             ThemeWatcherService.Watch(this);
         }
 

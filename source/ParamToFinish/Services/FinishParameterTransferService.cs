@@ -1,6 +1,8 @@
 using Autodesk.Revit.DB;
 using Nice3point.Revit.Toolkit;
 using ParamToFinish.Models;
+using ToadTools.UI.Progress;
+using Wpf.Ui.Controls;
 
 namespace ParamToFinish.Services;
 
@@ -56,10 +58,13 @@ public class FinishParameterTransferService : IFinishParameterTransferService
                 .ToList();
         }
 
+        using var progress = ToadProgress.Show("Основание отделки",
+            new ProgressOptions { Icon = SymbolRegular.Wallpaper24 });
+
         var finishWalls = new List<WallInfo>();
         var mainWalls = new List<WallInfo>();
 
-        foreach (var wall in walls)
+        foreach (var wall in progress.Track(walls, "Анализ стен"))
         {
             var sourceValue = _parameterService.GetParameterValue(wall, wallParameterName);
 
@@ -81,7 +86,7 @@ public class FinishParameterTransferService : IFinishParameterTransferService
 
         var updates = new List<ParameterUpdate>();
 
-        foreach (var finishWall in finishWalls)
+        foreach (var finishWall in progress.Track(finishWalls, "Поиск основания для отделки"))
         {
             var candidates = finishWall.Box != null ? spatialIndex.Query(finishWall.Box) : mainWalls;
 
@@ -101,7 +106,7 @@ public class FinishParameterTransferService : IFinishParameterTransferService
 
         transaction.Start();
 
-        foreach (var update in updates)
+        foreach (var update in progress.Track(updates, "Запись параметров"))
         {
             _parameterService.SetParameterValue(update.Element, update.ParameterName, update.Value);
         }

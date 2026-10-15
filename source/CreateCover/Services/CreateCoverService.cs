@@ -2,8 +2,10 @@ using System.Diagnostics;
 using Autodesk.Revit.DB.Electrical;
 using Autodesk.Revit.DB.Structure;
 using Autodesk.Revit.UI;
+using Wpf.Ui.Controls;
 using CreateCover.Models;
 using ToadTools.UI.Models;
+using ToadTools.UI.Progress;
 using ToadTools.UI.Services;
 
 namespace CreateCover.Services;
@@ -43,42 +45,46 @@ public class CreateCoverService
         var collector = new FilteredElementCollector(_doc).OfClass(typeof(FamilyInstance))
             .WhereElementIsNotElementType();
 
-        using (var tx = new Transaction(_doc, "Удалить крышки"))
-        {
-            tx.Start();
-
-            var idsToDelete = new List<ElementId>();
-
-            foreach (var elem in collector)
-            {
-                if (elem is FamilyInstance fi)
-                {
-                    var family = fi.Symbol.Family;
-                    if (family.Name == _familyName)
-                    {
-                        idsToDelete.Add(fi.Id);
-                    }
-                }
-            }
-
-            if (idsToDelete.Count > 0)
-            {
-                _doc.Delete(idsToDelete);
-            }
-
-            tx.Commit();
-        }
-
+        // Удаление старых крышек и создание новых — одна группа: «Прервать» откатывает и то и другое.
+        using (var progress = ToadProgress.Show("Разместить крышки",
+                   new ProgressOptions { Icon = SymbolRegular.LayerDiagonal24 }))
         using (var trGr = new TransactionGroup(_doc, "Добавление крышек"))
         {
             trGr.Start();
+            progress.Stage("Удаление старых крышек");
+
+            using (var tx = new Transaction(_doc, "Удалить крышки"))
+            {
+                tx.Start();
+
+                var idsToDelete = new List<ElementId>();
+
+                foreach (var elem in collector)
+                {
+                    if (elem is FamilyInstance fi)
+                    {
+                        var family = fi.Symbol.Family;
+                        if (family.Name == _familyName)
+                        {
+                            idsToDelete.Add(fi.Id);
+                        }
+                    }
+                }
+
+                if (idsToDelete.Count > 0)
+                {
+                    _doc.Delete(idsToDelete);
+                }
+
+                tx.Commit();
+            }
 
             if (coverSymbol != null && !coverSymbol.IsActive)
             {
                 coverSymbol.Activate();
             }
 
-            foreach (var tray in trays)
+            foreach (var tray in progress.Track(trays, "Создание крышек"))
             {
                 try
                 {

@@ -46,14 +46,15 @@ public class LotkiColorService
         var other = 0;
         var noTypeName = new List<string>();
 
+        using (var progress = TrayReport.StartProgress("Покраска лотков по типу"))
         using (var t0 = new Transaction(doc, "Покраска лотков по типу"))
         {
             t0.Start();
 
-            foreach (var soed in allsoed)
+            foreach (var soed in progress.Track(allsoed, "Покраска соединительных деталей"))
                 view.SetElementOverrides(soed.Id, ogs3);
 
-            foreach (var lotok in alllotkirealall)
+            foreach (var lotok in progress.Track(alllotkirealall, "Покраска лотков"))
             {
                 var typeName = doc.GetElement(lotok.GetTypeId())?.LookupParameter(ParamTypeName)?.AsString();
 

@@ -12,7 +12,9 @@ using ParamChecker.Views.Dialogs;
 using ParamChecker.Views.Pages;
 using ParamChecker.Models;
 using ToadTools.UI.Models;
+using ToadTools.UI.Progress;
 using ToadTools.UI.Services;
+using Wpf.Ui.Controls;
 
 namespace ParamChecker.ViewModels.Windows;
 
@@ -162,6 +164,9 @@ public sealed partial class ParamCheckerViewModel : ObservableObject
         else
         {
             _logger.StartLog(_settingsViewModel.LogFilePath);
+
+            // Сначала проверяем профили — чтобы сообщения об ошибках не всплывали посреди долгой выгрузки.
+            var profiles = new List<ExportProfile>();
             foreach (var item in CustomNavItems)
             {
                 if (item.ViewModelInstance is not ExportProfilesViewModel vm) continue;
@@ -192,8 +197,7 @@ public sealed partial class ParamCheckerViewModel : ObservableObject
                         }
                         else
                         {
-                            _logger.Log($"Обрабатываем профиль {profile.ProfileName}");
-                            _exportService.ExportProfile(profile);
+                            profiles.Add(profile);
                         }
                     }
                 }
@@ -202,12 +206,53 @@ public sealed partial class ParamCheckerViewModel : ObservableObject
                     _logger.Log($"Профиль {profile.ProfileName} не выбран для экспорта");
                 }
             }
-            var dial1 = ToadDialogService.Show(
-                "Успех!",
-                "Экспорт завершен!",
-                DialogButtons.OK,
-                DialogIcon.Info
-            );
+
+            if (profiles.Count == 0) return;
+
+            var summary = new ExportSummary { TotalModels = profiles.Sum(profile => profile.Models.Count) };
+            using (var progress = ToadProgress.Show("ParamChecker", new ProgressOptions
+                   {
+                       Icon = SymbolRegular.DocumentSearch24,
+                       SkipText = "Пропустить модель",
+                       CancelHint = "Прерываем — текущая модель будет закрыта без отчёта"
+                   }))
+            {
+                foreach (var profile in profiles)
+                {
+                    if (progress.IsCancelled)
+                    {
+                        summary.Cancelled = true;
+                        break;
+                    }
+
+                    _logger.Log($"Обрабатываем профиль {profile.ProfileName}");
+                    _exportService.ExportProfile(profile, progress, summary);
+                }
+            }
+
+            ShowSummary(summary);
         }
+    }
+
+    private void ShowSummary(ExportSummary summary)
+    {
+        var lines = new List<string>
+        {
+            $"Выгружено моделей: {summary.Exported.Count} из {summary.TotalModels}"
+        };
+        if (summary.Skipped.Count > 0)
+            lines.Add("\nПропущены:\n" + string.Join("\n", summary.Skipped.Select(name => "  • " + name)));
+        if (summary.Failed.Count > 0)
+            lines.Add("\nОшибки:\n" + string.Join("\n", summary.Failed.Select(name => "  • " + name)));
+        if (summary.Failed.Count > 0 || summary.Skipped.Count > 0)
+            lines.Add("\nПодробности — в логе.");
+
+        var hasProblems = summary.Failed.Count > 0 || summary.Cancelled;
+        ToadDialogService.Show(
+            summary.Cancelled ? "Экспорт прерван" : hasProblems ? "Экспорт завершён с ошибками" : "Успех!",
+            string.Join("\n", lines),
+            DialogButtons.OK,
+            hasProblems ? DialogIcon.Warning : DialogIcon.Info
+        );
     }
 } 

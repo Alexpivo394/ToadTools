@@ -121,8 +121,17 @@ public sealed partial class ParamToFinishViewModel : ObservableObject
             return;
         }
         
-        _transferService.Transfer(SelectedWallParameter, SelectedFinishParameter, AllModel, Filter);
-        
+        try
+        {
+            _transferService.Transfer(SelectedWallParameter, SelectedFinishParameter, AllModel, Filter);
+        }
+        catch (OperationCanceledException)
+        {
+            ToadDialogService.Show("Прервано", "Запись основания прервана, изменения в модели откачены.",
+                DialogButtons.OK, DialogIcon.Info);
+            return;
+        }
+
         var dial = ToadDialogService.Show(
             "Успех!",
             "Основание записано в отделку",

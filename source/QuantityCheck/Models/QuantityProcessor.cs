@@ -1,6 +1,8 @@
 using QuantityCheck.Dictionaries;
 using QuantityCheck.Services;
 using System.Collections.Generic;
+using ToadTools.UI.Progress;
+using Wpf.Ui.Controls;
 
 namespace QuantityCheck.Models;
 
@@ -23,6 +25,10 @@ public class QuantityProcessor
             _reserve = reserve;
             _logger?.StartLog(string.Empty);
             _logger?.Log($"Старт обработки. Параметр: '{_paramName}'");
+            using var progress = ToadProgress.Show("Записать количество",
+                new ProgressOptions { Icon = SymbolRegular.NumberSymbol24 });
+            progress.Stage("Сбор элементов");
+
             // Собираем все элементы
             var collector = new FilteredElementCollector(_doc)
                 .WhereElementIsNotElementType();
@@ -59,14 +65,14 @@ public class QuantityProcessor
                 int writtenCount = 0;
 
                 // Штучные
-                foreach (var el in pieceElements)
+                foreach (var el in progress.Track(pieceElements, "Штучные элементы"))
                 {
                     var result = WriteQuantity(el, 1);
                     if (result.ok) writtenCount++; else failed.Add((el.Id, result.reason ?? "Неизвестная причина"));
                 }
 
                 // Длиновые
-                foreach (var el in linearElements)
+                foreach (var el in progress.Track(linearElements, "Линейные элементы"))
                 {
                     double lengthMm = GetLengthInMm(el);
                     if (lengthMm > 0)

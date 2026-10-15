@@ -1,0 +1,122 @@
+<ui:FluentWindow
+    x:Class="WorksetCheck.Views.WorksetCheckReportView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:viewModels="clr-namespace:WorksetCheck.ViewModels"
+    xmlns:uiConverters="clr-namespace:ToadTools.UI.Converters;assembly=ToadTools.UI"
+    d:DataContext="{d:DesignInstance Type=viewModels:WorksetCheckReportViewModel}"
+    mc:Ignorable="d"
+    Title="Проверка рабочих наборов — отчёт"
+    WindowStartupLocation="CenterScreen"
+    WindowBackdropType="Mica"
+    WindowCornerPreference="Round"
+    Height="680"
+    Width="1100"
+    MinHeight="440"
+    MinWidth="760"
+    ExtendsContentIntoTitleBar="True">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Grid.Row="0" Title="Проверка рабочих наборов" Icon="TaskListSquareLtr24" />
+
+        <Grid Grid.Row="1" Margin="10,0,10,10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0"
+                       Margin="10,0,0,10"
+                       FontSize="18"
+                       FontWeight="Bold"
+                       TextWrapping="Wrap"
+                       Text="{Binding Headline}" />
+
+            <ui:InfoBar Grid.Row="1"
+                        Margin="0,0,0,10"
+                        IsOpen="True"
+                        IsClosable="False"
+                        Severity="{Binding Severity}"
+                        Message="{Binding Message}" />
+
+            <ItemsControl Grid.Row="2" ItemsSource="{Binding Counters}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Rows="1" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type viewModels:ReportCounter}">
+                        <ui:Card Margin="0,0,8,0" Padding="12,8">
+                            <StackPanel>
+                                <TextBlock Text="{Binding Value}" FontSize="22" FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding Label}" Opacity="0.7" />
+                            </StackPanel>
+                        </ui:Card>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock Grid.Row="3"
+                       Margin="10,12,0,5"
+                       Visibility="{Binding HasItems, Converter={uiConverters:BooleanCollapsedVisibilityConverter}}">
+                <Run Text="Замечания" FontWeight="Bold" />
+                <Run Text=" — двойной щелчок по строке выделит элемент в модели" />
+            </TextBlock>
+
+            <DataGrid Grid.Row="4"
+                      x:Name="DetailsGrid"
+                      ItemsSource="{Binding Items}"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      SelectionMode="Single"
+                      HeadersVisibility="Column"
+                      Visibility="{Binding HasItems, Converter={uiConverters:BooleanCollapsedVisibilityConverter}}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Id" Binding="{Binding Id}" Width="Auto" />
+                    <DataGridTextColumn Header="Категория" Binding="{Binding Category}" Width="*" />
+                    <DataGridTextColumn Header="Элемент" Binding="{Binding Element}" Width="1.5*" />
+                    <DataGridTextColumn Header="Рабочий набор" Binding="{Binding Workset}" Width="*" />
+                    <DataGridTextColumn Header="Замечание" Binding="{Binding Problem}" Width="1.5*" />
+                    <DataGridTextColumn Header="Действие" Binding="{Binding ActionText}" Width="1.5*" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+
+        <DockPanel Grid.Row="2" Margin="10,0,10,10">
+            <ui:Button DockPanel.Dock="Left"
+                       Content="Сохранить в Excel"
+                       Icon="{ui:SymbolIcon Save24}"
+                       Command="{Binding SaveCommand}"
+                       Visibility="{Binding HasItems, Converter={uiConverters:BooleanCollapsedVisibilityConverter}}" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <ui:Button Content="Открыть 3D-вид"
+                           Icon="{ui:SymbolIcon Cube24}"
+                           Command="{Binding OpenViewCommand}"
+                           Visibility="{Binding HasView, Converter={uiConverters:BooleanCollapsedVisibilityConverter}}"
+                           Margin="10,0,0,0" />
+                <ui:Button Content="Исправить"
+                           Icon="{ui:SymbolIcon Wrench24}"
+                           Command="{Binding FixCommand}"
+                           Appearance="Primary"
+                           Visibility="{Binding CanFix, Converter={uiConverters:BooleanCollapsedVisibilityConverter}}"
+                           Margin="10,0,0,0" />
+                <ui:Button Content="Закрыть"
+                           Icon="{ui:SymbolIcon Dismiss24}"
+                           Command="{Binding CloseCommand}"
+                           Margin="10,0,0,0" />
+            </StackPanel>
+        </DockPanel>
+    </Grid>
+</ui:FluentWindow>

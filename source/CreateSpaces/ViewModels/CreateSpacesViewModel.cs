@@ -80,11 +80,21 @@ public partial class CreateSpacesViewModel : ObservableObject
         if (SelectedLink == null)
             return;
 
-        var result = _spaceCreationService.CreateSpaces(
-            SelectedLink,
-            Models,
-            CreateSpaces);
-        
+        SpaceCreationResult result;
+        try
+        {
+            result = _spaceCreationService.CreateSpaces(
+                SelectedLink,
+                Models,
+                CreateSpaces);
+        }
+        catch (OperationCanceledException)
+        {
+            ToadDialogService.Show("Прервано", "Создание пространств прервано, изменения в модели откачены.",
+                DialogButtons.OK, DialogIcon.Info);
+            return;
+        }
+
         var dial = ToadDialogService.Show(
             "Успех!",
             $"Создано: {result.Created}\nОбновлено: {result.Updated}",

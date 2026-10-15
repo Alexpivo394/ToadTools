@@ -48,11 +48,12 @@ public class LotkiColorIspService
         var fittingsNoParam = 0;
         var traysNoParam = new List<string>();
 
+        using (var progress = TrayReport.StartProgress("Покраска лотков по исполнению"))
         using (var t0 = new Transaction(doc, "Покраска лотков по исполнению"))
         {
             t0.Start();
 
-            foreach (var element in alllotkirealall.Concat(allsoed))
+            foreach (var element in progress.Track(alllotkirealall.Concat(allsoed).ToList(), "Покраска лотков и деталей"))
             {
                 var ispParam = element.LookupParameter(ParamIsp);
 

@@ -2,6 +2,7 @@
 
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.Mvvm"/>
+        <PackageReference Include="EPPlus"/>
         <PackageReference Include="Newtonsoft.Json"/>
         <PackageReference Include="WPF-UI"/>
         <PackageReference Include="WPF-UI.Abstractions"/>

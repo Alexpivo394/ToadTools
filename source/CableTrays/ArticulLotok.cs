@@ -89,11 +89,12 @@ public class ArticulService
         var unknownIsp = new List<string>(); //исполнение не 1, 2 или 3
         var unknownType = new List<string>(); //не распознан ADSK_Наименование (по типу)
 
+        using (var progress = TrayReport.StartProgress("Артикулы лотков"))
         using (var t0 = new Transaction(doc, "Артикулы лотков"))
         {
             t0.Start();
 
-            foreach (var lotok in alllotkirealall)
+            foreach (var lotok in progress.Track(alllotkirealall, "Заполнение артикулов"))
             {
                 var ispParam = lotok.LookupParameter(ParamIsp);
                 var codeParam = lotok.LookupParameter(ParamCode);

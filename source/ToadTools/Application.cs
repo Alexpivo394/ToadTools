@@ -49,7 +49,7 @@ namespace ToadTools
                     "sozdanie-rabochih-naborov-plaginom-rptools-j3Ycy39HVW");
             worksets.AddPushButton<Commands.WorksetCheckCommand>("Проверка\nнаборов")
                 .WithIcon("WorksetsCheck")
-                .WithInfo("Позволяет проверить заданные\nмодели на соответствие элементов\nрабочим наборам.",
+                .WithInfo("Проверяет распределение элементов\nоткрытой модели по рабочим наборам\nи исправляет найденное.",
                     "worksetcheck-rfycq6j0Bd");
 
             panel.AddPushButton<Commands.ParamCheckerCommand>("Param\nChecker")

@@ -13,6 +13,12 @@ public class ThemeWatcherService
     private static readonly List<FrameworkElement> ObservedElements = new List<FrameworkElement>();
     private static bool _subscribed;
 
+    /// <summary>
+    ///     Тема, выбранная в окнах плагинов последней. Диалоги и окно прогресса открываются в ней же,
+    ///     а не перекрашивают открытые окна обратно в тёмную.
+    /// </summary>
+    public static ApplicationTheme CurrentTheme { get; private set; } = ApplicationTheme.Dark;
+
     public static void Initialize()
     {
         UiApplication.Current.Resources = new ResourceDictionary
@@ -27,8 +33,38 @@ public class ThemeWatcherService
         _subscribed = true;
     }
 
+    /// <summary>
+    ///     Отписывает от <see cref="ApplicationThemeManager.Changed" /> все объекты потока <paramref name="dispatcher" />.
+    ///     <para>
+    ///         Событие статическое, а <c>TitleBar</c> из WPF-UI подписывается при создании и отписывается только
+    ///         в <c>Unloaded</c>, которого у так и не показанного окна не бывает. Окно прогресса живёт в своём потоке —
+    ///         после его завершения такие подписки роняли бы любую смену темы в потоке Revit
+    ///         («владельцем этого объекта является другой поток»).
+    ///     </para>
+    /// </summary>
+    internal static void DetachThread(System.Windows.Threading.Dispatcher dispatcher)
+    {
+        try
+        {
+            var field = typeof(ApplicationThemeManager).GetField(nameof(ApplicationThemeManager.Changed),
+                System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+            if (field?.GetValue(null) is not ThemeChangedEvent handlers) return;
+
+            foreach (var handler in handlers.GetInvocationList())
+            {
+                if (handler.Target is System.Windows.Threading.DispatcherObject owner && owner.Dispatcher == dispatcher)
+                    ApplicationThemeManager.Changed -= (ThemeChangedEvent)handler;
+            }
+        }
+        catch
+        {
+            // Поле переименовали в новой версии WPF-UI — лучше остаться с подпиской, чем уронить Revit.
+        }
+    }
+
     public static void ApplyTheme(ApplicationTheme theme)
     {
+        CurrentTheme = theme;
         ApplicationThemeManager.Apply(theme);
         UpdateBackground(theme);
     }

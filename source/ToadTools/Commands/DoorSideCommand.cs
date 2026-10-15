@@ -3,7 +3,9 @@ using Autodesk.Revit.DB;
 using DoorSide;
 using Nice3point.Revit.Toolkit.External;
 using ToadTools.UI.Models;
+using ToadTools.UI.Progress;
 using ToadTools.UI.Services;
+using Wpf.Ui.Controls;
 
 namespace ToadTools.Commands;
 
@@ -28,14 +30,29 @@ public class DoorSideCommand : ExternalCommand
 
             var doors = GetDoorsInActiveView(doc);
 
-            foreach (var door in doors)
+            // Каждая дверь пишется своей транзакцией — группа нужна, чтобы «Прервать» откатило все сразу.
+            using var progress = ToadProgress.Show("Открывание дверей",
+                new ProgressOptions { Icon = SymbolRegular.Door28 });
+            using var group = new TransactionGroup(doc, "Открывание дверей");
+            group.Start();
+
+            foreach (var door in progress.Track(doors, "Запись открывания"))
             {
                 var swing = DetectSwing(door);
                 SetSwingParameter(doc, door, swing);
             }
+
+            group.Assimilate();
         }
         catch (OperationCanceledException)
         {
+            ToadDialogService.Show(
+                "Прервано",
+                "Заполнение прервано, изменения в модели откачены.",
+                DialogButtons.OK,
+                DialogIcon.Info
+            );
+
             Result = Autodesk.Revit.UI.Result.Cancelled;
             return;
         }
@@ -51,15 +68,13 @@ public class DoorSideCommand : ExternalCommand
             Result = Autodesk.Revit.UI.Result.Failed;
             return;
         }
-        finally
-        {
-            ToadDialogService.Show(
-                "Успех!",
-                "Параметр открывание заполнен",
-                DialogButtons.OK,
-                DialogIcon.Info
-            );
-        }
+
+        ToadDialogService.Show(
+            "Успех!",
+            "Параметр открывание заполнен",
+            DialogButtons.OK,
+            DialogIcon.Info
+        );
     }
 
     private static void EnsureSwingSharedParameterExists(Document doc)

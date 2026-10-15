@@ -51,12 +51,17 @@ public class ChangeSharedFamiliesCommand : ExternalCommand
                 ? ""
                 : "\n\nОшибки:\n" + string.Join("\n", report.Errors);
 
+            var cancelled = report.Cancelled
+                ? "\n\nЗамена прервана: оставшиеся вложенные семейства по-прежнему общие."
+                : "";
+
             ToadDialogService.Show(
-                "Готово",
+                report.Cancelled ? "Прервано" : "Готово",
                 $"Текущее семейство: {doc.Title}\n" +
                 $"Заменено shared вложенных семейств: {report.ConvertedFamiliesCount}\n\n" +
                 convertedNames +
-                errors,
+                errors +
+                cancelled,
                 DialogButtons.OK,
                 report.Errors.Any() ? DialogIcon.Warning : DialogIcon.Info);
 

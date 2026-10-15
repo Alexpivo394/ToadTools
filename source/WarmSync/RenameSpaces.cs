@@ -3,7 +3,9 @@ using Autodesk.Revit.DB.Architecture;
 using Autodesk.Revit.DB.Mechanical;
 using Nice3point.Revit.Toolkit;
 using ToadTools.UI.Models;
+using ToadTools.UI.Progress;
 using ToadTools.UI.Services;
+using Wpf.Ui.Controls;
 
 namespace WarmSync;
 
@@ -17,7 +19,10 @@ namespace WarmSync;
             int updatedCount = 0;
             int errorCount = 0;
             List<string> log = new();
+            var cancelled = false;
 
+            using (var progress = ToadProgress.Show("Номера пространств",
+                       new ProgressOptions { Icon = SymbolRegular.NumberSymbolSquare24 }))
             using (Transaction t = new Transaction(doc, "Sync Space Numbers"))
             {
                 try
@@ -57,7 +62,7 @@ namespace WarmSync;
 
                         Transform transform = linkInstance.GetTotalTransform();
 
-                        foreach (var room in rooms)
+                        foreach (var room in progress.Track(rooms, $"Помещения связи {linkDoc.Title}"))
                         {
                             try
                             {
@@ -103,10 +108,18 @@ namespace WarmSync;
 
                     t.Commit();
                 }
-                catch (Exception)
+                catch (OperationCanceledException)
                 {
-                    throw;
+                    // Транзакция не зафиксирована — using её откатит.
+                    cancelled = true;
                 }
+            }
+
+            if (cancelled)
+            {
+                ToadDialogService.Show("Прервано", "Синхронизация номеров прервана, изменения в модели откачены.",
+                    DialogButtons.OK, DialogIcon.Info);
+                return;
             }
 
             ShowResult(updatedCount, errorCount, log);

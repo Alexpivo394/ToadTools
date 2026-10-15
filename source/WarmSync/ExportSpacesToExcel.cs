@@ -6,7 +6,9 @@ using Microsoft.Win32;
 using Nice3point.Revit.Toolkit;
 using OfficeOpenXml;
 using ToadTools.UI.Models;
+using ToadTools.UI.Progress;
 using ToadTools.UI.Services;
+using Wpf.Ui.Controls;
 
 namespace WarmSync;
 
@@ -32,10 +34,14 @@ public class ExportSpacesToExcel
 
         ExcelPackage.License.SetNonCommercialPersonal("ToadTools");
 
+        if (string.IsNullOrEmpty(excelPath)) return;
+
         try
         {
             List<Space> spaces = GetSpaces(doc);
 
+            using (var progress = ToadProgress.Show("Выгрузка пространств",
+                       new ProgressOptions { Icon = SymbolRegular.TableArrowUp24 }))
             using (var package = new ExcelPackage())
             {
                 var ws = package.Workbook.Worksheets.Add("Spaces");
@@ -52,7 +58,7 @@ public class ExportSpacesToExcel
 
                 int row = 2;
 
-                foreach (var sp in spaces)
+                foreach (var sp in progress.Track(spaces, "Чтение пространств"))
                 {
                     Debug.WriteLine($"Обрабатываю Space ID {sp.Id}");
 #if REVIT2024_OR_GREATER
@@ -78,6 +84,8 @@ public class ExportSpacesToExcel
                     row++;
                 }
 
+                progress.Stage("Сохранение файла");
+
                 // автоширина, чтобы таблица не выглядела как жопа
                 ws.Cells[ws.Dimension.Address].AutoFitColumns();
 
@@ -91,6 +99,11 @@ public class ExportSpacesToExcel
                 DialogButtons.OK,
                 DialogIcon.Info
             );
+        }
+        catch (OperationCanceledException)
+        {
+            ToadDialogService.Show("Прервано", "Выгрузка прервана, файл не сохранён.",
+                DialogButtons.OK, DialogIcon.Info);
         }
         catch (Exception ex)
         {

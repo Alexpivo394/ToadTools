@@ -1,166 +1,292 @@
+using ToadTools.UI.Progress;
+using WorksetCheck.Models;
+
 namespace WorksetCheck.Services;
 
-public class CheckService
+/// <summary>
+///     Проверяет, что элементы открытой модели лежат в своих рабочих наборах, и для каждого нарушения
+///     сразу решает, что с ним сделает «Исправить».
+/// </summary>
+public sealed class CheckService
 {
-    private static readonly Dictionary<string[], string[]> SectionMapping = new()
+    private readonly Document _document;
+    private readonly WorksetRules _rules;
+    private List<Workset> _worksets = [];
+    private List<Workset> _linkWorksets = [];
+    private string _separator = "_";
+
+    public CheckService(Document document, WorksetRules rules)
     {
-        { new[] { "AR" }, new[] { "АР", "AR", "AI", "АИ" } },
-        { new[] { "KR" }, new[] { "КР", "KR" } },
-        { new[] { "OVV", "OVO", "OVK" }, new[] { "OVV", "OVO", "OVK", "ОВ" } },
-        { new[] { "VK" }, new[] { "ВК", "VK" } },
-        { new[] { "PT" }, new[] { "ПТ", "PT" } },
-        { new[] { "SS" }, new[] { "СС", "SS" } },
-        { new[] { "EOM" }, new[] { "ЭОМ", "EOM" } },
-        { new[] { "AVT" }, new[] { "АВТ", "AVT" } },
-        { new[] { "ITP" }, new[] { "ИТП", "ITP" } },
-    };
+        _document = document;
+        _rules = rules;
+    }
 
-    public List<string> CheckWorksets(
-        Document? doc,
-        string rvtLinksPrefix,
-        string gridsAndLevelsWorksetName,
-        string openingsWorksetName)
+    private enum Kind
     {
-        if (doc == null)
-            throw new ArgumentNullException(nameof(doc));
+        Ignore,
+        Link,
+        Cad,
+        Grid,
+        Level,
+        Model
+    }
 
-        var errors = new List<string>();
-
-        var allWorksets = new FilteredWorksetCollector(doc)
+    public CheckResult Run(ToadProgress progress)
+    {
+        _worksets = new FilteredWorksetCollector(_document)
             .OfKind(WorksetKind.UserWorkset)
-            .ToWorksets();
+            .ToWorksets()
+            .OrderBy(workset => workset.Name, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+        _linkWorksets = _worksets.Where(workset => _rules.IsLinksWorkset(workset.Name)).ToList();
+        _separator = DetectSeparator();
 
-        foreach (var ws in allWorksets)
+        var issues = new List<WorksetIssue>();
+        var checkedElements = 0;
+
+        progress.Stage("Проверка рабочих наборов");
+        for (var i = 0; i < _worksets.Count; i++)
         {
-            var wsName = ws.Name;
+            progress.ThrowIfCancelled();
+            var workset = _worksets[i];
+            progress.Report(i + 1, _worksets.Count, $"{workset.Name} ({i + 1} из {_worksets.Count})");
 
-            var elementsInWs = new FilteredElementCollector(doc)
-                .WhereElementIsNotElementType()
-                .Where(x => x.WorksetId == ws.Id)
-                .ToList();
+            var elements = new FilteredElementCollector(_document)
+                .WherePasses(new ElementWorksetFilter(workset.Id))
+                .WhereElementIsNotElementType();
 
-            // Рабочий набор для связей
-            if (wsName.StartsWith(
-                    rvtLinksPrefix,
-                    StringComparison.OrdinalIgnoreCase))
+            foreach (var element in elements)
             {
-                foreach (var element in elementsInWs)
-                {
-                    if (!IsCategory(element, BuiltInCategory.OST_RvtLinks))
-                    {
-                        errors.Add(
-                            $"[WS: {wsName}] Недопустимый элемент (Id {element.Id}) — должны быть только связи");
+                var kind = Classify(element);
+                if (kind == Kind.Ignore) continue;
 
-                        continue;
-                    }
-
-                    var linkName = element.Name ?? string.Empty;
-                    var matched = false;
-
-                    foreach (var mapping in SectionMapping)
-                    {
-#if REVIT2025_OR_GREATER
-                        var linkMatches = mapping.Key.Any(
-                            key => linkName.Contains(
-                                key,
-                                StringComparison.OrdinalIgnoreCase));
-
-                        var worksetMatches = mapping.Value.Any(
-                            value => wsName.Contains(
-                                value,
-                                StringComparison.OrdinalIgnoreCase));
-#else
-                        var linkMatches = mapping.Key.Any(
-                            key => linkName.IndexOf(
-                                key,
-                                StringComparison.OrdinalIgnoreCase) >= 0);
-
-                        var worksetMatches = mapping.Value.Any(
-                            value => wsName.IndexOf(
-                                value,
-                                StringComparison.OrdinalIgnoreCase) >= 0);
-#endif
-
-                        if (!linkMatches || !worksetMatches)
-                            continue;
-
-                        matched = true;
-                        break;
-                    }
-
-                    if (!matched)
-                    {
-                        errors.Add(
-                            $"[WS: {wsName}] Файл связи '{linkName}' не соответствует разделу рабочего набора");
-                    }
-                }
-            }
-            // Рабочий набор для осей и уровней
-            else if (string.Equals(
-                         wsName,
-                         gridsAndLevelsWorksetName,
-                         StringComparison.OrdinalIgnoreCase))
-            {
-                foreach (var element in elementsInWs)
-                {
-                    if (!IsCategory(element, BuiltInCategory.OST_Grids) &&
-                        !IsCategory(element, BuiltInCategory.OST_Levels))
-                    {
-                        errors.Add(
-                            $"[WS: {wsName}] Недопустимый элемент (Id {element.Id}) — должны быть только оси или уровни");
-                    }
-                }
-            }
-            // Рабочий набор для отверстий
-            else if (string.Equals(
-                         wsName,
-                         openingsWorksetName,
-                         StringComparison.OrdinalIgnoreCase))
-            {
-                foreach (var element in elementsInWs)
-                {
-                    if (!IsCategory(element, BuiltInCategory.OST_GenericModel))
-                    {
-                        errors.Add(
-                            $"[WS: {wsName}] Недопустимый элемент (Id {element.Id}) — должны быть только Обобщенные модели (отверстия)");
-                    }
-                }
-            }
-            // Остальные рабочие наборы
-            else
-            {
-                foreach (var element in elementsInWs)
-                {
-                    if (IsCategory(element, BuiltInCategory.OST_RvtLinks) ||
-                        IsCategory(element, BuiltInCategory.OST_Grids) ||
-                        IsCategory(element, BuiltInCategory.OST_Levels))
-                    {
-                        errors.Add(
-                            $"[WS: {wsName}] Недопустимый элемент (Id {element.Id}) — связи/оси/уровни тут быть не должны");
-                    }
-                }
+                checkedElements++;
+                if (Check(element, kind, workset.Name) is { } issue) issues.Add(issue);
             }
         }
 
-        return errors;
+        progress.ThrowIfCancelled();
+
+        var closed = _worksets.Where(workset => !workset.IsOpen).Select(workset => workset.Name).ToList();
+        return new CheckResult(issues, checkedElements, closed);
     }
 
-    private static bool IsCategory(
-        Element element,
-        BuiltInCategory builtInCategory)
+    /// <summary>
+    ///     Какие элементы проверяем. Вспомогательные (эскизы, вложенные семейства, элементы с РН родителя)
+    ///     пропускаем — их РН нельзя сменить отдельно, и в отчёте они были бы шумом.
+    /// </summary>
+    private static Kind Classify(Element element)
     {
-        var categoryId = element.Category?.Id;
+        switch (element)
+        {
+            case RevitLinkInstance:
+                return Kind.Link;
+            case ImportInstance:
+                return element.ViewSpecific ? Kind.Ignore : Kind.Cad;
+            case PointCloudInstance:
+                return Kind.Ignore;
+        }
 
-        return categoryId != null &&
-               GetElementIdValue(categoryId) == (long)builtInCategory;
+        var category = element.Category;
+        if (category is null) return Kind.Ignore;
+        if (category.Is(BuiltInCategory.OST_Grids)) return Kind.Grid;
+        if (category.Is(BuiltInCategory.OST_Levels)) return Kind.Level;
+
+        if (element.ViewSpecific ||
+            category.CategoryType != CategoryType.Model ||
+            category.Is(BuiltInCategory.OST_SketchLines) ||
+            element is FamilyInstance { SuperComponent: not null })
+            return Kind.Ignore;
+
+        var worksetParameter = element.get_Parameter(BuiltInParameter.ELEM_PARTITION_PARAM);
+        return worksetParameter is null || worksetParameter.IsReadOnly ? Kind.Ignore : Kind.Model;
     }
 
-    private static long GetElementIdValue(ElementId elementId)
+    private WorksetIssue? Check(Element element, Kind kind, string workset)
     {
-#if REVIT2024_OR_GREATER
-        return elementId.Value;
-#else
-        return elementId.IntegerValue;
-#endif
+        var inGrids = _rules.IsGridsWorkset(workset);
+        var inOpenings = _rules.IsOpeningsWorkset(workset);
+        var inLinks = _rules.IsLinksWorkset(workset);
+
+        switch (kind)
+        {
+            case Kind.Grid or Kind.Level:
+                if (!_rules.ChecksGrids || inGrids) return null;
+                return Issue(element, workset,
+                    kind == Kind.Grid ? "Ось не в РН осей и уровней" : "Уровень не в РН осей и уровней",
+                    TargetByName(_rules.GridsWorkset));
+
+            case Kind.Link:
+                return _rules.ChecksLinks ? CheckLink(element, workset, inLinks) : null;
+
+            case Kind.Cad:
+                if (!_rules.ChecksLinks || (inLinks && Sections.HasCadToken(workset))) return null;
+                return Issue(element, workset, "CAD-файл не в РН связей DWG", CadTarget());
+
+            case Kind.Model:
+                if (inLinks)
+                    return Issue(element, workset, "Элемент модели в РН связей", Target.On3D);
+                if (inGrids)
+                    return Issue(element, workset, "Элемент модели в РН осей и уровней", Target.On3D);
+                if (inOpenings && !element.Category.Is(BuiltInCategory.OST_GenericModel))
+                    return Issue(element, workset, "В РН отверстий допускаются только обобщённые модели", Target.On3D);
+                return null;
+
+            default:
+                return null;
+        }
+    }
+
+    private WorksetIssue? CheckLink(Element link, string workset, bool inLinks)
+    {
+        var linkSections = Sections.Find(TypeName(link));
+        var inSectionWorkset = inLinks && !Sections.HasCadToken(workset);
+
+        if (linkSections.Count == 0)
+        {
+            // Раздел по имени не понять — в любом РН связей (кроме DWG) связь считаем на месте.
+            if (inSectionWorkset) return null;
+            return Issue(link, workset, "Связь не в РН связей", Target.Manual("раздел не определён по имени файла"));
+        }
+
+        if (inSectionWorkset && Sections.Find(workset).Intersect(linkSections).Any()) return null;
+
+        if (linkSections.Count > 1)
+        {
+            var names = string.Join(", ", linkSections);
+            return Issue(link, workset, $"Связь не в РН своего раздела ({names})",
+                Target.Manual($"по имени файла подходит несколько разделов: {names}"));
+        }
+
+        var section = linkSections[0];
+        return Issue(link, workset, $"Связь раздела {section} не в РН связей {section}", SectionTarget(section));
+    }
+
+    /// <summary>РН связей раздела: если такого нет — создаём «префикс_раздел».</summary>
+    private Target SectionTarget(Section section)
+    {
+        var candidates = _linkWorksets
+            .Where(workset => !Sections.HasCadToken(workset.Name) && Sections.Find(workset.Name).Contains(section))
+            .ToList();
+
+        // «#Связи_ОВ_ВК» подходит и ОВ, и ВК — если есть РН только под раздел, берём его.
+        if (candidates.Count > 1)
+        {
+            var exact = candidates.Where(workset => Sections.Find(workset.Name).Count == 1).ToList();
+            if (exact.Count > 0) candidates = exact;
+        }
+
+        return candidates.Count switch
+        {
+            0 => Target.Create(_rules.LinksPrefix + _separator + section.Name),
+            1 => Target.Move(candidates[0].Name),
+            _ => Target.Manual("подходит несколько РН: " + string.Join(", ", candidates.Select(workset => workset.Name)))
+        };
+    }
+
+    private Target CadTarget()
+    {
+        var candidates = _linkWorksets.Where(workset => Sections.HasCadToken(workset.Name)).ToList();
+        return candidates.Count switch
+        {
+            0 => Target.Create(_rules.LinksPrefix + _separator + Sections.CadToken),
+            1 => Target.Move(candidates[0].Name),
+            _ => Target.Manual("подходит несколько РН DWG: " + string.Join(", ", candidates.Select(workset => workset.Name)))
+        };
+    }
+
+    private Target TargetByName(string name)
+    {
+        var existing = _worksets.FirstOrDefault(workset =>
+            string.Equals(workset.Name, name, StringComparison.OrdinalIgnoreCase));
+        return existing is null ? Target.Create(name) : Target.Move(existing.Name);
+    }
+
+    /// <summary>
+    ///     Разделитель между префиксом и разделом в новых РН — как в уже существующих:
+    ///     «#Связи_АР» → «_», «#АР» → без разделителя. По умолчанию «_».
+    /// </summary>
+    private string DetectSeparator()
+    {
+        return _linkWorksets
+                   .Select(workset => workset.Name)
+                   .Select(name => (name, index: Sections.FirstMarkerIndex(name)))
+                   .Where(pair => pair.index >= _rules.LinksPrefix.Length)
+                   .Select(pair => pair.name.Substring(_rules.LinksPrefix.Length, pair.index - _rules.LinksPrefix.Length))
+                   .Where(separator => separator.All(c => !char.IsLetterOrDigit(c)))
+                   .GroupBy(separator => separator)
+                   .OrderByDescending(group => group.Count())
+                   .Select(group => group.Key)
+                   .FirstOrDefault()
+               ?? "_";
+    }
+
+    private WorksetIssue Issue(Element element, string workset, string problem, Target target)
+    {
+        var action = target.Action;
+        var reason = target.Reason;
+
+        if (action is IssueAction.Move or IssueAction.CreateAndMove)
+        {
+            // Чужой или устаревший элемент перенести не дадут — сразу говорим об этом.
+            var status = WorksharingUtils.GetCheckoutStatus(_document, element.Id, out var owner);
+            if (status == CheckoutStatus.OwnedByOtherUser)
+            {
+                action = IssueAction.Manual;
+                reason = $"элемент занят пользователем {owner}";
+            }
+            else if (WorksharingUtils.GetModelUpdatesStatus(_document, element.Id) == ModelUpdatesStatus.UpdatedInCentral)
+            {
+                action = IssueAction.Manual;
+                reason = "элемент изменён в хранилище — загрузите последние изменения";
+            }
+        }
+        else if (action == IssueAction.ShowOn3D && element.get_BoundingBox(null) is null)
+        {
+            action = IssueAction.Manual;
+            reason = "у элемента нет геометрии для 3D-вида — найдите его по Id";
+        }
+
+        return new WorksetIssue
+        {
+            ElementId = element.Id,
+            Category = element.Category?.Name ?? element.GetType().Name,
+            Element = Describe(element),
+            Workset = workset,
+            Problem = problem,
+            Action = action,
+            TargetWorkset = action is IssueAction.Move or IssueAction.CreateAndMove ? target.Workset : null,
+            ManualReason = reason
+        };
+    }
+
+    private string Describe(Element element)
+    {
+        return element switch
+        {
+            RevitLinkInstance or ImportInstance => TypeName(element),
+            FamilyInstance instance => $"{instance.Symbol?.FamilyName} : {instance.Name}",
+            _ => element.Name
+        };
+    }
+
+    /// <summary>Имя типа — для связей это имя файла.</summary>
+    private string TypeName(Element element)
+    {
+        var name = _document.GetElement(element.GetTypeId())?.Name ?? element.Name;
+        return name.EndsWith(".rvt", StringComparison.OrdinalIgnoreCase) ? name.Substring(0, name.Length - 4) : name;
+    }
+
+    private sealed class Target(IssueAction action, string? workset = null, string? reason = null)
+    {
+        public static readonly Target On3D = new(IssueAction.ShowOn3D);
+
+        public IssueAction Action { get; } = action;
+        public string? Workset { get; } = workset;
+        public string? Reason { get; } = reason;
+
+        public static Target Move(string workset) => new(IssueAction.Move, workset);
+        public static Target Create(string workset) => new(IssueAction.CreateAndMove, workset);
+        public static Target Manual(string reason) => new(IssueAction.Manual, reason: reason);
     }
 }

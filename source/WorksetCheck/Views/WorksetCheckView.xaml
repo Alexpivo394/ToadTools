@@ -5,145 +5,96 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:viewModels="clr-namespace:WorksetCheck.ViewModels"
+    d:DataContext="{d:DesignInstance Type=viewModels:WorksetCheckViewModel}"
     mc:Ignorable="d"
-    Title="WorksetCheck"
-    Width="1100"
-    Height="650"
+    Title="Проверка рабочих наборов"
+    Width="560"
+    SizeToContent="Height"
+    ResizeMode="NoResize"
     ExtendsContentIntoTitleBar="True"
     WindowBackdropType="Mica"
     WindowCornerPreference="Round"
     WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,10,0,4" />
+        </Style>
+        <Style x:Key="FieldHint" TargetType="TextBlock">
+            <Setter Property="Opacity" Value="0.7" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="2,4,0,0" />
+        </Style>
+    </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />  <!-- Title -->
-            <RowDefinition Height="*" />     <!-- Main -->
-            <RowDefinition Height="Auto" />  <!-- Bottom toolbar -->
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        
-        <ui:TitleBar Grid.Row="0" Title="WorksetCheck">
+
+        <ui:TitleBar Grid.Row="0" Title="Проверка рабочих наборов" ShowMaximize="False" ShowMinimize="False">
             <ui:TitleBar.Icon>
-                <ui:SymbolIcon Symbol="AppsListDetail24" />
+                <ui:SymbolIcon Symbol="TaskListSquareLtr24" />
             </ui:TitleBar.Icon>
         </ui:TitleBar>
-        
+
         <!-- ReSharper disable Xaml.DynamicResourceError -->
-        <Border Grid.Row="1" Margin="10,0,10,0" CornerRadius="5" Padding="10"
+        <Border Grid.Row="1" Margin="10,0,10,10" CornerRadius="5" Padding="12,4,12,12"
                 Background="{DynamicResource ControlFillColorDefaultBrush}"
                 BorderBrush="{DynamicResource SystemAccentColorBrush}" BorderThickness="1">
             <!-- ReSharper restore Xaml.DynamicResourceError -->
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
+            <StackPanel>
+                <TextBlock Margin="0,6,0,0" TextWrapping="Wrap" Opacity="0.8"
+                           Text="Проверяется открытая модель. Имена рабочих наборов подставлены автоматически — проверьте их и при необходимости поправьте." />
 
-                <TextBlock Text="Модели для экспорта" FontWeight="Bold" Margin="0,0,0,10" />
+                <TextBlock Style="{StaticResource FieldLabel}">
+                    <Run Text="Префикс РН связей" />
+                    <Run Text="{Binding LinksSource, Mode=OneWay}" FontWeight="Normal" FontStyle="Italic" />
+                </TextBlock>
+                <ui:TextBox Text="{Binding LinksPrefix, UpdateSourceTrigger=PropertyChanged}"
+                            PlaceholderText="Например, #Связи" />
+                <TextBlock Style="{StaticResource FieldHint}" Text="{Binding LinksHint}" />
 
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" MinHeight="300">
-                    <ui:ListView
-                        ItemsSource="{Binding Models}"
-                        HorizontalContentAlignment="Stretch"
-                        Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ScrollViewer}}"
-                        ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                        ScrollViewer.VerticalScrollBarVisibility="Disabled">
-                        <ui:ListView.ItemTemplate>
-                            <DataTemplate>
-                                <!-- ReSharper disable Xaml.DynamicResourceError -->
-                                <Border Margin="0" Background="{DynamicResource ControlElevationBorderBrush}" Padding="2"
-                                        BorderThickness="4,0,0,0" BorderBrush="{DynamicResource SystemAccentColorTertiaryBrush}">
-                                    <!-- ReSharper restore Xaml.DynamicResourceError -->
-                                    <Grid Margin="0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <Grid Grid.Column="0">
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-                                        
-                                        <ui:TextBox
-                                            Grid.Row="0"
-                                            Text="{Binding ServerPath}"
-                                            PlaceholderText="Путь к модели Revit" />
-                                        
-                                        <Grid Grid.Row="1" Margin="0,5,0,0">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="*" />
-                                            </Grid.ColumnDefinitions>
-                                            
-                                            <ui:TextBox
-                                                Grid.Column="0"
-                                                Text="{Binding WorksetForWorkSetsName}"
-                                                PlaceholderText="Префикс рабочих наборов свзей" />
-                                            
-                                            <ui:TextBox
-                                                Grid.Column="1"
-                                                Text="{Binding WorksetForAxesName}"
-                                                Margin="5,0,0,0"
-                                                PlaceholderText="Рабочий набор для осей и уровней" />
-                                            
-                                            <ui:TextBox
-                                                Grid.Column="2"
-                                                Text="{Binding WorksetForHolesName}"
-                                                Margin="5,0,0,0"
-                                                PlaceholderText="Рабочий набор заданий на отверстия " />
-                                            
-                                        </Grid>
-                                    </Grid>
-                                    <ui:Button
-                                        Grid.Column="1"
-                                        Icon="{ui:SymbolIcon Symbol=Delete24}"
-                                        Command="{Binding DataContext.RemoveModelCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                        CommandParameter="{Binding}"
-                                        Appearance="Transparent"
-                                        VerticalAlignment="Stretch"
-                                        Margin="5,0,0,0" />
-                                    </Grid>
-                                    </Border>
-                            </DataTemplate>
-                        </ui:ListView.ItemTemplate>
-                    </ui:ListView>
-                </ScrollViewer>
+                <TextBlock Style="{StaticResource FieldLabel}">
+                    <Run Text="РН осей и уровней" />
+                    <Run Text="{Binding GridsSource, Mode=OneWay}" FontWeight="Normal" FontStyle="Italic" />
+                </TextBlock>
+                <ComboBox IsEditable="True"
+                          ItemsSource="{Binding Worksets}"
+                          Text="{Binding GridsWorkset, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBlock Style="{StaticResource FieldHint}" Text="{Binding GridsHint}" />
 
-                <ui:Button Grid.Row="2"
-                           Content="Добавить"
-                           Icon="{ui:SymbolIcon AddCircle24}"
-                           Command="{Binding AddModelCommand}"
-                           Appearance="Secondary"
-                           Margin="0,10,10,0" />
-            </Grid>
+                <TextBlock Style="{StaticResource FieldLabel}">
+                    <Run Text="РН заданий на отверстия" />
+                    <Run Text="{Binding OpeningsSource, Mode=OneWay}" FontWeight="Normal" FontStyle="Italic" />
+                </TextBlock>
+                <ComboBox IsEditable="True"
+                          ItemsSource="{Binding Worksets}"
+                          Text="{Binding OpeningsWorkset, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBlock Style="{StaticResource FieldHint}" Text="{Binding OpeningsHint}" />
+            </StackPanel>
         </Border>
-        
+
         <!-- ReSharper disable Xaml.DynamicResourceError -->
-        <Border Grid.Row="2"
-                Background="{DynamicResource ControlBackgroundBrush}"
-                Height="48"
-                VerticalAlignment="Bottom">
+        <Border Grid.Row="2" Background="{DynamicResource ControlBackgroundBrush}" Height="48">
             <!-- ReSharper restore Xaml.DynamicResourceError -->
             <DockPanel Margin="10,0">
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
-                    <ui:Button Content="Импорт" Command="{Binding ImportModelsCommand}" Margin="0,0,10,0" />
-                    <ui:Button Content="Экспорт" Command="{Binding ExportModelsCommand}"/>
-                    <TextBlock Text="Тема:" VerticalAlignment="Center" Margin="10,0,10,0"/>
-                    <ui:ToggleSwitch
-                        IsChecked="{Binding DataContext.DarkTheme, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}, Mode=TwoWay}"
-                        OffContent="Светлая"
-                        OnContent="Темная"/>
+                    <TextBlock Text="Тема:" VerticalAlignment="Center" Margin="0,0,10,0" />
+                    <ui:ToggleSwitch IsChecked="{Binding DarkTheme, Mode=TwoWay}"
+                                     OffContent="Светлая"
+                                     OnContent="Темная" />
                 </StackPanel>
-                <ui:Button Content="🚀 Запуск"
+                <ui:Button Content="Проверить"
+                           Icon="{ui:SymbolIcon Play24}"
                            Command="{Binding StartCommand}"
-                           DockPanel.Dock="Right"
+                           IsDefault="True"
                            HorizontalAlignment="Right"
                            VerticalAlignment="Center"
-                           Margin="0,0,0,0"
                            Appearance="Primary" />
             </DockPanel>
         </Border>
-
     </Grid>
 </ui:FluentWindow>

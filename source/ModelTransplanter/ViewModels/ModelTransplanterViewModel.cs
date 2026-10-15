@@ -4,6 +4,8 @@ using ModelTransplanter.Models;
 using ModelTransplanter.Services;
 using Nice3point.Revit.Toolkit;
 using ToadTools.UI.Models;
+using ToadTools.UI.Progress;
+using Wpf.Ui.Controls;
 using Wpf.Ui.Appearance;
 using ToadTools.UI.Services;
 using Settings = ModelTransplanter.Configuration.Settings;
@@ -87,17 +89,27 @@ public partial class ModelTransplanterViewModel : ObservableObject
 
             try
             {
-                var progress = new Progress<int>(value =>
+                using (var progress = ToadProgress.Show("Копирование элементов", new ProgressOptions
+                       {
+                           Icon = SymbolRegular.CopyArrowRight24
+                       }))
                 {
-                    ProgressValue = value;
-                });
-
-                var transferService = new ElementTransferService(_logger);
-                transferService.TransferElements(SelectedSourceDoc, SelectedTargetDoc, progress);
+                    var transferService = new ElementTransferService(_logger);
+                    transferService.TransferElements(SelectedSourceDoc, SelectedTargetDoc, progress);
+                }
 
                 var dial = ToadDialogService.Show(
                     "Успех!",
                     $"Перенос элементов завершен успешно!",
+                    DialogButtons.OK,
+                    DialogIcon.Info
+                );
+            }
+            catch (OperationCanceledException)
+            {
+                ToadDialogService.Show(
+                    "Прервано",
+                    "Перенос элементов прерван, изменения в модели откачены.",
                     DialogButtons.OK,
                     DialogIcon.Info
                 );

@@ -1,5 +1,7 @@
 using ClassifierCode.Dictionaries;
 using ClassifierCode.Models;
+using ToadTools.UI.Progress;
+using Wpf.Ui.Controls;
 
 namespace ClassifierCode.Services;
 
@@ -54,6 +56,10 @@ public sealed class ClassifierCodeService(ElementCollector collector)
         if (!loader.EnsureParameters(out var parametersNote))
             return null;
 
+        using var progress = ToadProgress.Show("Код по классификатору",
+            new ProgressOptions { Icon = SymbolRegular.TextBulletListSquare24 });
+        progress.Stage("Сбор элементов");
+
         var targets = collector.Collect(document, document.ActiveView, scope, selection);
         var report = new ClassifierReport(section, targets.Count);
         if (parametersNote != null)
@@ -72,7 +78,7 @@ public sealed class ClassifierCodeService(ElementCollector collector)
         AllowVaryBetweenGroups(targets, report);
 
         var writer = new ClassifierParameterWriter(document, keepExisting, report);
-        foreach (var element in targets)
+        foreach (var element in progress.Track(targets, "Классификация элементов"))
         {
             var classification = classifier.Classify(element);
             if (classification.Skip)
@@ -90,6 +96,7 @@ public sealed class ClassifierCodeService(ElementCollector collector)
             writer.Write(element, classification.Item);
         }
 
+        progress.Stage("Запись типов и сохранение");
         writer.FlushTypes();
         transaction.Commit();
 

@@ -1,5 +1,7 @@
 using Nice3point.Revit.Toolkit;
 using ToadTools.UI.Models;
+using ToadTools.UI.Progress;
+using Wpf.Ui.Controls;
 using ToadTools.UI.Services;
 using WriteDash.Models;
 
@@ -29,19 +31,51 @@ public class ParameterProcessorService
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .Select(x => x!));
 
-        var elements = new FilteredElementCollector(document)
-            .WhereElementIsNotElementType()
-            .Where(x =>
-                x.Category != null &&
-                x.Category.CategoryType == CategoryType.Model);
+        try
+        {
+            using var progress = ToadProgress.Show("Записать прочерк",
+                new ProgressOptions { Icon = SymbolRegular.TextEditStyle24 });
+            progress.Stage("Сбор элементов");
 
+            var elements = new FilteredElementCollector(document)
+                .WhereElementIsNotElementType()
+                .Where(x =>
+                    x.Category != null &&
+                    x.Category.CategoryType == CategoryType.Model)
+                .ToList();
+
+            using var transaction = new Transaction(document, "Fill empty parameters");
+
+            transaction.Start();
+            FillElements(document, elements, parameterNames, progress);
+            transaction.Commit();
+        }
+        catch (OperationCanceledException)
+        {
+            ToadDialogService.Show(
+                "Прервано",
+                "Запись прервана, изменения в модели откачены.",
+                DialogButtons.OK,
+                DialogIcon.Info
+            );
+
+            return;
+        }
+
+        ToadDialogService.Show(
+            "Успех!",
+            "Значение записано в выбранные параметры!",
+            DialogButtons.OK,
+            DialogIcon.Info
+        );
+    }
+
+    private static void FillElements(Document document, List<Element> elements, HashSet<string> parameterNames,
+        ToadProgress progress)
+    {
         var processedTypeIds = new HashSet<ElementId>();
 
-        using var transaction = new Transaction(document, "Fill empty parameters");
-
-        transaction.Start();
-
-        foreach (var element in elements)
+        foreach (var element in progress.Track(elements, "Заполнение пустых параметров"))
         {
             ProcessParameters(element.Parameters, parameterNames);
 
@@ -58,15 +92,6 @@ public class ParameterProcessorService
                 ProcessParameters(elementType.Parameters, parameterNames);
             }
         }
-
-        transaction.Commit();
-
-        ToadDialogService.Show(
-            "Успех!",
-            "Значение записано в выбранные параметры!",
-            DialogButtons.OK,
-            DialogIcon.Info
-        );
     }
 
     private static void ProcessParameters(
