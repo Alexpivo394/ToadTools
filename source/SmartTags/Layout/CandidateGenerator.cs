@@ -42,6 +42,42 @@ internal sealed class CandidateGenerator(LayoutScene scene, PlacementScorer scor
         return candidates;
     }
 
+    /// <summary>
+    ///     Запасные положения подальше — длиннее максимальной выноски. Нужны, когда рядом с элементом
+    ///     места нет: длинная выноска читается, две подписи друг на друге — нет.
+    /// </summary>
+    public List<Candidate> GenerateFar(LayoutItem item)
+    {
+        var candidates = new List<Candidate>();
+        if (item.Anchors.Count == 0 || item.TextWidth <= 0 || item.TextHeight <= 0) return candidates;
+
+        var axis = item.IsLinear ? item.Axis.Normalize() : Vector2D.Zero;
+        var max = Math.Max(_s.PreferredLeader, _s.MaxLeader);
+        double[] factors = [1.25, 1.6, 2, 2.5, 3];
+        for (var angle = 0.0; angle < 360 - 1e-6; angle += FarDirectionStep)
+        {
+            var direction = Vector2D.FromAngle(angle);
+            if (item.IsLinear && Math.Abs(Vector2D.Dot(direction, axis)) > 0.94) continue;
+            // Длинная почти горизонтальная выноска сливается с линиями чертежа.
+            if (Geometry2D.Inclination(direction) < FarMinInclination) continue;
+
+            foreach (var factor in factors)
+            foreach (var side in Sides(direction))
+            {
+                var placement = Placement.FromLeader(item, 0, direction, max * factor, side, _s.Shelf);
+                candidates.Add(new Candidate(placement, scorer.Own(item, placement)));
+            }
+        }
+
+        candidates.Sort((a, b) => a.Own.Hard != b.Own.Hard
+            ? a.Own.Hard.CompareTo(b.Own.Hard)
+            : a.Own.Soft.CompareTo(b.Own.Soft));
+        return candidates;
+    }
+
+    private const double FarDirectionStep = 15;
+    private const double FarMinInclination = 20;
+
     private List<Vector2D> Directions(LayoutItem item)
     {
         var raw = new List<Vector2D>();

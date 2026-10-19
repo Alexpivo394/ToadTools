@@ -100,6 +100,40 @@ public sealed class TagView
     /// <summary>Пересоздаёт контекст для другого вида (после блокировки 3D-вида копией).</summary>
     public TagView ForView(View view) => new(Document, view, Kind);
 
+    /// <summary>
+    ///     Точка элемента там, где он нарисован на виде: элементы, сдвинутые «Переместить элементы», показываются
+    ///     со смещением, а их линия расположения остаётся в модели. Рамки (get_BoundingBox вида) Revit уже сдвигает сам.
+    /// </summary>
+    public XYZ Displaced(Element element, XYZ point)
+    {
+        _displacements ??= ReadDisplacements();
+        return _displacements.TryGetValue(element.Id, out var offset) ? point + offset : point;
+    }
+
+    private Dictionary<ElementId, XYZ>? _displacements;
+
+    private Dictionary<ElementId, XYZ> ReadDisplacements()
+    {
+        var result = new Dictionary<ElementId, XYZ>();
+        try
+        {
+            foreach (var displacement in new FilteredElementCollector(Document, View.Id)
+                         .OfClass(typeof(DisplacementElement))
+                         .Cast<DisplacementElement>())
+            {
+                var offset = displacement.GetAbsoluteDisplacement();
+                foreach (var id in displacement.GetDisplacedElementIds())
+                    result[id] = offset;
+            }
+        }
+        catch
+        {
+            // Вид без смещений (или не поддерживает их).
+        }
+
+        return result;
+    }
+
     public bool IsInsideCrop(Vector2D point)
     {
         if (Crop is not { } crop) return true;

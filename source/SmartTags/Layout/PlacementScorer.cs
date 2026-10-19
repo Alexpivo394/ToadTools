@@ -20,6 +20,17 @@ internal sealed class PlacementScorer(LayoutScene scene)
     // Выноски соседних марок считаются параллельными, если расходятся меньше чем на ~10°.
     private const double ParallelCos = 0.985;
 
+    // Выноска считается идущей вдоль своей трубы, если отклоняется от оси меньше чем на ~20°.
+    private const double AlongAxisCos = 0.94;
+
+    // Элемент рядом с текстом (в зазоре) или задевший его краем тоже немного мешает.
+    private const double MinCover = 0.1;
+
+    // Сверх трёх «полностью закрывающих» элементов под текстом и четырёх пересечённых выноской штраф не растёт:
+    // разница между «много» и «очень много» линий не стоит длинной выноски.
+    private const double MaxUnderText = 3;
+    private const int MaxCrossed = 4;
+
     private readonly LayoutSettings _s = scene.Settings;
     private readonly List<int> _buffer = new(64);
     private readonly List<int> _groupBuffer = new(64);
@@ -63,15 +74,36 @@ internal sealed class PlacementScorer(LayoutScene scene)
             ? _s.WeightLongLeader * deviation * deviation
             : _s.WeightShortLeader * deviation * deviation;
 
+        // Выноски общей подписи: не длиннее максимума и не через свой же текст.
+        foreach (var extra in p.Extra)
+        {
+            var excess = (extra.Length - _s.MaxLeader) / preferred;
+            if (excess > 0) soft += _s.WeightLongLeader * excess * excess;
+            if (extra.Hits(p.Text.Inflate(-0.3)))
+                hard += Add(conflicts, ConflictKind.LeaderOverText, item.Id, item.Id, -1, true);
+        }
+
         soft += _s.WeightAnglePerDegree * AngleDeviation(p.Direction);
 
         // Почти горизонтальная выноска сливается с полкой и трубами — на чертежах так не делают.
-        if (Geometry2D.Inclination(p.Direction) < FlatAngle) soft += _s.WeightFlatLeader;
+        if (Geometry2D.Inclination(p.Direction) < FlatAngle)
+            soft += _s.WeightFlatLeader * Math.Max(1, p.LeaderLength / preferred);
+
+        // Выноска вдоль своей трубы ложится на саму трубу и соседние в пучке — её не видно. Генератор
+        // кандидатов такие направления не даёт, но столбики и выравнивание строят выноску от текста.
+        if (item.IsLinear && Math.Abs(Vector2D.Dot(p.Direction, item.Axis.Normalize())) > AlongAxisCos)
+            soft += _s.WeightAlongAxis;
 
         var textWithGap = p.Text.Inflate(_s.MinGap);
         var textWithSoftGap = p.Text.Inflate(_s.SoftGap);
         var leader = p.Leader;
         var shelf = p.Shelf;
+
+        // Текст, по которому проходят линии, читается: штраф растёт с закрытой долей текста, но не бесконечно —
+        // иначе на плотной схеме, где рядом с элементом линии везде, марка уходит далеко, а это хуже.
+        // Нельзя только закрывать текст толстым элементом.
+        var underText = 0.0;
+        var crossed = 0;
 
         _buffer.Clear();
         scene.QueryObstacles(p.Bounds.Inflate(_s.SoftGap), _buffer);
@@ -83,11 +115,15 @@ internal sealed class PlacementScorer(LayoutScene scene)
             {
                 switch (obstacle.Kind)
                 {
-                    case ObstacleKind.Element when _s.AvoidTextOverElements:
-                        hard += Add(conflicts, ConflictKind.TextOverElement, item.Id, -1, obstacle.Id, true);
-                        break;
                     case ObstacleKind.Element:
-                        soft += _s.WeightTextOverElement;
+                        var covered = obstacle.Covers(p.Text);
+                        if (_s.AvoidTextOverElements && obstacle.Thickness > _s.ThinElement && covered > _s.MaxTextCover)
+                        {
+                            hard += Add(conflicts, ConflictKind.TextOverElement, item.Id, -1, obstacle.Id, true);
+                            break;
+                        }
+
+                        underText += Math.Max(MinCover, covered / _s.MaxTextCover);
                         Add(conflicts, ConflictKind.TextOverElement, item.Id, -1, obstacle.Id, false);
                         break;
                     case ObstacleKind.TagText:
@@ -108,12 +144,13 @@ internal sealed class PlacementScorer(LayoutScene scene)
 
             // Выноска может идти по своему же элементу.
             if (obstacle.OwnerItem == item.Id) continue;
-            if (!obstacle.Hits(leader, SegmentTolerance) && !obstacle.Hits(shelf, SegmentTolerance)) continue;
+            if (!obstacle.Hits(leader, SegmentTolerance) && !obstacle.Hits(shelf, SegmentTolerance) &&
+                !HitsExtra(obstacle, p)) continue;
 
             switch (obstacle.Kind)
             {
                 case ObstacleKind.Element:
-                    soft += _s.WeightLeaderOverElement;
+                    crossed++;
                     Add(conflicts, ConflictKind.LeaderOverElement, item.Id, -1, obstacle.Id, false);
                     break;
                 case ObstacleKind.TagText:
@@ -125,6 +162,9 @@ internal sealed class PlacementScorer(LayoutScene scene)
                     break;
             }
         }
+
+        soft += _s.WeightTextOverElement * Math.Min(MaxUnderText, underText);
+        soft += _s.WeightLeaderOverElement * Math.Min(MaxCrossed, crossed);
 
         // Лёгкий штраф за тесноту: при прочих равных текст уходит на свободное место.
         soft += _s.WeightDensity * scene.Occupancy(p.Text.Inflate(_s.SoftGap * 2));
@@ -160,14 +200,13 @@ internal sealed class PlacementScorer(LayoutScene scene)
             Add(conflicts, ConflictKind.TooClose, a.Id, b.Id, -1, false);
         }
 
-        if (pa.Leader.Crosses(pb.Leader, SegmentTolerance) || pa.Leader.Crosses(pb.Shelf, SegmentTolerance) ||
-            pa.Shelf.Crosses(pb.Leader, SegmentTolerance) || pa.Shelf.Crosses(pb.Shelf, SegmentTolerance))
+        if (LeadersCross(pa, pb))
             hard += Add(conflicts, ConflictKind.LeaderOverLeader, a.Id, b.Id, -1, true);
 
-        if (pa.Leader.Hits(pb.Text) || pa.Shelf.Hits(pb.Text))
+        if (pa.Leader.Hits(pb.Text) || pa.Shelf.Hits(pb.Text) || pa.Extra.Any(extra => extra.Hits(pb.Text)))
             hard += Add(conflicts, ConflictKind.LeaderOverText, a.Id, b.Id, -1, true);
 
-        if (pb.Leader.Hits(pa.Text) || pb.Shelf.Hits(pa.Text))
+        if (pb.Leader.Hits(pa.Text) || pb.Shelf.Hits(pa.Text) || pb.Extra.Any(extra => extra.Hits(pa.Text)))
             hard += Add(conflicts, ConflictKind.LeaderOverText, b.Id, a.Id, -1, true);
 
         if (Vector2D.Distance(pa.Anchor, pb.Anchor) < _s.MinGap * 2)
@@ -313,10 +352,37 @@ internal sealed class PlacementScorer(LayoutScene scene)
             if (obstacle.Kind != ObstacleKind.Element || obstacle.OwnerItem == item.Id ||
                 !members.Contains(obstacle.OwnerItem)) continue;
 
-            if (obstacle.Hits(p.Leader, SegmentTolerance) || obstacle.Hits(p.Shelf, SegmentTolerance)) count++;
+            if (obstacle.Hits(p.Leader, SegmentTolerance) || obstacle.Hits(p.Shelf, SegmentTolerance) ||
+                HitsExtra(obstacle, p)) count++;
         }
 
         return count;
+    }
+
+    public static bool LeadersCross(Placement pa, Placement pb)
+    {
+        if (pa.Shelf.Crosses(pb.Shelf, SegmentTolerance)) return true;
+
+        foreach (var a in pa.Leaders)
+        {
+            if (a.Crosses(pb.Shelf, SegmentTolerance)) return true;
+            foreach (var b in pb.Leaders)
+            {
+                if (a.Crosses(b, SegmentTolerance)) return true;
+            }
+        }
+
+        return pb.Leaders.Any(b => b.Crosses(pa.Shelf, SegmentTolerance));
+    }
+
+    private static bool HitsExtra(LayoutObstacle obstacle, Placement p)
+    {
+        foreach (var extra in p.Extra)
+        {
+            if (obstacle.Hits(extra, SegmentTolerance)) return true;
+        }
+
+        return false;
     }
 
     private double AngleDeviation(Vector2D direction)
@@ -330,6 +396,20 @@ internal sealed class PlacementScorer(LayoutScene scene)
     private static int Add(List<Conflict>? conflicts, ConflictKind kind, int item, int other, int obstacle, bool hard)
     {
         conflicts?.Add(new Conflict(kind, item, other, obstacle, hard));
-        return hard ? 1 : 0;
+        return hard ? Severity(kind) : 0;
     }
+
+    /// <summary>
+    ///     Вес жёсткого конфликта. Нечитаемый текст хуже всего: лучше выноска через чужую выноску
+    ///     или текст на воздуховоде, чем две подписи друг на друге. Перекрещенные выноски путают, к какому
+    ///     элементу относится подпись, — это хуже, чем текст на линии схемы.
+    /// </summary>
+    public static int Severity(ConflictKind kind) => kind switch
+    {
+        ConflictKind.TextOverText or ConflictKind.TextOverTag or ConflictKind.TextOutsideCrop => 8,
+        ConflictKind.LeaderOverLeader or ConflictKind.LeaderOverTagLeader => 4,
+        ConflictKind.LeaderOverText => 3,
+        ConflictKind.TextOverElement => 2,
+        _ => 1
+    };
 }

@@ -42,8 +42,18 @@ public sealed class LayoutEngine(Action<string>? log = null)
 
         Log("Кандидатов: {0}, {1} мс", stats.Candidates, clock.ElapsedMilliseconds);
 
-        // 2. Жадная начальная раскладка.
         var optimizer = new LayoutOptimizer(scene, scorer, candidates, new Random(settings.Seed));
+        var arranger = new GroupArranger(scene, scorer, optimizer.Relocate, message => Log("{0}", message));
+
+        // 2. Скопления — сразу стопками, пока вокруг свободно; остальные марки встанут вокруг них.
+        if (!cancelled())
+        {
+            progress?.Invoke(new LayoutProgress("Упорядочивание групп", 0, 1));
+            arranger.Seed(state, cancelled);
+            Log("Посев групп: {0}, {1}, {2} мс", arranger.Arranged, optimizer.Total(state, null), clock.ElapsedMilliseconds);
+        }
+
+        // 3. Жадная начальная раскладка остальных.
         optimizer.Greedy(state, step =>
         {
             if (step % 25 == 0 || step == count)
@@ -71,13 +81,12 @@ public sealed class LayoutEngine(Action<string>? log = null)
         if (!cancelled())
         {
             var deadline = Math.Max(clock.ElapsedMilliseconds + 100, stats.BudgetMs);
-            var moves = optimizer.Polish(state, clock, deadline, cancelled);
+            var moves = optimizer.Polish(state, clock, deadline, cancelled, keepStacked: true);
             if (moves > 0) score = optimizer.Total(state, null);
             Log("Шлифовка: ходов {0}, {1}", moves, score);
         }
 
         // 5. Марки соседних элементов — в ровные столбики и строки, затем остальные подстраиваются под них.
-        var arranger = new GroupArranger(scene, scorer, optimizer.Relocate, message => Log("{0}", message));
         if (!cancelled())
         {
             progress?.Invoke(new LayoutProgress("Упорядочивание групп", 0, 1));
@@ -98,7 +107,27 @@ public sealed class LayoutEngine(Action<string>? log = null)
         {
             var before = stacks.Built;
             stacks.Run(state, cancelled);
-            Log("Столбики (повтор): {0}, {1}", stacks.Built - before, optimizer.Total(state, null));
+            score = optimizer.Total(state, null);
+            Log("Столбики (повтор): {0}, {1}", stacks.Built - before, score);
+        }
+
+        // Нечитаемые марки (текст на тексте, выноска через текст) — на дальние места.
+        if (!cancelled() && score.Hard > 0)
+        {
+            var deadline = clock.ElapsedMilliseconds + Math.Max(200, stats.BudgetMs / 3);
+            var rescued = optimizer.Rescue(state, generator.GenerateFar, clock, deadline, cancelled);
+            if (rescued > 0) score = optimizer.Total(state, null);
+            stats.Rescued = rescued;
+            Log("Спасение: перестановок {0}, {1}", rescued, score);
+        }
+
+        // Перекрещенные выноски — обменом подписей.
+        if (!cancelled() && score.Hard > 0)
+        {
+            var untangler = new LeaderUntangler(scene, scorer);
+            untangler.Run(state, cancelled);
+            if (untangler.Moves > 0) score = optimizer.Total(state, null);
+            Log("Распутывание: обменов {0}, {1}", untangler.Moves, score);
         }
 
         // 6. Выравнивание текстов в линию.

@@ -54,7 +54,7 @@ public static class TagCategoryMap
     /// <summary>Инженерные категории: их элементы — препятствия для текста и выносок.</summary>
     private static readonly string[] ObstacleNames =
     [
-        "OST_DuctCurves", "OST_FlexDuctCurves", "OST_DuctFitting", "OST_DuctAccessory", "OST_DuctTerminal",
+         "OST_DuctCurves", "OST_FlexDuctCurves", "OST_DuctFitting", "OST_DuctAccessory", "OST_DuctTerminal",
         "OST_DuctInsulations", "OST_DuctLinings", "OST_MechanicalEquipment", "OST_PlaceHolderDucts",
         "OST_PipeCurves", "OST_FlexPipeCurves", "OST_PipeFitting", "OST_PipeAccessory", "OST_PipeInsulations",
         "OST_PlumbingFixtures", "OST_Sprinklers", "OST_PlaceHolderPipes", "OST_CableTray", "OST_CableTrayFitting",

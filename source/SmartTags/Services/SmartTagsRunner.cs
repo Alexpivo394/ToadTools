@@ -16,10 +16,22 @@ public sealed class SmartTagsRunner(TagView view, SmartTagsSettings settings)
     private readonly Stopwatch _clock = Stopwatch.StartNew();
     private TagView _view = view;
 
+    // Больше элементов у одной подписи — выноски сливаются в веник.
+    private const int MaxSharedLabel = 4;
+
+    /// <summary>Цели последнего запуска — для диагностики.</summary>
+    internal List<TagTarget> LastTargets { get; } = [];
+
+    /// <summary>Раскладка последнего запуска — для диагностики.</summary>
+    internal LayoutResult? LastLayout { get; private set; }
+
+    /// <summary>Задача раскладки последнего запуска — для диагностики.</summary>
+    internal LayoutRequest? LastRequest { get; private set; }
+
     public RunResult Run(IRunProgress progress)
     {
         var result = new RunResult();
-        var targets = new List<TagTarget>();
+        var targets = LastTargets;
         LayoutResult? layout = null;
         WriteHeader();
 
@@ -44,10 +56,6 @@ public sealed class SmartTagsRunner(TagView view, SmartTagsSettings settings)
                 _log.Write($"{choice.Name}: элементов {elements.Count}, целей {built.Count}, марка «{choice.TagType.DisplayName}»");
             }
 
-            // Участки, выбранные вручную, маркируются все — повторы убираем только при маркировке всего вида.
-            if (settings.SkipSameDuctSection && settings.OnlyElements is null)
-                SameSectionFilter.Apply(targets, _view.Projection, _log.Writer);
-
             var existing = ExistingTags.Collect(_view, _log.Writer);
             var toDelete = ExistingTags.Apply(targets, existing, settings.ExistingMode, _log.Writer);
             var active = targets.Where(target => !target.IsSkipped).ToList();
@@ -63,6 +71,7 @@ public sealed class SmartTagsRunner(TagView view, SmartTagsSettings settings)
             CheckCancel(progress);
 
             Stage(progress, "Измерение марок");
+
             foreach (var target in active.Where(target => target is { IsSkipped: false, ExistingTag: null }))
             {
                 if (!placer.Measure(target)) target.MarkSkipped(SkipReason.MeasureFailed);
@@ -73,8 +82,18 @@ public sealed class SmartTagsRunner(TagView view, SmartTagsSettings settings)
                 target.MarkSkipped(SkipReason.MeasureFailed);
             CheckCancel(progress);
 
+            // Повтор на трассе виден только по тексту марок: одинаковый текст вдоль трассы — одна подпись.
+            // Все цели, а не только новые: трасса связна и через стояки, короткие и уже подписанные участки.
+            if (settings.RunMode == RunTagMode.Routes)
+                RouteFilter.Apply(targets, _view, settings.MinRunLength, _log.Writer);
+
+            if (settings.ShareLabels)
+                LabelSharing.Apply(active, _view.Projection, settings.PreferredLeader,
+                    MaxSharedLabel, _log.Writer);
+
             Stage(progress, "Подготовка раскладки");
             var request = BuildRequest(active, existing);
+            LastRequest = request;
             CheckCancel(progress);
 
             Stage(progress, "Раскладка");
@@ -105,6 +124,7 @@ public sealed class SmartTagsRunner(TagView view, SmartTagsSettings settings)
             _log.Write("ОШИБКА: " + ex);
         }
 
+        LastLayout = layout;
         FillReport(result, targets, layout);
         result.LayoutStats = layout?.Stats;
         result.ElapsedMs = _clock.ElapsedMilliseconds;
@@ -195,7 +215,7 @@ public sealed class SmartTagsRunner(TagView view, SmartTagsSettings settings)
         {
             foreach (var tag in alive)
             {
-                if (!placer.TryMeasure(tag.Tag, out var text, out var collapsedHead)) continue;
+                if (!placer.TryMeasure(tag.Tag, out var text, out var collapsedHead, out var attachHeight)) continue;
 
                 // Смещение текста от головы не меняется — переносим рамку к настоящему положению головы.
                 var offset = text.Min - collapsedHead;
@@ -206,7 +226,9 @@ public sealed class SmartTagsRunner(TagView view, SmartTagsSettings settings)
 
                 target.TextWidth = text.Width;
                 target.TextHeight = text.Height;
+                target.AttachHeight = attachHeight;
                 target.TextOffset = offset;
+                target.Text = TagPlacer.SafeText(tag.Tag);
                 target.Measured = true;
             }
         });
@@ -223,7 +245,8 @@ public sealed class SmartTagsRunner(TagView view, SmartTagsSettings settings)
 
         var obstacles = new ObstacleCollector(_view, _log.Writer);
         var ownerOf = new Dictionary<ElementId, int>();
-        foreach (var target in active.Where(target => !target.IsSkipped))
+        var categories = settings.Choices.Select(choice => choice.Category).Distinct().ToList();
+        foreach (var target in active.Where(target => target is { IsSkipped: false, SharedWith: null }))
         {
             var anchors = target.Anchors
                 .Select(point => (Point: point, Sheet: _view.Projection.ToSheet(point)))
@@ -248,17 +271,30 @@ public sealed class SmartTagsRunner(TagView view, SmartTagsSettings settings)
                 Axis = axis,
                 TextWidth = target.TextWidth,
                 TextHeight = target.TextHeight,
+                AttachHeight = target.AttachHeight,
                 Footprint = obstacles.Footprint(target),
                 // Новые марки ставятся раньше переразмещаемых.
                 Priority = target.ExistingTag is null ? 0 : -1,
-                Group = !target.IsRun ? 1 : Math.Abs(axis.X) >= Math.Abs(axis.Y) ? 2 : 3
+                // Штучные элементы — одна группа; участки — по категории и направлению: воздуховоды
+                // и трубы рядом подписываются каждые своей стопкой.
+                Group = !target.IsRun ? 1 : (categories.IndexOf(target.Choice.Category) + 1) * 10 + (Math.Abs(axis.X) >= Math.Abs(axis.Y) ? 2 : 3)
             };
             item.Anchors.AddRange(anchors.Select(anchor => anchor.Sheet));
+            item.ExtraAnchors.AddRange(target.Sharing.Select(shared => _view.Projection.ToSheet(shared.Anchors[0])));
 
             target.LayoutIndex = request.Items.Count;
             request.Items.Add(item);
-            foreach (var id in target.ElementIds)
+            foreach (var id in target.ElementIds.Concat(target.Sharing.SelectMany(shared => shared.ElementIds)))
                 ownerOf[id] = target.LayoutIndex;
+        }
+
+        // Марки общей подписи встают туда же, куда ведущая.
+        foreach (var target in active.Where(target => target is { IsSkipped: false, SharedWith: { } }))
+        {
+            if (target.SharedWith!.IsSkipped)
+                target.MarkSkipped(target.SharedWith.Skip, target.SharedWith.SkipDetails);
+            else
+                target.LayoutIndex = target.SharedWith.LayoutIndex;
         }
 
         obstacles.AddElements(request, ownerOf);
@@ -385,11 +421,11 @@ public sealed class SmartTagsRunner(TagView view, SmartTagsSettings settings)
         foreach (var choice in settings.Choices)
             _log.Write($"Категория {choice.Name} ({choice.Category}), марка «{choice.TagType.DisplayName}»");
         _log.Write(string.Format(CultureInfo.InvariantCulture,
-            "Режим {0}, только выбранные: {1}, мин. участок {2} мм, стояки {3}, одинаковое сечение {4}, " +
-            "выноска {5}/{6} мм (мин. {7}), зазор {8}, качество {9}, подрезка {10}",
+            "Режим {0}, только выбранные: {1}, мин. участок {2} мм, стояки {3}, линейные {4}, " +
+            "выноска {5}/{6} мм (мин. {7}), зазор {8}, качество {9}, подрезка {10}, общие подписи {11}",
             settings.ExistingMode, settings.OnlyElements?.Count.ToString() ?? "нет", settings.MinRunLength,
-            settings.TagVerticalRuns, settings.SkipSameDuctSection, settings.PreferredLeader, settings.MaxLeader,
-            settings.MinLeader, settings.Gap, settings.Quality, _view.Crop?.ToString() ?? "нет"));
+            settings.TagVerticalRuns, settings.RunMode, settings.PreferredLeader, settings.MaxLeader,
+            settings.MinLeader, settings.Gap, settings.Quality, _view.Crop?.ToString() ?? "нет", settings.ShareLabels));
     }
 
     private void Stage(IRunProgress progress, string stage)

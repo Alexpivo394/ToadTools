@@ -15,7 +15,8 @@ public enum ShelfSide
 /// </summary>
 public sealed class Placement
 {
-    private Placement(Vector2D anchor, Vector2D elbow, Vector2D attach, Box2D text, ShelfSide side, int anchorIndex)
+    private Placement(LayoutItem item, Vector2D anchor, Vector2D elbow, Vector2D attach, Box2D text, ShelfSide side,
+        int anchorIndex)
     {
         Anchor = anchor;
         Elbow = elbow;
@@ -28,6 +29,11 @@ public sealed class Placement
         LeaderLength = leader.Length;
         Direction = leader.Normalize();
         Bounds = text.Union(anchor).Union(elbow);
+
+        // Общая подпись: выноски остальных элементов сходятся к тому же излому.
+        Extra = item.ExtraAnchors.Count == 0 ? [] : item.ExtraAnchors.Select(point => new Segment2D(point, elbow)).ToArray();
+        foreach (var point in item.ExtraAnchors)
+            Bounds = Bounds.Union(point);
     }
 
     public Vector2D Anchor { get; }
@@ -53,6 +59,20 @@ public sealed class Placement
     public Segment2D Leader => new(Anchor, Elbow);
     public Segment2D Shelf => new(Elbow, Attach);
 
+    /// <summary>Выноски остальных элементов общей подписи (от их точек к излому).</summary>
+    public Segment2D[] Extra { get; }
+
+    /// <summary>Все выноски марки: своя и общей подписи.</summary>
+    public IEnumerable<Segment2D> Leaders
+    {
+        get
+        {
+            yield return Leader;
+            foreach (var extra in Extra)
+                yield return extra;
+        }
+    }
+
     /// <summary>Оценка без учёта соседних марок — кэшируется, т. к. не меняется за время раскладки.</summary>
     internal Score? OwnScore { get; set; }
 
@@ -64,22 +84,23 @@ public sealed class Placement
         var elbow = anchor + direction.Normalize() * length;
         var attach = new Vector2D(side == ShelfSide.Right ? elbow.X + shelf : elbow.X - shelf, elbow.Y);
         var text = TextAt(item, attach, side);
-        return new Placement(anchor, elbow, attach, text, side, anchorIndex);
+        return new Placement(item, anchor, elbow, attach, text, side, anchorIndex);
     }
 
     /// <summary>Строит положение от заданного прямоугольника текста: выноска тянется к нему от точки привязки.</summary>
     public static Placement FromText(LayoutItem item, int anchorIndex, Box2D text, ShelfSide side, double shelf)
     {
         var anchor = item.Anchors[anchorIndex];
-        var y = text.Center.Y;
+        var y = text.MinY + item.ShelfHeight;
         var attach = side == ShelfSide.Right ? new Vector2D(text.MinX, y) : new Vector2D(text.MaxX, y);
         var elbow = new Vector2D(side == ShelfSide.Right ? attach.X - shelf : attach.X + shelf, y);
-        return new Placement(anchor, elbow, attach, text, side, anchorIndex);
+        return new Placement(item, anchor, elbow, attach, text, side, anchorIndex);
     }
 
-    private static Box2D TextAt(LayoutItem item, Vector2D attach, ShelfSide side)
+    /// <summary>Прямоугольник текста, к кромке которого полка подходит в точке <paramref name="attach" />.</summary>
+    public static Box2D TextAt(LayoutItem item, Vector2D attach, ShelfSide side)
     {
         var minX = side == ShelfSide.Right ? attach.X : attach.X - item.TextWidth;
-        return Box2D.FromMin(new Vector2D(minX, attach.Y - item.TextHeight / 2), item.TextWidth, item.TextHeight);
+        return Box2D.FromMin(new Vector2D(minX, attach.Y - item.ShelfHeight), item.TextWidth, item.TextHeight);
     }
 }

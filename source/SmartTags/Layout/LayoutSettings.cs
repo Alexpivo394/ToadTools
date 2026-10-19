@@ -32,6 +32,15 @@ public sealed class LayoutSettings
     /// <summary>Текст поверх инженерных элементов — жёсткий конфликт (иначе только штраф).</summary>
     public bool AvoidTextOverElements { get; set; } = true;
 
+    /// <summary>
+    ///     Элемент тоньше этого (линия схемы, тонкая труба) текст может перекрыть со штрафом: подпись остаётся
+    ///     читаемой, а на плотной схеме иначе марку не поставить рядом с элементом.
+    /// </summary>
+    public double ThinElement { get; set; } = 1.5;
+
+    /// <summary>Какую долю текста может закрыть элемент толще <see cref="ThinElement" /> (больше — жёсткий конфликт).</summary>
+    public double MaxTextCover { get; set; } = 0.15;
+
     public LayoutQuality Quality { get; set; } = LayoutQuality.Standard;
     public int Seed { get; set; } = 20240917;
     public int MaxCandidatesPerItem { get; set; } = 160;
@@ -59,6 +68,7 @@ public sealed class LayoutSettings
     public double WeightAnchorRank { get; set; } = 0.15;
     public double WeightReversedShelf { get; set; } = 1.5;
     public double WeightFlatLeader { get; set; } = 1.5;
+    public double WeightAlongAxis { get; set; } = 6;
     public double WeightParallel { get; set; } = 0.4;
 
     /// <summary>Сколько точек привязки перебирать у элемента.</summary>

@@ -135,7 +135,7 @@ internal sealed class ObstacleCollector(TagView view, Action<string>? log)
     {
         if (curve.Location is not LocationCurve { Curve: { } line }) return [];
 
-        var points = line.Tessellate();
+        var points = line.Tessellate().Select(point => view.Displaced(curve, point)).ToList();
         if (points.Count < 2) return [];
 
         CrossSection(curve, out var width, out var height, out var round);

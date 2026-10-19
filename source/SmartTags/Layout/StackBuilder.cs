@@ -31,13 +31,14 @@ internal sealed class StackBuilder(LayoutScene scene, PlacementScorer scorer)
 
         for (var i = 0; i < count; i++)
         {
-            if (state[i] is not { } placed) continue;
+            // Посеянные стопки не разбираем.
+            if (state[i] is not { Stacked: false } placed) continue;
 
             conflicts.Clear();
             if (scorer.Full(scene.Items[i], placed, state, conflicts).Hard == 0) continue;
 
             troubled[i] = true;
-            foreach (var conflict in conflicts.Where(c => c.IsHard && c.OtherItem >= 0))
+            foreach (var conflict in conflicts.Where(c => c.IsHard && c.OtherItem >= 0 && state[c.OtherItem] is { Stacked: false }))
             {
                 sets.Union(i, conflict.OtherItem);
                 troubled[conflict.OtherItem] = true;
@@ -63,17 +64,22 @@ internal sealed class StackBuilder(LayoutScene scene, PlacementScorer scorer)
     {
         var area = Box2D.Empty;
         var textHeight = 0.0;
+        double lowestShelf = double.MaxValue, highestShelf = double.MinValue;
         foreach (var index in cluster)
         {
             var item = scene.Items[index];
             area = area.Union(item.MainAnchor);
-            if (item.Footprint is not null) area = area.Union(item.Footprint.Bounds);
+            // Контур трубы — весь участок, столбик за его концом тянул бы выноски вдоль трубы.
+            if (item.Footprint is not null && !item.IsLinear) area = area.Union(item.Footprint.Bounds);
             textHeight = Math.Max(textHeight, item.TextHeight);
+            lowestShelf = Math.Min(lowestShelf, item.ShelfHeight);
+            highestShelf = Math.Max(highestShelf, item.ShelfHeight);
         }
 
         if (area.IsEmpty || textHeight <= 0) return;
 
-        var pitch = textHeight + Math.Max(_s.MinGap, _s.SoftGap * 0.6);
+        // Полки на разной высоте у разных марок — шаг с запасом, чтобы тексты соседних строк не сошлись.
+        var pitch = textHeight + (highestShelf - lowestShelf) + Math.Max(_s.MinGap, _s.SoftGap * 0.6);
         var current = cluster.Select(index => state[index]).ToArray();
         var bestScore = ClusterScore(state, cluster, current);
         Placement?[]? best = null;
@@ -127,12 +133,10 @@ internal sealed class StackBuilder(LayoutScene scene, PlacementScorer scorer)
         {
             var slot = order[row];
             var item = scene.Items[cluster[slot]];
-            var centerY = top + row * pitch;
-            var text = side == ShelfSide.Left
-                ? new Box2D(edge - item.TextWidth, centerY - item.TextHeight / 2, edge, centerY + item.TextHeight / 2)
-                : new Box2D(edge, centerY - item.TextHeight / 2, edge + item.TextWidth, centerY + item.TextHeight / 2);
+            var shelfY = top + row * pitch;
+            var text = Placement.TextAt(item, new Vector2D(edge, shelfY), side);
 
-            var elbow = new Vector2D(side == ShelfSide.Left ? edge + _s.Shelf : edge - _s.Shelf, centerY);
+            var elbow = new Vector2D(side == ShelfSide.Left ? edge + _s.Shelf : edge - _s.Shelf, shelfY);
             var anchor = NearestAnchor(item, elbow, out var distance);
             if (distance > _s.MaxLeader)
             {
