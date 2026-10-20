@@ -9,7 +9,6 @@ namespace SmartTags.Layout;
 internal sealed class StackBuilder(LayoutScene scene, PlacementScorer scorer)
 {
     private readonly LayoutSettings _s = scene.Settings;
-    private readonly List<int> _buffer = new(64);
 
     public int Built { get; private set; }
 
@@ -32,13 +31,14 @@ internal sealed class StackBuilder(LayoutScene scene, PlacementScorer scorer)
 
         for (var i = 0; i < count; i++)
         {
-            if (state[i] is not { } placed) continue;
+            // Посеянные стопки не разбираем.
+            if (state[i] is not { Stacked: false } placed) continue;
 
             conflicts.Clear();
             if (scorer.Full(scene.Items[i], placed, state, conflicts).Hard == 0) continue;
 
             troubled[i] = true;
-            foreach (var conflict in conflicts.Where(c => c.IsHard && c.OtherItem >= 0))
+            foreach (var conflict in conflicts.Where(c => c.IsHard && c.OtherItem >= 0 && state[c.OtherItem] is { Stacked: false }))
             {
                 sets.Union(i, conflict.OtherItem);
                 troubled[conflict.OtherItem] = true;
@@ -64,17 +64,22 @@ internal sealed class StackBuilder(LayoutScene scene, PlacementScorer scorer)
     {
         var area = Box2D.Empty;
         var textHeight = 0.0;
+        double lowestShelf = double.MaxValue, highestShelf = double.MinValue;
         foreach (var index in cluster)
         {
             var item = scene.Items[index];
             area = area.Union(item.MainAnchor);
-            if (item.Footprint is not null) area = area.Union(item.Footprint.Bounds);
+            // Контур трубы — весь участок, столбик за его концом тянул бы выноски вдоль трубы.
+            if (item.Footprint is not null && !item.IsLinear) area = area.Union(item.Footprint.Bounds);
             textHeight = Math.Max(textHeight, item.TextHeight);
+            lowestShelf = Math.Min(lowestShelf, item.ShelfHeight);
+            highestShelf = Math.Max(highestShelf, item.ShelfHeight);
         }
 
         if (area.IsEmpty || textHeight <= 0) return;
 
-        var pitch = textHeight + Math.Max(_s.MinGap, _s.SoftGap * 0.6);
+        // Полки на разной высоте у разных марок — шаг с запасом, чтобы тексты соседних строк не сошлись.
+        var pitch = textHeight + (highestShelf - lowestShelf) + Math.Max(_s.MinGap, _s.SoftGap * 0.6);
         var current = cluster.Select(index => state[index]).ToArray();
         var bestScore = ClusterScore(state, cluster, current);
         Placement?[]? best = null;
@@ -128,12 +133,10 @@ internal sealed class StackBuilder(LayoutScene scene, PlacementScorer scorer)
         {
             var slot = order[row];
             var item = scene.Items[cluster[slot]];
-            var centerY = top + row * pitch;
-            var text = side == ShelfSide.Left
-                ? new Box2D(edge - item.TextWidth, centerY - item.TextHeight / 2, edge, centerY + item.TextHeight / 2)
-                : new Box2D(edge, centerY - item.TextHeight / 2, edge + item.TextWidth, centerY + item.TextHeight / 2);
+            var shelfY = top + row * pitch;
+            var text = Placement.TextAt(item, new Vector2D(edge, shelfY), side);
 
-            var elbow = new Vector2D(side == ShelfSide.Left ? edge + _s.Shelf : edge - _s.Shelf, centerY);
+            var elbow = new Vector2D(side == ShelfSide.Left ? edge + _s.Shelf : edge - _s.Shelf, shelfY);
             var anchor = NearestAnchor(item, elbow, out var distance);
             if (distance > _s.MaxLeader)
             {
@@ -166,31 +169,7 @@ internal sealed class StackBuilder(LayoutScene scene, PlacementScorer scorer)
 
     private Score ClusterScore(LayoutState state, List<int> cluster, Placement?[] placements)
     {
-        var members = new HashSet<int>(cluster);
-        var score = Score.Zero;
-        for (var i = 0; i < cluster.Count; i++)
-        {
-            if (placements[i] is not { } placement) continue;
-
-            var item = scene.Items[cluster[i]];
-            score += scorer.Own(item, placement);
-
-            for (var j = i + 1; j < cluster.Count; j++)
-            {
-                if (placements[j] is { } other)
-                    score += scorer.Pair(item, placement, scene.Items[cluster[j]], other);
-            }
-
-            _buffer.Clear();
-            state.QueryNeighbors(placement.Bounds.Inflate(scorer.AlignRadius), _buffer);
-            foreach (var outsider in _buffer)
-            {
-                if (!members.Contains(outsider) && state[outsider] is { } other)
-                    score += scorer.Pair(item, placement, scene.Items[outsider], other);
-            }
-        }
-
-        return score;
+        return scorer.Group(state, cluster, placements);
     }
 }
 

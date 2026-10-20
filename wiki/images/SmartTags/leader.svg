@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="260" viewBox="0 0 960 260" font-family="Segoe UI, Arial, sans-serif">
+  <style>
+    .panel { fill: #f8fafc; stroke: #e2e8f0; }
+    .h { font-size: 15px; font-weight: 600; fill: #0f172a; }
+    .s { font-size: 12px; fill: #64748b; }
+    .pipe { stroke: #2563eb; stroke-width: 6; fill: none; }
+    .ld { stroke: #0f172a; stroke-width: 1; fill: none; }
+    .dot { fill: #0f172a; }
+    .t { font-size: 12px; fill: #0f172a; }
+    .box { fill: none; stroke: #dc2626; stroke-width: 1; stroke-dasharray: 3 2; }
+    .dim { stroke: #dc2626; stroke-width: 1; }
+    .lbl { font-size: 12px; fill: #334155; }
+    .z0 { fill: #e2e8f0; } .z1 { fill: #bbf7d0; } .z2 { fill: #fed7aa; }
+    .tick { stroke: #334155; stroke-width: 1; }
+  </style>
+  <rect width="960" height="260" fill="#ffffff"/>
+
+  <g transform="translate(10,10)">
+    <rect class="panel" width="560" height="240" rx="10"/>
+    <text class="h" x="16" y="28">Длина выноски</text>
+    <path class="pipe" d="M30 112 H230"/>
+    <circle class="dot" cx="90" cy="112" r="2.2"/>
+    <path class="ld" d="M90 112 L120 66 H160"/><text class="t" x="122" y="62">Ø50</text>
+    <text class="lbl" x="250" y="72" style="fill:#15803d">выноска — от элемента до полки марки</text>
+    <text class="lbl" x="250" y="90">все длины — мм на листе, от масштаба вида</text>
+    <text class="lbl" x="250" y="106">не зависят</text>
+
+    <!-- Шкала: 10 px = 1 мм, ноль в x=30 -->
+    <rect class="z0" x="30" y="160" width="50" height="16"/>
+    <rect class="z1" x="80" y="160" width="300" height="16"/>
+    <rect class="z2" x="380" y="160" width="150" height="16"/>
+    <path d="M150 154 l-6 -9 h12 z" fill="#15803d"/>
+    <path class="tick" d="M30 176 v6 M80 176 v6 M150 176 v6 M380 176 v6"/>
+    <g class="lbl" text-anchor="middle">
+      <text x="30" y="196">0</text><text x="80" y="196">5</text>
+      <text x="150" y="196" style="fill:#15803d;font-weight:600">12</text><text x="380" y="196">35</text>
+    </g>
+    <g class="s">
+      <text x="62" y="216" text-anchor="middle">мин.: короче</text><text x="62" y="230" text-anchor="middle">не бывает</text>
+      <text x="150" y="216" text-anchor="middle" style="fill:#15803d">к этой длине</text>
+      <text x="150" y="230" text-anchor="middle" style="fill:#15803d">стремится плагин</text>
+      <text x="380" y="216" text-anchor="middle">«не длиннее»</text>
+      <text x="380" y="230" text-anchor="middle">(на 3D — 70)</text>
+      <text x="455" y="152" text-anchor="middle" style="fill:#c2410c">в отчёте — конфликт</text>
+      <text x="455" y="138" text-anchor="middle" style="fill:#c2410c">нет места,</text>
+      <text x="455" y="124" text-anchor="middle" style="fill:#c2410c">только если ближе</text>
+    </g>
+  </g>
+
+  <g transform="translate(580,10)">
+    <rect class="panel" width="370" height="240" rx="10"/>
+    <text class="h" x="16" y="28">Зазор между марками</text>
+    <path class="pipe" d="M30 190 H340"/>
+    <circle class="dot" cx="90" cy="190" r="2.2"/><path class="ld" d="M90 190 L104 130 H164"/><text class="t" x="106" y="126">Ø50</text>
+    <circle class="dot" cx="230" cy="190" r="2.2"/><path class="ld" d="M230 190 L216 130 H276"/><text class="t" x="218" y="126">Ø50</text>
+    <rect class="box" x="104" y="112" width="60" height="18"/>
+    <rect class="box" x="216" y="112" width="60" height="18"/>
+    <path class="dim" d="M164 94 V108 M216 94 V108 M164 101 H216"/>
+    <text class="lbl" x="190" y="88" text-anchor="middle">1,5 мм</text>
+    <text class="s" x="16" y="226">минимальное расстояние между текстами марок</text>
+  </g>
+</svg>

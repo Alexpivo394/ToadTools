@@ -44,6 +44,13 @@ internal sealed class LayoutOptimizer(LayoutScene scene, PlacementScorer scorer,
         for (var step = 0; step < order.Length && !cancelled(); step++)
         {
             var item = order[step];
+            // Уже стоит (посеянная стопка) — не трогаем.
+            if (state[item] is not null)
+            {
+                progress?.Invoke(step + 1);
+                continue;
+            }
+
             if (BestCandidate(item, state, candidates[item].Count) is { } best)
                 state.Set(item, best.Placement);
 
@@ -84,7 +91,7 @@ internal sealed class LayoutOptimizer(LayoutScene scene, PlacementScorer scorer,
                 troubled.Clear();
                 for (var i = 0; i < count; i++)
                 {
-                    if (hardOf[i] > 0 && candidates[i].Count > 0) troubled.Add(i);
+                    if (hardOf[i] > 0 && candidates[i].Count > 0 && state[i] is not { Stacked: true }) troubled.Add(i);
                 }
             }
 
@@ -94,7 +101,7 @@ internal sealed class LayoutOptimizer(LayoutScene scene, PlacementScorer scorer,
                 : random.Next(count);
 
             var options = candidates[item];
-            if (options.Count == 0)
+            if (options.Count == 0 || state[item] is { Stacked: true })
             {
                 stall++;
                 continue;
@@ -166,8 +173,11 @@ internal sealed class LayoutOptimizer(LayoutScene scene, PlacementScorer scorer,
         return Total(state, null);
     }
 
-    /// <summary>Шлифовка: каждой марке — лучший кандидат при неподвижных соседях, пока есть улучшения.</summary>
-    public int Polish(LayoutState state, Stopwatch clock, long deadlineMs, Func<bool> cancelled)
+    /// <summary>
+    ///     Шлифовка: каждой марке — лучший кандидат при неподвижных соседях, пока есть улучшения.
+    ///     <paramref name="keepStacked" /> — не трогать марки, собранные в столбики и строки.
+    /// </summary>
+    public int Polish(LayoutState state, Stopwatch clock, long deadlineMs, Func<bool> cancelled, bool keepStacked = false)
     {
         var moves = 0;
         for (var pass = 0; pass < 4; pass++)
@@ -177,6 +187,7 @@ internal sealed class LayoutOptimizer(LayoutScene scene, PlacementScorer scorer,
             {
                 if (clock.ElapsedMilliseconds >= deadlineMs || cancelled()) return moves;
                 if (state[item] is not { } placed || candidates[item].Count == 0) continue;
+                if (keepStacked && placed.Stacked) continue;
 
                 var layoutItem = scene.Items[item];
                 var bestScore = scorer.Full(layoutItem, placed, state);
@@ -206,6 +217,76 @@ internal sealed class LayoutOptimizer(LayoutScene scene, PlacementScorer scorer,
         return moves;
     }
 
+    /// <summary>
+    ///     Спасение нечитаемых марок: тем, чей текст лежит на чужом тексте или под чужой выноской, добавляются
+    ///     дальние кандидаты (выноска длиннее максимума), и марка переставляется на лучшее из всех мест.
+    ///     Возвращает число перестановок.
+    /// </summary>
+    public int Rescue(LayoutState state, Func<LayoutItem, List<Candidate>> far, Stopwatch clock, long deadlineMs,
+        Func<bool> cancelled)
+    {
+        var moves = 0;
+        var extended = new bool[scene.Items.Length];
+        var conflicts = new List<Conflict>();
+        for (var pass = 0; pass < 3; pass++)
+        {
+            var improved = false;
+            // Сначала самые нечитаемые: текст на тексте, потом перекрещенные выноски и так далее.
+            foreach (var item in WorstFirst(state, conflicts))
+            {
+                if (clock.ElapsedMilliseconds >= deadlineMs || cancelled()) return moves;
+                if (state[item] is not { } placed) continue;
+
+                var layoutItem = scene.Items[item];
+                conflicts.Clear();
+                var current = scorer.Full(layoutItem, placed, state, conflicts);
+                if (!conflicts.Any(c => c.IsHard && PlacementScorer.Severity(c.Kind) > 1)) continue;
+
+                if (!extended[item])
+                {
+                    extended[item] = true;
+                    candidates[item].AddRange(far(layoutItem));
+                    candidates[item].Sort((a, b) => a.Own.Hard != b.Own.Hard
+                        ? a.Own.Hard.CompareTo(b.Own.Hard)
+                        : a.Own.Soft.CompareTo(b.Own.Soft));
+                }
+
+                if (BestCandidate(item, state, candidates[item].Count) is not { } best ||
+                    ReferenceEquals(best.Placement, placed)) continue;
+
+                var score = best.Own + scorer.Neighbors(layoutItem, best.Placement, state);
+                if (!score.IsBetterThan(current)) continue;
+
+                state.Set(item, best.Placement);
+                moves++;
+                improved = true;
+            }
+
+            if (!improved) break;
+        }
+
+        return moves;
+    }
+
+    /// <summary>Марки с жёсткими конфликтами тяжелее «выноска длиннее максимума», от самых тяжёлых.</summary>
+    private List<int> WorstFirst(LayoutState state, List<Conflict> conflicts)
+    {
+        var worst = new int[scene.Items.Length];
+        for (var item = 0; item < worst.Length; item++)
+        {
+            if (state[item] is not { } placed) continue;
+
+            conflicts.Clear();
+            scorer.Full(scene.Items[item], placed, state, conflicts);
+            worst[item] = conflicts.Where(c => c.IsHard).Select(c => PlacementScorer.Severity(c.Kind)).DefaultIfEmpty(0).Max();
+        }
+
+        return Enumerable.Range(0, worst.Length)
+            .Where(item => worst[item] > 1)
+            .OrderByDescending(item => worst[item])
+            .ToList();
+    }
+
     /// <summary>Сумма оценок. Парные слагаемые входят в оценки обеих марок, поэтому делятся пополам.</summary>
     public Score Total(LayoutState state, int[]? hardOf)
     {
@@ -225,6 +306,12 @@ internal sealed class LayoutOptimizer(LayoutScene scene, PlacementScorer scorer,
         }
 
         return new Score(own.Hard + pairs.Hard / 2, own.Soft + pairs.Soft / 2);
+    }
+
+    /// <summary>Лучшее положение марки при неподвижных соседях.</summary>
+    public Placement? Relocate(int item, LayoutState state)
+    {
+        return BestCandidate(item, state, candidates[item].Count)?.Placement;
     }
 
     private Candidate? BestCandidate(int item, LayoutState state, int limit)

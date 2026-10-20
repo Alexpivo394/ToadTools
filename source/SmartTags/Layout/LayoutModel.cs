@@ -11,11 +11,26 @@ public sealed class LayoutItem
     /// <summary>Точки, куда может упираться выноска. Первая — предпочтительная.</summary>
     public List<Vector2D> Anchors { get; } = [];
 
+    /// <summary>
+    ///     Общая подпись: точки других элементов с такой же маркой рядом. Их выноски сходятся к излому
+    ///     этой марки, а текст ставится в то же место — на чертеже это одна подпись с несколькими выносками.
+    /// </summary>
+    public List<Vector2D> ExtraAnchors { get; } = [];
+
     /// <summary>Направление оси для линейных элементов (труба, воздуховод), иначе ноль.</summary>
     public Vector2D Axis { get; set; }
 
     public double TextWidth { get; set; }
     public double TextHeight { get; set; }
+
+    /// <summary>
+    ///     Высота над низом текста, на которой Revit подводит выноску к марке (середина рамки марки).
+    ///     У марок с подчёркиванием это уровень подчёркивания, а не середина текста. Null — середина текста.
+    /// </summary>
+    public double? AttachHeight { get; set; }
+
+    /// <summary>Высота полки (точки крепления выноски) над низом текста.</summary>
+    public double ShelfHeight => AttachHeight ?? TextHeight / 2;
 
     /// <summary>Контур своего элемента: выноска может по нему идти без штрафа.</summary>
     public ConvexPolygon2D? Footprint { get; set; }
@@ -66,6 +81,24 @@ public sealed class LayoutObstacle
     public Segment2D? Segment { get; private init; }
 
     public Box2D Bounds => Box ?? Polygon?.Bounds ?? Segment?.Bounds ?? Box2D.Empty;
+
+    /// <summary>Толщина на листе: у трубы или воздуховода — ширина полосы, у оборудования — меньший размер.</summary>
+    public double Thickness => _thickness ??= Box is { } box ? Math.Min(box.Width, box.Height) : Polygon?.Thickness ?? 0;
+
+    private double? _thickness;
+
+    /// <summary>Какую долю прямоугольника закрывает препятствие (0…1).</summary>
+    public double Covers(Box2D box)
+    {
+        var area = box.Width * box.Height;
+        if (area <= 1e-9) return 0;
+
+        var common = Box is { } own
+            ? Math.Max(0, Math.Min(own.MaxX, box.MaxX) - Math.Max(own.MinX, box.MinX)) *
+              Math.Max(0, Math.Min(own.MaxY, box.MaxY) - Math.Max(own.MinY, box.MinY))
+            : Polygon?.IntersectionArea(box) ?? 0;
+        return Math.Min(1, common / area);
+    }
 
     public static LayoutObstacle FromBox(ObstacleKind kind, Box2D box, string label) => new(kind, label) { Box = box };
 

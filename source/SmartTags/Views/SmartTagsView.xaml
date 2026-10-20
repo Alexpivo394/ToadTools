@@ -7,6 +7,7 @@
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     xmlns:viewModels="clr-namespace:SmartTags.ViewModels"
     xmlns:models="clr-namespace:SmartTags.Models"
+    xmlns:layout="clr-namespace:SmartTags.Layout"
     xmlns:converters="clr-namespace:SmartTags.Converters"
     xmlns:uiConverters="clr-namespace:ToadTools.UI.Converters;assembly=ToadTools.UI"
     d:DataContext="{d:DesignInstance Type=viewModels:SmartTagsViewModel}"
@@ -15,7 +16,7 @@
     WindowStartupLocation="CenterScreen"
     WindowBackdropType="Mica"
     WindowCornerPreference="Round"
-    Height="800"
+    Height="860"
     Width="940"
     MinHeight="620"
     MinWidth="820"
@@ -74,7 +75,7 @@
                                    Margin="0,0,8,0" />
                         <ui:Button Content="Выбрать на виде"
                                    Icon="{ui:SymbolIcon SelectObject24}"
-                                   ToolTip="Окно скроется — выберите элементы на виде и нажмите «Готово»"
+                                   ToolTip="Окно скроется — выберите элементы на виде как обычно в Revit и нажмите «Готово» на панели выбора"
                                    Command="{Binding PickElementsCommand}" />
                     </StackPanel>
                 </Grid>
@@ -148,23 +149,36 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="Не маркировать участки короче, мм" VerticalAlignment="Center" />
+                            <TextBlock Text="Не маркировать участки (трассы) короче, мм" VerticalAlignment="Center" />
                             <ui:TextBox Grid.Column="1" Width="90" ClearButtonEnabled="False"
                                         Text="{Binding MinRunLength, UpdateSourceTrigger=PropertyChanged}" />
                         </Grid>
                         <CheckBox Margin="0,6,0,0"
                                   Content="Маркировать вертикальные участки (стояки)"
                                   IsChecked="{Binding TagVerticalRuns}" />
-                        <CheckBox Margin="0,4,0,0"
-                                  Content="Не подписывать воздуховоды с тем же расходом и сечением"
-                                  ToolTip="Если участки воздуховодов соединены фитингами и у них одинаковые расход и сечение, марка ставится только на самый длинный."
-                                  IsChecked="{Binding SkipSameDuctSection}"
-                                  Visibility="{Binding ShowSameSection, Converter={uiConverters:BooleanCollapsedVisibilityConverter}}" />
+                        <TextBlock Margin="0,8,0,2" Text="Марки на трубах, воздуховодах, лотках:" />
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton GroupName="RunMode"
+                                         Content="Трасса целиком"
+                                         ToolTip="Одна марка на трассу: участки одного размера и системы, соединённые отводами, муфтами, арматурой или прямым проходом тройника. Ответвление тройника — отдельная трасса. Если текст марки вдоль трассы меняется (например, расход), подпись получает каждая часть со своим текстом."
+                                         IsChecked="{Binding RunMode, Converter={converters:EnumRadioConverter}, ConverterParameter={x:Static models:RunTagMode.Routes}}" />
+                            <RadioButton GroupName="RunMode"
+                                         Margin="12,0,0,0"
+                                         Content="Прямой участок"
+                                         ToolTip="Марка на каждый прямой участок: соосные куски одного размера и системы, соединённые напрямую или муфтой."
+                                         IsChecked="{Binding RunMode, Converter={converters:EnumRadioConverter}, ConverterParameter={x:Static models:RunTagMode.Runs}}" />
+                            <RadioButton GroupName="RunMode"
+                                         Margin="12,0,0,0"
+                                         Content="Каждый элемент"
+                                         ToolTip="Марка на каждую трубу, воздуховод, лоток — даже если они идут подряд по одной прямой."
+                                         IsChecked="{Binding RunMode, Converter={converters:EnumRadioConverter}, ConverterParameter={x:Static models:RunTagMode.Each}}" />
+                        </StackPanel>
                     </StackPanel>
                 </Grid>
 
                 <!-- Placement -->
-                <StackPanel Grid.Column="2">
+                <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel>
                     <TextBlock Text="Уже стоящие марки" FontWeight="Bold" Margin="10,0,0,5" />
                     <ui:Card Padding="12,8">
                         <StackPanel>
@@ -199,6 +213,28 @@
                                 <ui:TextBox Grid.Row="1" Grid.Column="1" Width="80" ClearButtonEnabled="False" Margin="0,6,0,0"
                                             Text="{Binding MaxLeader, UpdateSourceTrigger=PropertyChanged}" />
                             </Grid>
+                            <CheckBox Margin="0,8,0,0"
+                                      ToolTip="Соседние элементы с одинаковым текстом марки (например, решётки одного типоразмера и расхода) подписываются один раз: выноски от всех элементов сходятся к одной подписи. Трубы и воздуховоды так не объединяются."
+                                      IsChecked="{Binding ShareLabels}">
+                                <TextBlock Text="Одинаковые марки рядом — одной подписью" TextWrapping="Wrap" />
+                            </CheckBox>
+                            <StackPanel Visibility="{Binding ShowSide, Converter={uiConverters:BooleanCollapsedVisibilityConverter}}">
+                                <TextBlock Text="Сторона марки" Margin="0,12,0,4"
+                                           ToolTip="Куда от элемента уходит выноска. На другую сторону марка уходит, только если на заданной для неё нет места." />
+                                <WrapPanel>
+                                    <RadioButton GroupName="Side" MinWidth="0" Margin="0,0,10,0" Content="Авто"
+                                                 ToolTip="Сторону выбирает плагин — туда, где свободнее"
+                                                 IsChecked="{Binding Side, Converter={converters:EnumRadioConverter}, ConverterParameter={x:Static layout:TagSide.Auto}}" />
+                                    <RadioButton GroupName="Side" MinWidth="0" Margin="0,0,10,0" Content="Сверху"
+                                                 IsChecked="{Binding Side, Converter={converters:EnumRadioConverter}, ConverterParameter={x:Static layout:TagSide.Top}}" />
+                                    <RadioButton GroupName="Side" MinWidth="0" Margin="0,0,10,0" Content="Снизу"
+                                                 IsChecked="{Binding Side, Converter={converters:EnumRadioConverter}, ConverterParameter={x:Static layout:TagSide.Bottom}}" />
+                                    <RadioButton GroupName="Side" MinWidth="0" Margin="0,0,10,0" Content="Слева"
+                                                 IsChecked="{Binding Side, Converter={converters:EnumRadioConverter}, ConverterParameter={x:Static layout:TagSide.Left}}" />
+                                    <RadioButton GroupName="Side" MinWidth="0" Content="Справа"
+                                                 IsChecked="{Binding Side, Converter={converters:EnumRadioConverter}, ConverterParameter={x:Static layout:TagSide.Right}}" />
+                                </WrapPanel>
+                            </StackPanel>
                             <TextBlock Text="Качество раскладки" Margin="0,12,0,4" />
                             <Slider Minimum="0" Maximum="2" TickFrequency="1" IsSnapToTickEnabled="True"
                                     TickPlacement="BottomRight" Value="{Binding Quality}" />
@@ -212,6 +248,7 @@
                         </StackPanel>
                     </ui:Card>
                 </StackPanel>
+                </ScrollViewer>
             </Grid>
 
             <!-- Advanced -->
@@ -243,12 +280,6 @@
                             <ui:TextBox Grid.Row="1" Grid.Column="1" Width="80" ClearButtonEnabled="False" Margin="0,6,0,0"
                                         Text="{Binding MinLeader, UpdateSourceTrigger=PropertyChanged}" />
                         </Grid>
-                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                            <TextBlock Text="Углы выноски:" VerticalAlignment="Center" Margin="0,0,10,0" />
-                            <CheckBox Content="30°" IsChecked="{Binding Angle30}" MinWidth="0" Margin="0,0,10,0" />
-                            <CheckBox Content="45°" IsChecked="{Binding Angle45}" MinWidth="0" Margin="0,0,10,0" />
-                            <CheckBox Content="60°" IsChecked="{Binding Angle60}" MinWidth="0" />
-                        </StackPanel>
                     </StackPanel>
                     <StackPanel Grid.Column="2">
                         <CheckBox Content="Не ставить текст поверх элементов" IsChecked="{Binding AvoidTextOverElements}" />

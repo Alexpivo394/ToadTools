@@ -111,7 +111,7 @@ internal sealed class RunBuilder(Action<string>? log)
     }
 
     /// <summary>Ключ участка: категория, размер, система.</summary>
-    private static string RunKey(MEPCurve curve)
+    public static string RunKey(MEPCurve curve)
     {
         var category = curve.Category is { } c ? RevitCompat.IdValue(c.Id).ToString() : "?";
         return category + "|" + SizeKey(curve) + "|" + ParameterText(curve, BuiltInParameter.RBS_SYSTEM_NAME_PARAM);

@@ -34,6 +34,7 @@ public sealed class TaggableCategory(
     public bool IsLinear => Services.TagCategoryMap.IsLinear(Category);
 
     public bool IsDucts => Category == BuiltInCategory.OST_DuctCurves;
+    public bool IsPipes => Category == BuiltInCategory.OST_PipeCurves;
 }
 
 /// <summary>Выбор пользователя: какую категорию маркировать и каким типом марки.</summary>

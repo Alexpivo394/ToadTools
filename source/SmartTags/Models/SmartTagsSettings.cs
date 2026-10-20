@@ -12,11 +12,16 @@ public sealed class SmartTagsSettings
 
     public ExistingTagMode ExistingMode { get; set; } = ExistingTagMode.Skip;
 
-    /// <summary>Участки труб/воздуховодов короче этого (мм в модели) не маркируются.</summary>
+    /// <summary>Участки (в режиме трасс — трассы) короче этого, мм в модели, не маркируются.</summary>
     public double MinRunLength { get; set; } = 300;
 
     public bool TagVerticalRuns { get; set; }
-    public bool SkipSameDuctSection { get; set; } = true;
+
+    /// <summary>Сколько марок ставить на линейные элементы: на каждый, на прямой участок или на трассу.</summary>
+    public RunTagMode RunMode { get; set; } = RunTagMode.Routes;
+
+    /// <summary>Одинаковые марки соседних штучных элементов — одной подписью с несколькими выносками.</summary>
+    public bool ShareLabels { get; set; } = true;
 
     public double PreferredLeader { get; set; } = 12;
     public double MaxLeader { get; set; } = 35;
@@ -24,9 +29,8 @@ public sealed class SmartTagsSettings
     public double Gap { get; set; } = 1.5;
     public LayoutQuality Quality { get; set; } = LayoutQuality.Standard;
 
-    public bool Angle30 { get; set; } = true;
-    public bool Angle45 { get; set; } = true;
-    public bool Angle60 { get; set; } = true;
+    /// <summary>С какой стороны ставить марки на планах и разрезах (Auto — по месту).</summary>
+    public TagSide Side { get; set; } = TagSide.Auto;
 
     public bool AvoidTextOverElements { get; set; } = true;
     public bool UseCrop { get; set; } = true;
@@ -36,12 +40,6 @@ public sealed class SmartTagsSettings
 
     public LayoutSettings ToLayoutSettings()
     {
-        var angles = new List<double>();
-        if (Angle30) angles.Add(30);
-        if (Angle45) angles.Add(45);
-        if (Angle60) angles.Add(60);
-        if (angles.Count == 0) angles.Add(45);
-
         var minGap = Math.Max(0.2, Gap);
         var minLeader = Math.Max(0.5, MinLeader);
         var preferred = Math.Max(minLeader, PreferredLeader);
@@ -52,8 +50,8 @@ public sealed class SmartTagsSettings
             MinLeader = minLeader,
             PreferredLeader = preferred,
             MaxLeader = Math.Max(preferred, MaxLeader),
-            PreferredAngles = angles,
             AvoidTextOverElements = AvoidTextOverElements,
+            Side = Side,
             Quality = Quality
         };
     }

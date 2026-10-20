@@ -41,7 +41,21 @@ public sealed class TagTarget(Element primary, bool isRun)
     public double TextWidth { get; set; }
 
     public double TextHeight { get; set; }
+
+    /// <summary>Высота точки крепления выноски над низом текста, мм на листе (null — середина текста).</summary>
+    public double? AttachHeight { get; set; }
+
     public Vector2D TextOffset { get; set; }
+
+    /// <summary>Текст марки (после создания) — одинаковые марки соседних элементов объединяются.</summary>
+    public string Text { get; set; } = string.Empty;
+
+    /// <summary>Общая подпись: марка, чей текст и излом разделяет эта (null — своя подпись).</summary>
+    public TagTarget? SharedWith { get; set; }
+
+    /// <summary>Марки, разделяющие подпись этой.</summary>
+    public List<TagTarget> Sharing { get; } = [];
+
     public bool Measured { get; set; }
 
     /// <summary>Индекс в задаче раскладки (-1 — в раскладку не попал).</summary>

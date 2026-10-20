@@ -33,7 +33,10 @@ internal sealed class TargetCollector(TagView view, SmartTagsSettings settings, 
         var targets = new List<TagTarget>();
         if (choice.IsLinear)
         {
-            var runs = new RunBuilder(log).Build(elements.OfType<MEPCurve>());
+            var curves = elements.OfType<MEPCurve>();
+            var runs = settings.RunMode == RunTagMode.Each
+                ? curves.Select(curve => new List<MEPCurve> { curve }).ToList()
+                : new RunBuilder(log).Build(curves);
             targets.AddRange(runs.Select(BuildRun));
             targets.AddRange(elements.Where(element => element is not MEPCurve).Select(BuildPoint));
         }
@@ -61,8 +64,8 @@ internal sealed class TargetCollector(TagView view, SmartTagsSettings settings, 
         {
             if (curve.Location is not LocationCurve { Curve: { } line }) continue;
 
-            var start = line.GetEndPoint(0);
-            var end = line.GetEndPoint(1);
+            var start = view.Displaced(curve, line.GetEndPoint(0));
+            var end = view.Displaced(curve, line.GetEndPoint(1));
             total += start.DistanceTo(end);
             target.Axis ??= RunBuilder.Direction(curve);
 
@@ -93,15 +96,16 @@ internal sealed class TargetCollector(TagView view, SmartTagsSettings settings, 
             return target;
         }
 
-        if (target.LengthMm < settings.MinRunLength)
+        // У трассы считается длина целиком — её проверит RouteFilter, когда трассы соберутся.
+        if (settings.RunMode != RunTagMode.Routes && target.LengthMm < settings.MinRunLength)
         {
             target.MarkSkipped(SkipReason.TooShort, $"{Math.Round(target.LengthMm)} мм");
             return target;
         }
 
         var bestLine = ((LocationCurve)best.Location).Curve;
-        var p0 = bestLine.GetEndPoint(0);
-        var p1 = bestLine.GetEndPoint(1);
+        var p0 = view.Displaced(best, bestLine.GetEndPoint(0));
+        var p1 = view.Displaced(best, bestLine.GetEndPoint(1));
         if (bestVisible < 0.5)
         {
             // На виде участок почти точка (стояк на плане) — одна привязка в середине.
@@ -124,7 +128,7 @@ internal sealed class TargetCollector(TagView view, SmartTagsSettings settings, 
         var box = element.get_BoundingBox(view.View) ?? element.get_BoundingBox(null);
         var center = box is not null
             ? (box.Transform ?? Transform.Identity).OfPoint((box.Min + box.Max) * 0.5)
-            : LocationOf(element);
+            : LocationOf(element) is { } location ? view.Displaced(element, location) : null;
 
         if (center is null)
         {

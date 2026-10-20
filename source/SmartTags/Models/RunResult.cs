@@ -24,7 +24,7 @@ public sealed class ItemReport(string label, IReadOnlyList<ElementId> elementIds
     {
         SkipReason.AlreadyTagged => "Уже промаркирован",
         SkipReason.TooShort => "Короткий участок",
-        SkipReason.SameSection => "Тот же расход и сечение",
+        SkipReason.SameSection => "Повтор: трасса уже подписана на другом участке",
         SkipReason.Vertical => "Вертикальный участок",
         SkipReason.OutsideCrop => "Вне подрезки вида",
         SkipReason.NoAnchor => "Нет точки привязки",

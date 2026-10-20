@@ -21,22 +21,20 @@ public sealed partial class SmartTagsViewModel : ObservableObject
     private bool _onlySelected;
 
     [ObservableProperty] private bool _showRunOptions;
-    [ObservableProperty] private bool _showSameSection;
     [ObservableProperty] private string _minRunLength = string.Empty;
     [ObservableProperty] private bool _tagVerticalRuns;
-    [ObservableProperty] private bool _skipSameDuctSection;
+    [ObservableProperty] private RunTagMode _runMode;
+    [ObservableProperty] private bool _shareLabels;
 
     [ObservableProperty] private ExistingTagMode _existingMode;
     [ObservableProperty] private string _preferredLeader = string.Empty;
     [ObservableProperty] private string _maxLeader = string.Empty;
     [ObservableProperty] private double _quality;
+    [ObservableProperty] private TagSide _side;
 
     [ObservableProperty] private bool _advancedExpanded;
     [ObservableProperty] private string _gap = string.Empty;
     [ObservableProperty] private string _minLeader = string.Empty;
-    [ObservableProperty] private bool _angle30;
-    [ObservableProperty] private bool _angle45;
-    [ObservableProperty] private bool _angle60;
     [ObservableProperty] private bool _avoidTextOverElements;
     [ObservableProperty] private bool _useCrop;
     [ObservableProperty] private bool _writeLog;
@@ -77,6 +75,9 @@ public sealed partial class SmartTagsViewModel : ObservableObject
     public bool HasError => !string.IsNullOrEmpty(Error);
 
     public bool ShowLockWarning => _session.View.IsUnlocked3D;
+
+    /// <summary>Сторону марки задают только на планах и разрезах: на 3D-схеме она зависит от поворота вида.</summary>
+    public bool ShowSide => _session.View.Kind != ViewKind.ThreeD;
 
     public string LockWarning => ViewLocker.IsDefaultName(_session.View.Name)
         ? $"3D-вид не заблокирован. Стандартный вид «{_session.View.Name}» нельзя заблокировать без имени: " +
@@ -158,12 +159,11 @@ public sealed partial class SmartTagsViewModel : ObservableObject
         {
             ExistingMode = ExistingMode,
             TagVerticalRuns = TagVerticalRuns,
-            SkipSameDuctSection = SkipSameDuctSection,
+            RunMode = RunMode,
+            ShareLabels = ShareLabels,
             Quality = (int)Math.Round(Quality),
+            Side = Side,
             AdvancedExpanded = AdvancedExpanded,
-            Angle30 = Angle30,
-            Angle45 = Angle45,
-            Angle60 = Angle60,
             AvoidTextOverElements = AvoidTextOverElements,
             UseCrop = UseCrop,
             WriteLog = WriteLog,
@@ -206,16 +206,15 @@ public sealed partial class SmartTagsViewModel : ObservableObject
         ExistingMode = state.ExistingMode;
         MinRunLength = Format(state.MinRunLength);
         TagVerticalRuns = state.TagVerticalRuns;
-        SkipSameDuctSection = state.SkipSameDuctSection;
+        RunMode = state.RunMode;
+        ShareLabels = state.ShareLabels;
         PreferredLeader = Format(state.PreferredLeader);
         MaxLeader = Format(_session.View.Kind == ViewKind.ThreeD ? state.MaxLeader3D : state.MaxLeader);
         Quality = Math.Max(0, Math.Min(2, state.Quality));
+        Side = state.Side;
         AdvancedExpanded = state.AdvancedExpanded;
         Gap = Format(state.Gap);
         MinLeader = Format(state.MinLeader);
-        Angle30 = state.Angle30;
-        Angle45 = state.Angle45;
-        Angle60 = state.Angle60;
         AvoidTextOverElements = state.AvoidTextOverElements;
         UseCrop = state.UseCrop;
         WriteLog = state.WriteLog;
@@ -255,7 +254,6 @@ public sealed partial class SmartTagsViewModel : ObservableObject
     {
         var selected = Rows.Where(row => row.IsSelected).ToList();
         ShowRunOptions = selected.Any(row => row.Category.IsLinear);
-        ShowSameSection = selected.Any(row => row.Category.IsDucts);
         Error = null;
         OnPropertyChanged(nameof(CanStart));
         StartCommand.NotifyCanExecuteChanged();
@@ -288,15 +286,14 @@ public sealed partial class SmartTagsViewModel : ObservableObject
             ExistingMode = ExistingMode,
             MinRunLength = minRun,
             TagVerticalRuns = TagVerticalRuns,
-            SkipSameDuctSection = SkipSameDuctSection,
+            RunMode = RunMode,
+            ShareLabels = ShareLabels,
             PreferredLeader = preferred,
             MaxLeader = max,
             MinLeader = minLeader,
             Gap = gap,
             Quality = (LayoutQuality)(int)Math.Round(Quality),
-            Angle30 = Angle30,
-            Angle45 = Angle45,
-            Angle60 = Angle60,
+            Side = ShowSide ? Side : TagSide.Auto,
             AvoidTextOverElements = AvoidTextOverElements,
             UseCrop = UseCrop,
             WriteLog = WriteLog,

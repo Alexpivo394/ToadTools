@@ -30,6 +30,19 @@ public enum ExistingTagMode
     Recreate
 }
 
+/// <summary>Сколько марок ставить на трубы, воздуховоды, лотки и короба.</summary>
+public enum RunTagMode
+{
+    [Description("Каждый элемент")]
+    Each,
+
+    [Description("Каждый прямой участок")]
+    Runs,
+
+    [Description("Трассу целиком")]
+    Routes
+}
+
 public enum SkipReason
 {
     None,
