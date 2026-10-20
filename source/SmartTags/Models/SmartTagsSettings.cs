@@ -29,6 +29,9 @@ public sealed class SmartTagsSettings
     public double Gap { get; set; } = 1.5;
     public LayoutQuality Quality { get; set; } = LayoutQuality.Standard;
 
+    /// <summary>С какой стороны ставить марки на планах и разрезах (Auto — по месту).</summary>
+    public TagSide Side { get; set; } = TagSide.Auto;
+
     public bool AvoidTextOverElements { get; set; } = true;
     public bool UseCrop { get; set; } = true;
     public bool WriteLog { get; set; }
@@ -48,6 +51,7 @@ public sealed class SmartTagsSettings
             PreferredLeader = preferred,
             MaxLeader = Math.Max(preferred, MaxLeader),
             AvoidTextOverElements = AvoidTextOverElements,
+            Side = Side,
             Quality = Quality
         };
     }

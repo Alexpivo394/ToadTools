@@ -7,6 +7,16 @@ public enum LayoutQuality
     Maximum
 }
 
+/// <summary>С какой стороны от элемента ставить марку (на листе).</summary>
+public enum TagSide
+{
+    Auto,
+    Top,
+    Bottom,
+    Left,
+    Right
+}
+
 /// <summary>Параметры раскладки. Все размеры — в мм на листе.</summary>
 public sealed class LayoutSettings
 {
@@ -41,6 +51,12 @@ public sealed class LayoutSettings
     /// <summary>Какую долю текста может закрыть элемент толще <see cref="ThinElement" /> (больше — жёсткий конфликт).</summary>
     public double MaxTextCover { get; set; } = 0.15;
 
+    /// <summary>
+    ///     Сторона, куда уходит выноска от элемента. Не та сторона — крупный мягкий штраф: марка уходит
+    ///     на другую сторону, только если на заданной у неё остаются жёсткие конфликты.
+    /// </summary>
+    public TagSide Side { get; set; } = TagSide.Auto;
+
     public LayoutQuality Quality { get; set; } = LayoutQuality.Standard;
     public int Seed { get; set; } = 20240917;
     public int MaxCandidatesPerItem { get; set; } = 160;
@@ -70,6 +86,7 @@ public sealed class LayoutSettings
     public double WeightFlatLeader { get; set; } = 1.5;
     public double WeightAlongAxis { get; set; } = 6;
     public double WeightParallel { get; set; } = 0.4;
+    public double WeightWrongSide { get; set; } = 50;
 
     /// <summary>Сколько точек привязки перебирать у элемента.</summary>
     public int AnchorSamples => Quality switch 

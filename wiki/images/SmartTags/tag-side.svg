@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="250" viewBox="0 0 960 250" font-family="Segoe UI, Arial, sans-serif">
+  <style>
+    .panel { fill: #f8fafc; stroke: #e2e8f0; }
+    .warn { fill: #fff7ed; stroke: #fed7aa; }
+    .h { font-size: 15px; font-weight: 600; fill: #0f172a; }
+    .s { font-size: 12px; fill: #64748b; }
+    .eq { fill: #dbeafe; stroke: #2563eb; stroke-width: 1.5; }
+    .duct { fill: #cbd5e1; stroke: #64748b; stroke-width: 1; }
+    .ld { stroke: #0f172a; stroke-width: 1; fill: none; }
+    .dot { fill: #0f172a; }
+    .t { font-size: 12px; fill: #0f172a; }
+    .x { stroke: #dc2626; stroke-width: 1.5; fill: none; stroke-dasharray: 4 3; }
+  </style>
+  <rect width="960" height="250" fill="#ffffff"/>
+
+  <g transform="translate(10,10)">
+    <rect class="panel" width="176" height="230" rx="10"/>
+    <text class="h" x="14" y="26">Сверху</text>
+    <rect class="eq" x="63" y="120" width="50" height="34" rx="2"/>
+    <circle class="dot" cx="88" cy="120" r="2.2"/><path class="ld" d="M88 120 L98 82 H138"/><text class="t" x="99" y="78">ВН-1</text>
+  </g>
+
+  <g transform="translate(196,10)">
+    <rect class="panel" width="176" height="230" rx="10"/>
+    <text class="h" x="14" y="26">Снизу</text>
+    <rect class="eq" x="63" y="90" width="50" height="34" rx="2"/>
+    <circle class="dot" cx="88" cy="124" r="2.2"/><path class="ld" d="M88 124 L98 178 H138"/><text class="t" x="99" y="174">ВН-1</text>
+  </g>
+
+  <g transform="translate(382,10)">
+    <rect class="panel" width="176" height="230" rx="10"/>
+    <text class="h" x="14" y="26">Слева</text>
+    <rect class="eq" x="100" y="120" width="50" height="34" rx="2"/>
+    <circle class="dot" cx="100" cy="137" r="2.2"/><path class="ld" d="M100 137 L64 108 H24"/><text class="t" x="27" y="104">ВН-1</text>
+  </g>
+
+  <g transform="translate(568,10)">
+    <rect class="panel" width="176" height="230" rx="10"/>
+    <text class="h" x="14" y="26">Справа</text>
+    <rect class="eq" x="26" y="120" width="50" height="34" rx="2"/>
+    <circle class="dot" cx="76" cy="137" r="2.2"/><path class="ld" d="M76 137 L112 108 H152"/><text class="t" x="113" y="104">ВН-1</text>
+  </g>
+
+  <g transform="translate(754,10)">
+    <rect class="warn" width="196" height="230" rx="10"/>
+    <text class="h" x="14" y="26">Сверху, но места нет</text>
+    <text class="s" x="14" y="44">над элементом воздуховод</text>
+    <rect class="duct" x="10" y="66" width="176" height="26"/>
+    <text class="s" x="60" y="83" style="fill:#334155">воздуховод</text>
+    <path class="x" d="M98 116 L108 80"/>
+    <rect class="eq" x="73" y="116" width="50" height="34" rx="2"/>
+    <circle class="dot" cx="98" cy="150" r="2.2"/><path class="ld" d="M98 150 L108 196 H148"/><text class="t" x="109" y="192">ВН-1</text>
+    <text class="s" x="14" y="220">марка ушла вниз</text>
+  </g>
+</svg>

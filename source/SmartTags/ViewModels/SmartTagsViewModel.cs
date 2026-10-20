@@ -30,6 +30,7 @@ public sealed partial class SmartTagsViewModel : ObservableObject
     [ObservableProperty] private string _preferredLeader = string.Empty;
     [ObservableProperty] private string _maxLeader = string.Empty;
     [ObservableProperty] private double _quality;
+    [ObservableProperty] private TagSide _side;
 
     [ObservableProperty] private bool _advancedExpanded;
     [ObservableProperty] private string _gap = string.Empty;
@@ -74,6 +75,9 @@ public sealed partial class SmartTagsViewModel : ObservableObject
     public bool HasError => !string.IsNullOrEmpty(Error);
 
     public bool ShowLockWarning => _session.View.IsUnlocked3D;
+
+    /// <summary>Сторону марки задают только на планах и разрезах: на 3D-схеме она зависит от поворота вида.</summary>
+    public bool ShowSide => _session.View.Kind != ViewKind.ThreeD;
 
     public string LockWarning => ViewLocker.IsDefaultName(_session.View.Name)
         ? $"3D-вид не заблокирован. Стандартный вид «{_session.View.Name}» нельзя заблокировать без имени: " +
@@ -158,6 +162,7 @@ public sealed partial class SmartTagsViewModel : ObservableObject
             RunMode = RunMode,
             ShareLabels = ShareLabels,
             Quality = (int)Math.Round(Quality),
+            Side = Side,
             AdvancedExpanded = AdvancedExpanded,
             AvoidTextOverElements = AvoidTextOverElements,
             UseCrop = UseCrop,
@@ -206,6 +211,7 @@ public sealed partial class SmartTagsViewModel : ObservableObject
         PreferredLeader = Format(state.PreferredLeader);
         MaxLeader = Format(_session.View.Kind == ViewKind.ThreeD ? state.MaxLeader3D : state.MaxLeader);
         Quality = Math.Max(0, Math.Min(2, state.Quality));
+        Side = state.Side;
         AdvancedExpanded = state.AdvancedExpanded;
         Gap = Format(state.Gap);
         MinLeader = Format(state.MinLeader);
@@ -287,6 +293,7 @@ public sealed partial class SmartTagsViewModel : ObservableObject
             MinLeader = minLeader,
             Gap = gap,
             Quality = (LayoutQuality)(int)Math.Round(Quality),
+            Side = ShowSide ? Side : TagSide.Auto,
             AvoidTextOverElements = AvoidTextOverElements,
             UseCrop = UseCrop,
             WriteLog = WriteLog,

@@ -7,6 +7,7 @@
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     xmlns:viewModels="clr-namespace:SmartTags.ViewModels"
     xmlns:models="clr-namespace:SmartTags.Models"
+    xmlns:layout="clr-namespace:SmartTags.Layout"
     xmlns:converters="clr-namespace:SmartTags.Converters"
     xmlns:uiConverters="clr-namespace:ToadTools.UI.Converters;assembly=ToadTools.UI"
     d:DataContext="{d:DesignInstance Type=viewModels:SmartTagsViewModel}"
@@ -15,7 +16,7 @@
     WindowStartupLocation="CenterScreen"
     WindowBackdropType="Mica"
     WindowCornerPreference="Round"
-    Height="800"
+    Height="860"
     Width="940"
     MinHeight="620"
     MinWidth="820"
@@ -176,7 +177,8 @@
                 </Grid>
 
                 <!-- Placement -->
-                <StackPanel Grid.Column="2">
+                <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel>
                     <TextBlock Text="Уже стоящие марки" FontWeight="Bold" Margin="10,0,0,5" />
                     <ui:Card Padding="12,8">
                         <StackPanel>
@@ -212,9 +214,27 @@
                                             Text="{Binding MaxLeader, UpdateSourceTrigger=PropertyChanged}" />
                             </Grid>
                             <CheckBox Margin="0,8,0,0"
-                                      Content="Одинаковые марки рядом — одной подписью"
                                       ToolTip="Соседние элементы с одинаковым текстом марки (например, решётки одного типоразмера и расхода) подписываются один раз: выноски от всех элементов сходятся к одной подписи. Трубы и воздуховоды так не объединяются."
-                                      IsChecked="{Binding ShareLabels}" />
+                                      IsChecked="{Binding ShareLabels}">
+                                <TextBlock Text="Одинаковые марки рядом — одной подписью" TextWrapping="Wrap" />
+                            </CheckBox>
+                            <StackPanel Visibility="{Binding ShowSide, Converter={uiConverters:BooleanCollapsedVisibilityConverter}}">
+                                <TextBlock Text="Сторона марки" Margin="0,12,0,4"
+                                           ToolTip="Куда от элемента уходит выноска. На другую сторону марка уходит, только если на заданной для неё нет места." />
+                                <WrapPanel>
+                                    <RadioButton GroupName="Side" MinWidth="0" Margin="0,0,10,0" Content="Авто"
+                                                 ToolTip="Сторону выбирает плагин — туда, где свободнее"
+                                                 IsChecked="{Binding Side, Converter={converters:EnumRadioConverter}, ConverterParameter={x:Static layout:TagSide.Auto}}" />
+                                    <RadioButton GroupName="Side" MinWidth="0" Margin="0,0,10,0" Content="Сверху"
+                                                 IsChecked="{Binding Side, Converter={converters:EnumRadioConverter}, ConverterParameter={x:Static layout:TagSide.Top}}" />
+                                    <RadioButton GroupName="Side" MinWidth="0" Margin="0,0,10,0" Content="Снизу"
+                                                 IsChecked="{Binding Side, Converter={converters:EnumRadioConverter}, ConverterParameter={x:Static layout:TagSide.Bottom}}" />
+                                    <RadioButton GroupName="Side" MinWidth="0" Margin="0,0,10,0" Content="Слева"
+                                                 IsChecked="{Binding Side, Converter={converters:EnumRadioConverter}, ConverterParameter={x:Static layout:TagSide.Left}}" />
+                                    <RadioButton GroupName="Side" MinWidth="0" Content="Справа"
+                                                 IsChecked="{Binding Side, Converter={converters:EnumRadioConverter}, ConverterParameter={x:Static layout:TagSide.Right}}" />
+                                </WrapPanel>
+                            </StackPanel>
                             <TextBlock Text="Качество раскладки" Margin="0,12,0,4" />
                             <Slider Minimum="0" Maximum="2" TickFrequency="1" IsSnapToTickEnabled="True"
                                     TickPlacement="BottomRight" Value="{Binding Quality}" />
@@ -228,6 +248,7 @@
                         </StackPanel>
                     </ui:Card>
                 </StackPanel>
+                </ScrollViewer>
             </Grid>
 
             <!-- Advanced -->

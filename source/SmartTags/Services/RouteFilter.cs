@@ -9,7 +9,8 @@ namespace SmartTags.Services;
 ///     прямым проходом тройника (ответвление — уже другая трасса). Трасса с одинаковым текстом марки
 ///     подписывается один раз — на участке, который стоит свободнее (не в пучке параллельных труб), при
 ///     равенстве — на самом длинном. Если марка показывает то, что вдоль трассы меняется (например, расход),
-///     подпись получает каждая часть трассы со своим текстом.
+///     подпись получает каждая часть трассы со своим текстом. Части трассы на разной высоте (подъём, опуск,
+///     утка) подписываются каждая отдельно: на плане и разрезе они читаются как разные трубы.
 /// </summary>
 internal static class RouteFilter
 {
@@ -21,6 +22,12 @@ internal static class RouteFilter
 
     // Соединители тройника считаются соосными, если угол между ними больше ~170°.
     private const double OppositeCos = -0.985;
+
+    // Участки на одной высоте, если их отметки расходятся не больше чем на 50 мм (в футах).
+    private const double LevelTolerance = 50 / 304.8;
+
+    // Участок круче ~30° к горизонтали — стояк или подъём: он не связывает части трассы на разной высоте.
+    private const double SteepSin = 0.5;
 
     public static void Apply(List<TagTarget> targets, TagView view, double minLength, Action<string>? log)
     {
@@ -34,13 +41,16 @@ internal static class RouteFilter
         foreach (var element in targets[index].Elements)
             runOfElement[element.Id] = index;
 
+        var levels = runs.ToDictionary(index => index, index => Level(targets[index]));
         var sets = new DisjointSets(targets.Count);
         foreach (var index in runs)
         foreach (var curve in targets[index].Elements.OfType<MEPCurve>())
         foreach (var neighbor in Neighbors(curve))
         {
             if (!runOfElement.TryGetValue(neighbor.Id, out var other) || other == index) continue;
-            if (targets[other].Choice == targets[index].Choice && RunBuilder.RunKey(curve) == RunBuilder.RunKey(neighbor))
+            if (targets[other].Choice == targets[index].Choice &&
+                RunBuilder.RunKey(curve) == RunBuilder.RunKey(neighbor) &&
+                SameLevel(levels[index], levels[other]))
                 sets.Union(index, other);
         }
 
@@ -153,6 +163,39 @@ internal static class RouteFilter
                RevitCompat.Is(element, BuiltInCategory.OST_ConduitFitting) ||
                RevitCompat.Is(element, BuiltInCategory.OST_DuctAccessory) ||
                RevitCompat.Is(element, BuiltInCategory.OST_PipeAccessory);
+    }
+
+    /// <summary>Отметки участка (низ и верх, футы) и признак стояка; null — геометрии нет.</summary>
+    private static (double Min, double Max, bool Steep)? Level(TagTarget target)
+    {
+        var min = double.MaxValue;
+        var max = double.MinValue;
+        foreach (var element in target.Elements)
+        {
+            if (element.Location is not LocationCurve { Curve: { } line }) continue;
+
+            for (var end = 0; end < 2; end++)
+            {
+                var z = line.GetEndPoint(end).Z;
+                min = Math.Min(min, z);
+                max = Math.Max(max, z);
+            }
+        }
+
+        if (min > max) return null;
+        return (min, max, target.Axis is { } axis && Math.Abs(axis.Z) > SteepSin);
+    }
+
+    /// <summary>
+    ///     Соседние участки — одна часть трассы: оба горизонтальные (или с уклоном) на одной высоте либо оба
+    ///     стояки. Уклонные участки подряд стыкуются концами, поэтому их отметки перекрываются.
+    /// </summary>
+    private static bool SameLevel((double Min, double Max, bool Steep)? a, (double Min, double Max, bool Steep)? b)
+    {
+        if (a is not { } first || b is not { } second) return true;
+        if (first.Steep || second.Steep) return first.Steep == second.Steep;
+
+        return first.Min - LevelTolerance <= second.Max && second.Min - LevelTolerance <= first.Max;
     }
 
     /// <summary>Сколько других участков проходит рядом с точкой привязки — в пучке марку не разобрать.</summary>

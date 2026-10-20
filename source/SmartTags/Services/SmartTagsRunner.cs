@@ -237,6 +237,9 @@ public sealed class SmartTagsRunner(TagView view, SmartTagsSettings settings)
     private LayoutRequest BuildRequest(List<TagTarget> active, List<ExistingTag> existing)
     {
         var request = new LayoutRequest { Settings = settings.ToLayoutSettings() };
+        // На 3D-схеме стороны «сверху/слева» зависят от поворота вида — там марки ставятся по месту.
+        if (_view.Kind == ViewKind.ThreeD)
+            request.Settings.Side = TagSide.Auto;
         if (settings.UseCrop && _view.Crop is { } crop)
         {
             request.Bounds = crop;
@@ -422,10 +425,11 @@ public sealed class SmartTagsRunner(TagView view, SmartTagsSettings settings)
             _log.Write($"Категория {choice.Name} ({choice.Category}), марка «{choice.TagType.DisplayName}»");
         _log.Write(string.Format(CultureInfo.InvariantCulture,
             "Режим {0}, только выбранные: {1}, мин. участок {2} мм, стояки {3}, линейные {4}, " +
-            "выноска {5}/{6} мм (мин. {7}), зазор {8}, качество {9}, подрезка {10}, общие подписи {11}",
+            "выноска {5}/{6} мм (мин. {7}), зазор {8}, качество {9}, подрезка {10}, общие подписи {11}, сторона {12}",
             settings.ExistingMode, settings.OnlyElements?.Count.ToString() ?? "нет", settings.MinRunLength,
             settings.TagVerticalRuns, settings.RunMode, settings.PreferredLeader, settings.MaxLeader,
-            settings.MinLeader, settings.Gap, settings.Quality, _view.Crop?.ToString() ?? "нет", settings.ShareLabels));
+            settings.MinLeader, settings.Gap, settings.Quality, _view.Crop?.ToString() ?? "нет", settings.ShareLabels,
+            settings.Side));
     }
 
     private void Stage(IRunProgress progress, string stage)

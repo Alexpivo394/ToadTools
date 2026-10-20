@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="260" viewBox="0 0 960 260" font-family="Segoe UI, Arial, sans-serif">
+  <style>
+    .panel { fill: #f8fafc; stroke: #e2e8f0; }
+    .h { font-size: 15px; font-weight: 600; fill: #0f172a; }
+    .s { font-size: 12px; fill: #64748b; }
+    .gr { fill: #ecfeff; stroke: #0e7490; stroke-width: 1.5; }
+    .gx { stroke: #0e7490; stroke-width: 1; }
+    .duct { stroke: #94a3b8; stroke-width: 10; fill: none; }
+    .ld { stroke: #0f172a; stroke-width: 1; fill: none; }
+    .dot { fill: #0f172a; }
+    .t { font-size: 12px; fill: #0f172a; }
+  </style>
+  <defs>
+    <g id="grille">
+      <rect class="gr" x="-14" y="-14" width="28" height="28"/>
+      <path class="gx" d="M-14 -14 L14 14 M14 -14 L-14 14"/>
+    </g>
+  </defs>
+  <rect width="960" height="260" fill="#ffffff"/>
+
+  <g transform="translate(10,10)">
+    <rect class="panel" width="465" height="240" rx="10"/>
+    <text class="h" x="16" y="28">Выключено</text>
+    <text class="s" x="16" y="46">у каждой решётки своя подпись — три одинаковых текста</text>
+    <path class="duct" d="M30 190 H435"/>
+    <use href="#grille" x="110" y="190"/><use href="#grille" x="230" y="190"/><use href="#grille" x="350" y="190"/>
+    <circle class="dot" cx="110" cy="176" r="2.2"/><path class="ld" d="M110 176 L120 128 H204"/><text class="t" x="122" y="124">АМН 300×150</text>
+    <circle class="dot" cx="230" cy="176" r="2.2"/><path class="ld" d="M230 176 L240 90 H324"/><text class="t" x="242" y="86">АМН 300×150</text>
+    <circle class="dot" cx="350" cy="176" r="2.2"/><path class="ld" d="M350 176 L360 128 H444"/><text class="t" x="362" y="124">АМН 300×150</text>
+  </g>
+
+  <g transform="translate(485,10)">
+    <rect class="panel" width="465" height="240" rx="10"/>
+    <text class="h" x="16" y="28">Включено</text>
+    <text class="s" x="16" y="46">одна подпись, выноски от всех решёток сходятся к ней</text>
+    <path class="duct" d="M30 190 H435"/>
+    <use href="#grille" x="110" y="190"/><use href="#grille" x="230" y="190"/><use href="#grille" x="350" y="190"/>
+    <path class="ld" d="M196 112 H280"/><text class="t" x="198" y="108">АМН 300×150</text>
+    <circle class="dot" cx="110" cy="176" r="2.2"/><path class="ld" d="M110 176 L196 112"/>
+    <circle class="dot" cx="230" cy="176" r="2.2"/><path class="ld" d="M230 176 L196 112"/>
+    <circle class="dot" cx="350" cy="176" r="2.2"/><path class="ld" d="M350 176 L280 112"/>
+  </g>
+</svg>

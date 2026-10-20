@@ -23,6 +23,9 @@ internal sealed class PlacementScorer(LayoutScene scene)
     // Выноска считается идущей вдоль своей трубы, если отклоняется от оси меньше чем на ~20°.
     private const double AlongAxisCos = 0.94;
 
+    // Выноска идёт в заданную сторону, если отклоняется от неё меньше чем на ~78°.
+    private const double MinSideComponent = 0.2;
+
     // Элемент рядом с текстом (в зазоре) или задевший его краем тоже немного мешает.
     private const double MinCover = 0.1;
 
@@ -61,6 +64,9 @@ internal sealed class PlacementScorer(LayoutScene scene)
         // Полка «против» наклона выноски выглядит как крючок.
         if (Math.Abs(p.Direction.X) >= 0.35 && p.Direction.X >= 0 != (p.Side == ShelfSide.Right))
             soft += _s.WeightReversedShelf;
+
+        if (IsWrongSide(p))
+            soft += _s.WeightWrongSide;
 
         if (!scene.IsInsideBounds(p.Text))
             hard += Add(conflicts, ConflictKind.TextOutsideCrop, item.Id, -1, -1, true);
@@ -384,6 +390,16 @@ internal sealed class PlacementScorer(LayoutScene scene)
 
         return false;
     }
+
+    /// <summary>Выноска уходит не в заданную пользователем сторону (вбок/вниз вместо вверх и т. п.).</summary>
+    private bool IsWrongSide(Placement p) => _s.Side switch
+    {
+        TagSide.Top => p.Direction.Y < MinSideComponent,
+        TagSide.Bottom => -p.Direction.Y < MinSideComponent,
+        TagSide.Left => -p.Direction.X < MinSideComponent || p.Side != ShelfSide.Left,
+        TagSide.Right => p.Direction.X < MinSideComponent || p.Side != ShelfSide.Right,
+        _ => false
+    };
 
     private double AngleDeviation(Vector2D direction)
     {

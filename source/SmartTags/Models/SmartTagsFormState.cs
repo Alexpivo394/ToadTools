@@ -1,3 +1,5 @@
+using SmartTags.Layout;
+
 namespace SmartTags.Models;
 
 /// <summary>Состояние окна, которое запоминается между запусками.</summary>
@@ -18,6 +20,7 @@ public sealed class SmartTagsFormState
     public double MaxLeader3D { get; set; } = 70;
 
     public int Quality { get; set; } = 1;
+    public TagSide Side { get; set; } = TagSide.Auto;
 
     public bool AdvancedExpanded { get; set; }
     public double Gap { get; set; } = 1.5;

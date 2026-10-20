@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="330" viewBox="0 0 960 330" font-family="Segoe UI, Arial, sans-serif">
+  <style>
+    .panel { fill: #f8fafc; stroke: #e2e8f0; }
+    .h { font-size: 15px; font-weight: 600; fill: #0f172a; }
+    .s { font-size: 12px; fill: #64748b; }
+    .p { stroke-width: 6; fill: none; stroke-linecap: butt; stroke-linejoin: miter; }
+    .b { stroke-width: 3.5; fill: none; }
+    .fit { fill: #ffffff; stroke: #0f172a; stroke-width: 1.5; }
+    .ld { stroke: #0f172a; stroke-width: 1; fill: none; }
+    .dot { fill: #0f172a; }
+    .t { font-size: 12px; fill: #0f172a; }
+    .c1 { stroke: #2563eb; } .c2 { stroke: #0d9488; } .c3 { stroke: #7c3aed; } .c4 { stroke: #db2777; } .c5 { stroke: #ea580c; }
+  </style>
+  <rect width="960" height="330" fill="#ffffff"/>
+
+  <!-- Трасса целиком -->
+  <g transform="translate(10,10)">
+    <rect class="panel" width="300" height="280" rx="10"/>
+    <text class="h" x="16" y="28">Трасса целиком</text>
+    <text class="s" x="16" y="46">2 марки: магистраль и ответвление</text>
+    <path class="p c1" d="M20 180 H245 V90"/>
+    <path class="b c5" d="M165 180 V262"/>
+    <circle class="fit" cx="95" cy="180" r="4"/><circle class="fit" cx="165" cy="180" r="4"/><circle class="fit" cx="245" cy="180" r="4"/>
+    <circle class="dot" cx="58" cy="180" r="2.2"/><path class="ld" d="M58 180 L66 148 H92"/><text class="t" x="67" y="144">Ø50</text>
+    <circle class="dot" cx="165" cy="232" r="2.2"/><path class="ld" d="M165 232 L176 214 H202"/><text class="t" x="177" y="210">Ø25</text>
+  </g>
+
+  <!-- Прямой участок -->
+  <g transform="translate(330,10)">
+    <rect class="panel" width="300" height="280" rx="10"/>
+    <text class="h" x="16" y="28">Прямой участок</text>
+    <text class="s" x="16" y="46">4 марки: каждый прямой участок</text>
+    <path class="p c1" d="M20 180 H165"/>
+    <path class="p c2" d="M165 180 H245"/>
+    <path class="p c3" d="M245 180 V90"/>
+    <path class="b c5" d="M165 180 V262"/>
+    <circle class="fit" cx="95" cy="180" r="4"/><circle class="fit" cx="165" cy="180" r="4"/><circle class="fit" cx="245" cy="180" r="4"/>
+    <circle class="dot" cx="58" cy="180" r="2.2"/><path class="ld" d="M58 180 L66 148 H92"/><text class="t" x="67" y="144">Ø50</text>
+    <circle class="dot" cx="205" cy="180" r="2.2"/><path class="ld" d="M205 180 L198 148 H172"/><text class="t" x="173" y="144">Ø50</text>
+    <circle class="dot" cx="245" cy="122" r="2.2"/><path class="ld" d="M245 122 L256 104 H282"/><text class="t" x="257" y="100">Ø50</text>
+    <circle class="dot" cx="165" cy="232" r="2.2"/><path class="ld" d="M165 232 L176 214 H202"/><text class="t" x="177" y="210">Ø25</text>
+  </g>
+
+  <!-- Каждый элемент -->
+  <g transform="translate(650,10)">
+    <rect class="panel" width="300" height="280" rx="10"/>
+    <text class="h" x="16" y="28">Каждый элемент</text>
+    <text class="s" x="16" y="46">5 марок: каждая труба отдельно</text>
+    <path class="p c1" d="M20 180 H95"/>
+    <path class="p c4" d="M95 180 H165"/>
+    <path class="p c2" d="M165 180 H245"/>
+    <path class="p c3" d="M245 180 V90"/>
+    <path class="b c5" d="M165 180 V262"/>
+    <circle class="fit" cx="95" cy="180" r="4"/><circle class="fit" cx="165" cy="180" r="4"/><circle class="fit" cx="245" cy="180" r="4"/>
+    <circle class="dot" cx="50" cy="180" r="2.2"/><path class="ld" d="M50 180 L58 148 H84"/><text class="t" x="59" y="144">Ø50</text>
+    <circle class="dot" cx="128" cy="180" r="2.2"/><path class="ld" d="M128 180 L120 148 H94"/><text class="t" x="95" y="144">Ø50</text>
+    <circle class="dot" cx="205" cy="180" r="2.2"/><path class="ld" d="M205 180 L198 148 H172"/><text class="t" x="173" y="144">Ø50</text>
+    <circle class="dot" cx="245" cy="122" r="2.2"/><path class="ld" d="M245 122 L256 104 H282"/><text class="t" x="257" y="100">Ø50</text>
+    <circle class="dot" cx="165" cy="232" r="2.2"/><path class="ld" d="M165 232 L176 214 H202"/><text class="t" x="177" y="210">Ø25</text>
+  </g>
+
+  <g transform="translate(16,314)" class="s">
+    <circle class="fit" cx="5" cy="-4" r="4"/>
+    <text x="16" y="0" class="s">слева направо: муфта, тройник (вниз — ответвление Ø25), отвод. Одним цветом — элементы, которые получают одну марку</text>
+  </g>
+</svg>
