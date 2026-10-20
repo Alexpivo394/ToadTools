@@ -67,6 +67,7 @@
 
         <!-- Testing -->
         <PackageVersion Include="Shouldly" Version="4.3.0"/>
+        <PackageVersion Include="TUnit" Version="1.72.10"/>
 
         <!-- Build Automation -->
         <PackageVersion Include="Sourcy.DotNet" Version="1.1.1"/>

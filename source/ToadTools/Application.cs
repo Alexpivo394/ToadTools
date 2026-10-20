@@ -57,6 +57,10 @@ namespace ToadTools
                 .WithInfo("Выгружает из моделей на сервере\nотчет по заполнению параметров.",
                     "paramchecker-movFIkYSwy");
 
+            panel.AddPushButton<Commands.ToadExporterCommand>("Toad\nExporter")
+                .WithIcon("ToadExporter")
+                .WithInfo("Выгружает модели с Revit Server\nили из папки в RVT и NWC.");
+
             var stack = panel.AddStackPanel();
             stack.AddPushButton<Commands.ModelTransplanterCommand>("Копирование элементов")
                 .WithIcon("Transplanter")

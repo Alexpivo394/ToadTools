@@ -2,6 +2,7 @@
 
 **BIM**
 - [ParamChecker](ParamChecker)
+- [ToadExporter](ToadExporter)
 - [Создание рабочих наборов](WorkingSet)
 - [Копирование элементов](ModelTransplanter)
 - [Проверка рабочих наборов](WorksetCheck)

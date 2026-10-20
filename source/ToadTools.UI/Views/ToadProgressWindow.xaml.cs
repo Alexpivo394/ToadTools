@@ -39,7 +39,11 @@ public sealed partial class ToadProgressWindow
         Closing += OnClosing;
 
         _refreshTimer = new DispatcherTimer(DispatcherPriority.Background) { Interval = RefreshInterval };
-        _refreshTimer.Tick += (_, _) => _viewModel.Refresh();
+        _refreshTimer.Tick += (_, _) =>
+        {
+            _viewModel.Refresh();
+            KeepAboveRevit();
+        };
         _refreshTimer.Start();
 
         // Быстрые операции заканчиваются раньше, чем окно успело бы появиться, — и не мелькают.
@@ -67,6 +71,20 @@ public sealed partial class ToadProgressWindow
         // Alt+F4 не должен прятать окно посреди работы — для остановки есть «Прервать».
         if (!_allowClose) e.Cancel = true;
     }
+
+    /// <summary>
+    ///     Окно живёт в своём потоке и не принадлежит окнам Revit: открывая модель, Revit активирует своё
+    ///     окно, и окно плагина перекрыло бы прогресс. Поэтому окно поверх всех, пока активен Revit;
+    ///     при переключении в другую программу — обычное.
+    /// </summary>
+    private void KeepAboveRevit()
+    {
+        GetWindowThreadProcessId(GetForegroundWindow(), out var processId);
+        var revitActive = processId == CurrentProcessId;
+        if (Topmost != revitActive) Topmost = revitActive;
+    }
+
+    private static readonly uint CurrentProcessId = (uint)System.Diagnostics.Process.GetCurrentProcess().Id;
 
     /// <summary>Ставит окно по центру окна, из которого запущена команда (Revit или окно плагина).</summary>
     private void CenterOverAnchor()
@@ -101,4 +119,10 @@ public sealed partial class ToadProgressWindow
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool IsIconic(IntPtr window);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetForegroundWindow();
+
+    [DllImport("user32.dll")]
+    private static extern uint GetWindowThreadProcessId(IntPtr window, out uint processId);
 }
