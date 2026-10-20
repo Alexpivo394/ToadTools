@@ -138,8 +138,8 @@
                                         MaxHeight="50"
                                         VerticalScrollBarVisibility="Auto"
                                         HorizontalScrollBarVisibility="Disabled"
-                                        TextWrapping="Wrap"
-                                        AcceptsReturn="True" />
+                                        TextWrapping="NoWrap"
+                                        AcceptsReturn="False" />
 
                                     <ui:Button
                                         Grid.Column="2"
@@ -157,7 +157,7 @@
                                         Margin="10,0,0,0"
                                         MaxHeight="50"
                                         VerticalScrollBarVisibility="Auto"
-                                        TextWrapping="Wrap"
+                                        TextWrapping="NoWrap"
                                         HorizontalScrollBarVisibility="Disabled" />
 
                                     <ui:Button

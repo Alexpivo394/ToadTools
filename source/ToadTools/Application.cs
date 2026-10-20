@@ -13,7 +13,8 @@ namespace ToadTools
     public class Application : AsyncExternalApplication
     {
         private const string TabName = "ToadTools";
-        private const string HelpUrl = "https://bim-baza.yonote.ru/doc/";
+        /// <summary>Вики плагина: страница справки открывается по F1 на кнопке ленты.</summary>
+        internal const string WikiUrl = "https://github.com/Alexpivo394/ToadTools/wiki/";
 
         public override async Task OnStartupAsync()
         {
@@ -45,31 +46,28 @@ namespace ToadTools
             var worksets = panel.AddSplitButton("Worksets", "Рабочие\nнаборы");
             worksets.AddPushButton<Commands.WorkingSetCommand>("Создание\nнаборов")
                 .WithIcon("Create")
-                .WithInfo("Создает в модели рабочие наборы\nдля выбранного раздела.",
-                    "sozdanie-rabochih-naborov-plaginom-rptools-j3Ycy39HVW");
+                .WithInfo("Создает в модели рабочие наборы\nдля выбранного раздела.", "WorkingSet");
             worksets.AddPushButton<Commands.WorksetCheckCommand>("Проверка\nнаборов")
                 .WithIcon("WorksetsCheck")
                 .WithInfo("Проверяет распределение элементов\nоткрытой модели по рабочим наборам\nи исправляет найденное.",
-                    "worksetcheck-rfycq6j0Bd");
+                    "WorksetCheck");
 
             panel.AddPushButton<Commands.ParamCheckerCommand>("Param\nChecker")
                 .WithIcon("Export")
-                .WithInfo("Выгружает из моделей на сервере\nотчет по заполнению параметров.",
-                    "paramchecker-movFIkYSwy");
+                .WithInfo("Выгружает из моделей на сервере\nотчет по заполнению параметров.", "ParamChecker");
 
             panel.AddPushButton<Commands.ToadExporterCommand>("Toad\nExporter")
                 .WithIcon("ToadExporter")
-                .WithInfo("Выгружает модели с Revit Server\nили из папки в RVT и NWC.");
+                .WithInfo("Выгружает модели с Revit Server\nили из папки в RVT и NWC.", "ToadExporter");
 
             var stack = panel.AddStackPanel();
             stack.AddPushButton<Commands.ModelTransplanterCommand>("Копирование элементов")
                 .WithIcon("Transplanter")
-                .WithInfo("Позволяет копировать элементы\nиз модели в модель.",
-                    "kopirovanie-soderzhimogo-modeli-7q8Wf296FB");
+                .WithInfo("Позволяет копировать элементы\nиз модели в модель.", "ModelTransplanter");
             stack.AddPushButton<Commands.ChangeSharedFamiliesCommand>("Общие → необщие")
                 .WithIcon("ChangeSharedFamilies")
                 .WithInfo("Заменяет общие вложенные семейства\nна необщие. Работает только с\nредактором семейства.",
-                    "zamenit-obshie-semejstva-neobshimi-BDbyQvBJH7");
+                    "ChangeSharedFamilies");
         }
 
         private void CreateGeneralPanel()
@@ -80,25 +78,24 @@ namespace ToadTools
             var stack = panel.AddStackPanel();
             stack.AddPushButton<Commands.SmartTagsCommand>("Умные выноски")
                 .WithIcon("SmartTags")
-                .WithInfo("Расставляет марки на видимых элементах\nактивного вида без пересечений текста\nи выносок. Весь запуск отменяется\nодним Ctrl+Z.");
+                .WithInfo("Расставляет марки на видимых элементах\nактивного вида без пересечений текста\nи выносок. Весь запуск отменяется\nодним Ctrl+Z.",
+                    "SmartTags");
             stack.AddPushButton<Commands.QuantityCheckCommand>("Запись количества")
                 .WithIcon("QuantityCheck")
-                .WithInfo("Заполняет параметр количества\nв элементах модели.",
-                    "zapolnenie-parametra-kolichestvo-beinN88LwP");
+                .WithInfo("Заполняет параметр количества\nв элементах модели.", "QuantityCheck");
             stack.AddPushButton<Commands.WriteDashCommand>("Запись прочерков")
                 .WithIcon("WriteDash")
-                .WithInfo("Заполняет прочерк в указанные параметры\nесли в них нет значения.",
-                    "zapisat-procherk-kfwUDj6TeL");
+                .WithInfo("Заполняет прочерк в указанные параметры\nесли в них нет значения.", "WriteDash");
             stack.AddPushButton<Commands.ClassifierCodeCommand>("Код классификатора")
                 .WithIcon("ClassifierCode")
-                .WithInfo("Заполняет ADSK_Код по классификатору\nи ADSK_Описание по классификатору\nу элементов ИОС.");
+                .WithInfo("Заполняет ADSK_Код по классификатору\nи ADSK_Описание по классификатору\nу элементов ИОС.",
+                    "ClassifierCode");
             stack.AddPushButton<Commands.LengthCommand>("Длина элементов")
                 .WithIcon("Ruler")
-                .WithInfo("Посчитать суммарную длину выбранных элементов.");
+                .WithInfo("Посчитать суммарную длину выбранных элементов.", "Length");
             stack.AddPushButton<Commands.CreateSpacesCommand>("Создание пространств")
                 .WithIcon("Spaces")
-                .WithInfo("Создает в проекте пространства на основе помещений из раздела АР.",
-                    "sozdanie-prostranstv-Bia5rDOjqY");
+                .WithInfo("Создает в проекте пространства на основе помещений из раздела АР.", "CreateSpaces");
         }
 
         private void CreateDisciplinePanels()
@@ -107,52 +104,65 @@ namespace ToadTools
             var panelTray = CreatePanel("Лотки", MediaColor.FromRgb(152, 168, 124));
 
             var trays = panelTray.AddPullDownButton("Кабельные лотки", "Кабельные лотки");
-            trays.WithIcon("1Tray").SetContextualHelp(Help("kabelnye-lotki-hSP8BFIW8g"));
-            trays.AddPushButton<Commands.CableTrayArticulCommand>("Артикулы и наименования").WithIcon("1Tray");
-            trays.AddPushButton<Commands.CableTrayColorPerforationCommand>("Покрасить по перфорации").WithIcon("1Tray");
-            trays.AddPushButton<Commands.CableTrayColorVariantCommand>("Покрасить по исполнению").WithIcon("1Tray");
-            trays.AddPushButton<Commands.CableTrayColorCoverCommand>("Покрасить крышки").WithIcon("1Tray");
+            trays.WithIcon("1Tray").WithInfo("Артикулы и наименования лотков,\nраскраска лотков на виде.", "CableTrays");
+            trays.AddPushButton<Commands.CableTrayArticulCommand>("Артикулы и наименования").WithIcon("1Tray")
+                .WithInfo("Заполняет код изделия, наименование\nи количество у лотков.", "CableTrays");
+            trays.AddPushButton<Commands.CableTrayColorPerforationCommand>("Покрасить по перфорации").WithIcon("1Tray")
+                .WithInfo("Раскрашивает лотки на виде по типу:\nперфорированный, неперфорированный,\nпроволочный.", "CableTrays");
+            trays.AddPushButton<Commands.CableTrayColorVariantCommand>("Покрасить по исполнению").WithIcon("1Tray")
+                .WithInfo("Раскрашивает лотки и детали на виде\nпо ADSK_Исполнение.", "CableTrays");
+            trays.AddPushButton<Commands.CableTrayColorCoverCommand>("Покрасить крышки").WithIcon("1Tray")
+                .WithInfo("Выделяет на виде красным лотки\nи детали с крышкой.", "CableTrays");
 
             panelTray.AddPushButton<Commands.CreateCoverCommand>("Разместить\nкрышки")
                 .WithIcon("CreateCover")
-                .WithInfo("Разместить в модели крышки на кабельные лотки", "razmestit-kryshki-pJSWjFkyzL");
+                .WithInfo("Разместить в модели крышки на кабельные лотки", "CreateCover");
 
             //Сети связи
             var panelSs = CreatePanel("Сети связи", MediaColor.FromRgb(155, 242, 222));
 
             panelSs.AddPushButton<Commands.SSPlanCommand>("Структурная\nсхема")
                 .WithIcon("SSPlan")
-                .WithInfo("Создать структурную схему.", "strukturnaya-shema-yO3TQrgqVS");
+                .WithInfo("Создать структурную схему.", "SSPlan");
 
             //ОВ
             var panelOv = CreatePanel("ОВ", MediaColor.FromRgb(255, 209, 220));
 
             var warm = panelOv.AddPullDownButton("Теплопотери", "Теплопотери");
-            warm.WithIcon("WarmSync").SetContextualHelp(Help("sinhronizaciya-teplopoter-RWMUuxZBdq"));
-            warm.AddPushButton<Commands.RenameSpacesCommand>("Заполнение имен пространств").WithIcon("WarmSync");
-            warm.AddPushButton<Commands.WriteSpaceIdToParamCommand>("Запись ID пространств").WithIcon("WarmSync");
-            warm.AddPushButton<Commands.ExportSpacesToExcelCommand>("Экспорт пространств в Excel").WithIcon("WarmSync");
-            warm.AddPushButton<Commands.WriteFromExcelCommand>("Импорт значений из Excel").WithIcon("WarmSync");
+            warm.WithIcon("WarmSync").WithInfo("Обмен температурой и теплопотерями\nмежду пространствами и Excel.", "WarmSync");
+            warm.AddPushButton<Commands.RenameSpacesCommand>("Заполнение номеров пространств").WithIcon("WarmSync")
+                .WithInfo("Записывает пространствам номера\nпо помещениям из связи АР.", "WarmSync");
+            warm.AddPushButton<Commands.WriteSpaceIdToParamCommand>("Запись ID пространств").WithIcon("WarmSync")
+                .WithInfo("Записывает ID пространства\nв параметр «ID элемента».", "WarmSync");
+            warm.AddPushButton<Commands.ExportSpacesToExcelCommand>("Экспорт пространств в Excel").WithIcon("WarmSync")
+                .WithInfo("Выгружает пространства в Excel.", "WarmSync");
+            warm.AddPushButton<Commands.WriteFromExcelCommand>("Импорт значений из Excel").WithIcon("WarmSync")
+                .WithInfo("Загружает температуру и теплопотери\nиз Excel в пространства.", "WarmSync");
 
             //АР
             var panelAr = CreatePanel("АР", MediaColor.FromRgb(245, 245, 220));
 
             panelAr.AddPushButton<Commands.DoorSideCommand>("Открывание\nдверей")
                 .WithIcon("DoorSide")
-                .WithInfo("Записать сторону открывания двери в параметр Открывание", "otkryvanie-dveri-JJyZ1390oD");
+                .WithInfo("Записать сторону открывания двери в параметр Открывание", "DoorSide");
             panelAr.AddPushButton<Commands.ParamToFinishCommand>("Основание\nотделки")
                 .WithIcon("ParamToFinish")
-                .WithInfo("Позволяет записать основание отделки в выбранный параметр", "osnovanie-otdelki-EcPw4yHPWP");
+                .WithInfo("Позволяет записать основание отделки в выбранный параметр", "ParamToFinish");
 
             //КР
             var panelKr = CreatePanel("КР", MediaColor.FromRgb(172, 229, 238));
 
+            const string reinforcementPage = "ReinforcementByColor";
             var reinforcement = panelKr.AddPullDownButton("Армирование", "Армирование");
-            reinforcement.WithIcon("Rei").WithInfo("Размещает семейства армирования взамен цветовых областей");
-            reinforcement.AddPushButton<Commands.RSHPLeftRightCommand>("R-SHP-Армирование по Y").WithIcon("Rei");
-            reinforcement.AddPushButton<Commands.RSHPUpDownCommand>("R-SHP-Армирование по X").WithIcon("Rei");
-            reinforcement.AddPushButton<Commands.RSUMLeftRightCommand>("R-SUM-Армирование по Y").WithIcon("Rei");
-            reinforcement.AddPushButton<Commands.RSUMUpDownCommand>("R-SUM-Армирование по X").WithIcon("Rei");
+            reinforcement.WithIcon("Rei").WithInfo("Размещает семейства армирования взамен цветовых областей", reinforcementPage);
+            reinforcement.AddPushButton<Commands.RSHPLeftRightCommand>("R-SHP-Армирование по Y").WithIcon("Rei")
+                .WithInfo("Заменяет выбранные области семейством\nR-SHP, стержни вдоль Y.", reinforcementPage);
+            reinforcement.AddPushButton<Commands.RSHPUpDownCommand>("R-SHP-Армирование по X").WithIcon("Rei")
+                .WithInfo("Заменяет выбранные области семейством\nR-SHP, стержни вдоль X.", reinforcementPage);
+            reinforcement.AddPushButton<Commands.RSUMLeftRightCommand>("R-SUM-Армирование по Y").WithIcon("Rei")
+                .WithInfo("Заменяет выбранные области семейством\nR-SUM, стержни вдоль Y.", reinforcementPage);
+            reinforcement.AddPushButton<Commands.RSUMUpDownCommand>("R-SUM-Армирование по X").WithIcon("Rei")
+                .WithInfo("Заменяет выбранные области семейством\nR-SUM, стержни вдоль X.", reinforcementPage);
         }
 
         private RibbonPanel CreatePanel(string name, MediaColor titleColor)
@@ -166,7 +176,7 @@ namespace ToadTools
             $"/ToadTools;component/Resources/Icons/{icon}{size}.png";
 
         internal static ContextualHelp Help(string page) =>
-            new(ContextualHelpType.Url, HelpUrl + page);
+            new(ContextualHelpType.Url, WikiUrl + page);
     }
 
     internal static class RibbonButtonExtensions
@@ -182,7 +192,7 @@ namespace ToadTools
         }
 
         /// <summary>
-        ///     Подсказка и, если есть, ссылка на страницу справки (открывается по F1).
+        ///     Подсказка и, если есть, страница вики (открывается по F1, пока курсор на кнопке).
         /// </summary>
         public static T WithInfo<T>(this T item, string toolTip, string? helpPage = null) where T : RibbonItem
         {

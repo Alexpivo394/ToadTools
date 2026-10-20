@@ -8,7 +8,7 @@
     xmlns:viewModels="clr-namespace:ParamToFinish.ViewModels"
     d:DataContext="{d:DesignInstance Type=viewModels:ParamToFinishViewModel}"
     mc:Ignorable="d"
-    Title="ModelTransplanter"
+    Title="Основание отделки"
     WindowStartupLocation="CenterScreen"
     WindowBackdropType="Mica"
     WindowCornerPreference="Round"
@@ -24,7 +24,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <!-- Title Bar -->
-        <ui:TitleBar Grid.Row="0" Title="ParamToFinish" Icon="AddCircle24" />
+        <ui:TitleBar Grid.Row="0" Title="Основание отделки" Icon="AddCircle24" />
         
         <!-- Content -->
         <Grid Grid.Row="1" Margin="10,0,10,10">

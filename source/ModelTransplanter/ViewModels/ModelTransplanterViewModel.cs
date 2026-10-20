@@ -139,7 +139,11 @@ public partial class ModelTransplanterViewModel : ObservableObject
     public void LoadFromSettings(Settings settings)
     {
         DarkTheme = settings.IsDarkTheme;
+
+        // Пустой путь в настройках — остаётся лог по умолчанию в «Документах».
+        if (string.IsNullOrWhiteSpace(settings.LogFilePath)) return;
         LogFilePath = settings.LogFilePath;
+        _logger = new Logger(LogFilePath);
     }
 
     public Settings ToSettings()

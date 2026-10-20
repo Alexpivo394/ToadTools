@@ -9,7 +9,7 @@
     WindowStartupLocation="CenterScreen"
     WindowBackdropType="Mica"
     WindowCornerPreference="Round"
-    Title="WorkingSet"
+    Title="Структурная схема"
     Height="450"
     Width="450"
     MinHeight="450"

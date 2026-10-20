@@ -312,7 +312,7 @@
                                           ToolTipService.ShowOnDisabled="True" />
                                 <CheckBox Content="Сжать файл" IsChecked="{Binding Settings.Compact}" Margin="0,4,0,0" />
                                 <TextBlock Margin="0,8,0,0" Opacity="0.7" FontSize="12" TextWrapping="Wrap"
-                                           Text="Сохраняется как файл хранилища — у получателя откроется без предупреждений" />
+                                           Text="Модель совместной работы сохраняется локальной копией с рабочими наборами (как createLocalRVT); её файл хранилища не сохраняется" />
                             </StackPanel>
                         </ui:CardExpander>
 

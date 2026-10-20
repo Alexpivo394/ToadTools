@@ -9,7 +9,7 @@
     WindowStartupLocation="CenterScreen"
     WindowBackdropType="Mica"
     WindowCornerPreference="Round"
-    Title="WorkingSet"
+    Title="Записать количество"
     Height="300"
     Width="450"
     MinHeight="250"
@@ -27,7 +27,7 @@
 
         <!-- Заголовок -->
         <ui:TitleBar Grid.Row="0"
-                     Title="Создание рабочих наборов"
+                     Title="Записать количество"
                      Margin="0,0,0,10">
             <ui:TitleBar.Icon>
                 <ui:SymbolIcon Symbol="AddCircle24"/>

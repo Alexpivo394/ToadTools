@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System.Windows;
 using Autodesk.Revit.UI;
+using Nice3point.Revit.Toolkit;
 using Microsoft.Win32;
 using ToadTools.UI.Models;
 using WorkingSet.Models;
@@ -13,8 +14,6 @@ namespace WorkingSet.ViewModels;
 public partial class WorkingSetViewModel : ObservableObject
 {
     private WorkingSetModel? _model;
-    CreateWorksetsHandler? _createWorksetsHandler;
-    private ExternalEvent? _externalEvent;
 
     [ObservableProperty] private string? _selectedSection;
     [ObservableProperty] private List<string>? _sections;
@@ -37,8 +36,6 @@ public partial class WorkingSetViewModel : ObservableObject
         }
 
         _model = new WorkingSetModel(value!);
-        _createWorksetsHandler = new CreateWorksetsHandler();
-        _externalEvent = ExternalEvent.Create(_createWorksetsHandler);
 
         LoadSections();
     }
@@ -65,7 +62,7 @@ public partial class WorkingSetViewModel : ObservableObject
             return;
         }
         
-        if (_model == null || _createWorksetsHandler == null || _externalEvent == null)
+        if (_model == null)
         {
             ToadDialogService.Show(
                 "Внимание!",
@@ -76,16 +73,30 @@ public partial class WorkingSetViewModel : ObservableObject
             return;
         }
 
-        _createWorksetsHandler.Worksets = _model.GetWorksetsFromSection(section);
-        _externalEvent.Raise();
-        
-        string? dial2 = ToadDialogService.Show(
+        var doc = RevitContext.ActiveDocument!;
+        if (!doc.IsWorkshared)
+        {
+            ToadDialogService.Show(
+                "Внимание!",
+                "В модели не включена совместная работа. Включите её (Совместная работа → Рабочие наборы) " +
+                "и запустите плагин снова.",
+                DialogButtons.OK,
+                DialogIcon.Warning
+            );
+            return;
+        }
+
+        var names = _model.GetWorksetsFromSection(section);
+        var created = WorksetCreator.Create(doc, names);
+
+        ToadDialogService.Show(
             "Успех!",
-            "Рабочие наборы созданы успешно!",
+            created > 0
+                ? $"Создано рабочих наборов: {created} из {names.Count}."
+                : $"Все {names.Count} рабочих наборов раздела «{section}» уже есть в модели.",
             DialogButtons.OK,
-            DialogIcon.Warning
+            DialogIcon.Info
         );
-        
     }
     
     [RelayCommand]

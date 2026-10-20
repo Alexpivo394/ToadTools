@@ -11,6 +11,7 @@ public class CategorySets
                     BuiltInCategory.OST_GenericModel,
                     BuiltInCategory.OST_MechanicalEquipment,
                     BuiltInCategory.OST_PipeFitting,
+                    BuiltInCategory.OST_PipeAccessory,
                     BuiltInCategory.OST_PlumbingFixtures,
                     BuiltInCategory.OST_DuctFitting,
                     BuiltInCategory.OST_DuctAccessory,

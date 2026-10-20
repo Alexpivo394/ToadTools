@@ -75,7 +75,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private void OpenRefLink()
     {
-        string url = "https://bim-baza.yonote.ru/doc/paramchecker-movFIkYSwy#h-okno-nastrojki-fil%D1%8Ctra";
+        string url = "https://github.com/Alexpivo394/ToadTools/wiki/ParamChecker";
         ProcessStartInfo psi = new()
         {
             FileName = url,

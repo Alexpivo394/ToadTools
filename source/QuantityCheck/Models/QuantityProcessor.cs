@@ -19,8 +19,11 @@ public class QuantityProcessor
             _doc = doc;
         }
 
-        public void Process(string? paramName, double reserve)
+        /// <returns>Сколько элементов получили количество и сколько нет (причины — в логе).</returns>
+        public (int Written, int Failed) Process(string? paramName, double reserve)
         {
+            var written = 0;
+            var notWritten = 0;
             _paramName = paramName;
             _reserve = reserve;
             _logger?.StartLog(string.Empty);
@@ -89,6 +92,8 @@ public class QuantityProcessor
                 }
 
                 tx.Commit();
+                written = writtenCount;
+                notWritten = failed.Count;
 
                 _logger?.Log($"Успешно записано: {writtenCount}");
                 if (failed.Count > 0)
@@ -112,6 +117,7 @@ public class QuantityProcessor
                 }
             }
             _logger?.Log("Завершено");
+            return (written, notWritten);
         }
 
         private (bool ok, string? reason) WriteQuantity(Element el, double value)

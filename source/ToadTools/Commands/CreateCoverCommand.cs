@@ -5,6 +5,8 @@ using CreateCover.Services;
 using CreateCover.ViewModels;
 using CreateCover.Views;
 using Nice3point.Revit.Toolkit.External;
+using ToadTools.UI.Models;
+using ToadTools.UI.Services;
 
 namespace ToadTools.Commands;
 
@@ -31,8 +33,19 @@ public class CreateCoverCommand : ExternalCommand
             var familyService = new FamilyService(doc, FamilyName, FamilyPath);
             var getFirstTrayService = new GetFirstTrayService(doc);
 
-            var paramCreator = new ParamModelCreator(familyService.GetOrLoadFamilySymbol(),
-                getFirstTrayService.GetFirstTray(), paramService);
+            var firstTray = getFirstTrayService.GetFirstTray();
+            if (firstTray is null)
+            {
+                ToadDialogService.Show("Разместить крышки", "В модели нет кабельных лотков — крышки ставить некуда.",
+                    DialogButtons.OK, DialogIcon.Warning);
+                return;
+            }
+
+            // Без семейства крышки ставить нечего; причину FamilyService уже показал.
+            var coverSymbol = familyService.GetOrLoadFamilySymbol();
+            if (coverSymbol is null) return;
+
+            var paramCreator = new ParamModelCreator(coverSymbol, firstTray, paramService);
             var createService = new CreateCoverService(doc, familyService, FamilyName);
 
             var viewModel = new CreateCoverViewModel(paramCreator, createService);
@@ -43,6 +56,8 @@ public class CreateCoverCommand : ExternalCommand
         catch (Exception e)
         {
             Debug.WriteLine(e);
+            ToadDialogService.Show("Разместить крышки", $"Не удалось запустить плагин: {e.Message}",
+                DialogButtons.OK, DialogIcon.Error);
             Result = Autodesk.Revit.UI.Result.Cancelled;
         }
     }

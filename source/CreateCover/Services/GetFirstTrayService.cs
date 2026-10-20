@@ -11,12 +11,12 @@ public class GetFirstTrayService
         _doc = doc;
     }
 
-    public Element GetFirstTray()
+    public Element? GetFirstTray()
     {
         var trays = new FilteredElementCollector(_doc).OfCategory(BuiltInCategory.OST_CableTray)
             .WhereElementIsNotElementType()
             .ToList();
         
-        return trays.First();
+        return trays.FirstOrDefault();
     }
 }

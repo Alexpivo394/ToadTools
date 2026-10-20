@@ -104,7 +104,8 @@ public partial class FilterConfigViewModel : ObservableObject
 
         var settings = new JsonSerializerSettings
         {
-            ReferenceLoopHandling = ReferenceLoopHandling.Ignore, Formatting = Formatting.Indented
+            // Одной строкой: JSON показывается в поле правила, многострочный растягивал строку.
+            ReferenceLoopHandling = ReferenceLoopHandling.Ignore, Formatting = Formatting.None
         };
 
         return JsonConvert.SerializeObject(model, settings);

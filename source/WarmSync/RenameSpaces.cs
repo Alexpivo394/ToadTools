@@ -20,6 +20,7 @@ namespace WarmSync;
             int errorCount = 0;
             List<string> log = new();
             var cancelled = false;
+            var arLinks = 0;
 
             using (var progress = ToadProgress.Show("Номера пространств",
                        new ProgressOptions { Icon = SymbolRegular.NumberSymbolSquare24 }))
@@ -47,9 +48,11 @@ namespace WarmSync;
                         var linkDoc = linkInstance.GetLinkDocument();
                         if (linkDoc == null) continue;
 
-                        if (!linkDoc.Title.ToUpper().Contains("_AR_"))
+                        var title = linkDoc.Title.ToUpperInvariant();
+                        if (!title.Contains("_AR_") && !title.Contains("_АР_"))
                             continue;
 
+                        arLinks++;
                         log.Add($"Обработка файла: {linkDoc.Title}");
 
                         var rooms = new FilteredElementCollector(linkDoc)
@@ -121,6 +124,9 @@ namespace WarmSync;
                     DialogButtons.OK, DialogIcon.Info);
                 return;
             }
+
+            if (arLinks == 0)
+                log.Add("Связь АР не найдена: в имени файла связи должно быть «_AR_» или «_АР_».");
 
             ShowResult(updatedCount, errorCount, log);
         }

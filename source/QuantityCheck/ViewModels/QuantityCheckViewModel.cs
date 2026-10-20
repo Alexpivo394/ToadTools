@@ -38,9 +38,17 @@ public partial class QuantityCheckViewModel(Logger? logger) : ObservableObject
     [RelayCommand]
     private void WriteQuantity()
     {
+        if (string.IsNullOrWhiteSpace(ParameterName))
+        {
+            ToadDialogService.Show("Внимание", "Введите имя параметра для записи количества.",
+                DialogButtons.OK, DialogIcon.Warning);
+            return;
+        }
+
+        (int Written, int Failed) result;
         try
         {
-            _processor.Process(ParameterName, Reverse);
+            result = _processor.Process(ParameterName!.Trim(), Reverse);
         }
         catch (OperationCanceledException)
         {
@@ -49,12 +57,15 @@ public partial class QuantityCheckViewModel(Logger? logger) : ObservableObject
             return;
         }
 
-        
-        string? dildo = ToadDialogService.Show(
+        var message = $"Количество записано: {result.Written}";
+        if (result.Failed > 0)
+            message += $"\nНе записано: {result.Failed} — причины в Документы\\QuantityCheckLog.txt";
+
+        ToadDialogService.Show(
             "Готово",
-            "Длина заполнена",
+            message,
             DialogButtons.OK,
-            DialogIcon.Info
+            result.Failed > 0 ? DialogIcon.Warning : DialogIcon.Info
         );
     }
 } 

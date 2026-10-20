@@ -7,7 +7,7 @@
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     xmlns:converters="clr-namespace:ToadTools.UI.Converters;assembly=ToadTools.UI"
     mc:Ignorable="d"
-    Title="ModelTransplanter"
+    Title="Копирование элементов"
     WindowStartupLocation="CenterScreen"
     WindowBackdropType="Mica"
     WindowCornerPreference="Round"
@@ -19,7 +19,7 @@
 
     <Grid>
         <!-- Title Bar -->
-        <ui:TitleBar Title="ModelTransplanter" Icon="AddCircle24" />
+        <ui:TitleBar Title="Копирование элементов" Icon="AddCircle24" />
 
         <!-- Content -->
         <StackPanel Margin="20" VerticalAlignment="Center">

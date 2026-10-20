@@ -11,7 +11,8 @@
     ShowInTaskbar="False"
     ShowActivated="False"
     Width="380"
-    SizeToContent="Height"
+    Height="150"
+    MinHeight="0"
     ExtendsContentIntoTitleBar="True">
     <Grid>
         <Grid.RowDefinitions>

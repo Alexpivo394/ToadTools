@@ -6,7 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     mc:Ignorable="d"
-    Title="ModelTransplanter"
+    Title="Разместить крышки"
     WindowStartupLocation="CenterScreen"
     WindowBackdropType="Mica"
     WindowCornerPreference="Round"
@@ -22,7 +22,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <!-- Title Bar -->
-        <ui:TitleBar Grid.Row="0" Title="CreateCover" Icon="AddCircle24" />
+        <ui:TitleBar Grid.Row="0" Title="Разместить крышки" Icon="AddCircle24" />
         
         <!-- Content -->
         <Grid Grid.Row="1" Margin="10,0,10,10">

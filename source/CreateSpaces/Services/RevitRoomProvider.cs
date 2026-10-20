@@ -12,28 +12,24 @@ public class RevitRoomProvider
 
     public void Initialize(LinkDescriptor link)
     {
-        if (link == null || string.IsNullOrEmpty(link.Name))
-            _rooms = Array.Empty<Room>();
-        
+        _rooms = Array.Empty<Room>();
+        if (link == null || string.IsNullOrEmpty(link.Name)) return;
+
         var linkInstance = new FilteredElementCollector(_doc)
             .OfClass(typeof(RevitLinkInstance))
             .Cast<RevitLinkInstance>()
-            .FirstOrDefault(x => x.GetLinkDocument()?.Title == link?.Name);
-
-        if (linkInstance == null)
-            _rooms = Array.Empty<Room>();
+            .FirstOrDefault(x => x.GetLinkDocument()?.Title == link.Name);
 
         var linkedDoc = linkInstance?.GetLinkDocument();
-        if (linkedDoc == null)
-            _rooms = Array.Empty<Room>();
-        
-        List<Room?>? rooms = new FilteredElementCollector(linkedDoc)
+        if (linkedDoc == null) return;
+
+        // Неразмещённые и неокружённые помещения без точки — пространство для них не создать.
+        _rooms = new FilteredElementCollector(linkedDoc)
             .OfCategory(BuiltInCategory.OST_Rooms)
             .WhereElementIsNotElementType()
             .Cast<Room>()
-            .ToList()!;
-        
-        _rooms = rooms;
+            .Where(room => room.Location is LocationPoint && room.Area > 0)
+            .ToList<Room?>();
     }
     
     public IReadOnlyList<Room?>? GetRoomsFromLink()

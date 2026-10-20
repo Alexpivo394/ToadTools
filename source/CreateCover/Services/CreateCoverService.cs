@@ -37,9 +37,9 @@ public class CreateCoverService
 
         if (coverSymbol == null)
         {
-            var errMsg = $"Не удалось найти или загрузить семейство {_familyName}";
-            var dial1 = ToadDialogService.Show("ЧОТА НЕ ТАК(((", "С загрузкой семейства какая-то шляпа",
+            ToadDialogService.Show("Разместить крышки", $"Не удалось найти или загрузить семейство {_familyName}",
                 DialogButtons.OK, DialogIcon.Error);
+            return;
         }
 
         var collector = new FilteredElementCollector(_doc).OfClass(typeof(FamilyInstance))
