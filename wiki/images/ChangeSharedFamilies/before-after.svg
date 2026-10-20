@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="260" viewBox="0 0 960 260" font-family="Segoe UI, Arial, sans-serif">
+  <style>
+    .panel { fill: #f8fafc; stroke: #e2e8f0; }
+    .ok { fill: #f0fdf4; stroke: #bbf7d0; }
+    .h { font-size: 15px; font-weight: 600; fill: #0f172a; }
+    .s { font-size: 12px; fill: #64748b; }
+    .t { font-size: 12px; fill: #0f172a; }
+    .fam { fill: #dbeafe; stroke: #2563eb; stroke-width: 1.5; }
+    .nest { fill: #fef3c7; stroke: #d97706; stroke-width: 1.5; }
+    .nest2 { fill: #ffffff; stroke: #94a3b8; stroke-width: 1.5; stroke-dasharray: 4 3; }
+    .row { fill: #ffffff; stroke: #e2e8f0; }
+    .bad { fill: #fef2f2; stroke: #fecaca; }
+    .hd { fill: #f1f5f9; stroke: #cbd5e1; }
+    .ar { stroke: #94a3b8; stroke-width: 2; fill: none; marker-end: url(#a); }
+  </style>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#94a3b8"/></marker></defs>
+  <rect width="960" height="260" fill="#ffffff"/>
+
+  <g transform="translate(10,10)">
+    <rect class="panel" width="450" height="240" rx="10"/>
+    <text class="h" x="16" y="28">До: вложенные семейства общие</text>
+    <rect class="fam" x="16" y="48" width="180" height="110" rx="6"/>
+    <text class="t" x="28" y="70">Шкаф ЩР-1</text>
+    <rect class="nest" x="28" y="82" width="74" height="30" rx="4"/><text class="t" x="34" y="102">Автомат</text>
+    <rect class="nest" x="110" y="82" width="74" height="30" rx="4"/><text class="t" x="116" y="102">Счётчик</text>
+    <text class="s" x="28" y="138">общие — видны в проекте</text>
+    <text class="h" x="220" y="70" style="font-size:13px">Спецификация</text>
+    <g transform="translate(220,80)">
+      <rect class="hd" width="214" height="22"/><text class="th s" x="8" y="15">Наименование</text><text class="s" x="170" y="15">Кол.</text>
+      <rect class="row" y="22" width="214" height="22"/><text class="t" x="8" y="37">Шкаф ЩР-1</text><text class="t" x="176" y="37">1</text>
+      <rect class="bad" y="44" width="214" height="22"/><text class="t" x="8" y="59">Автомат</text><text class="t" x="176" y="59">1</text>
+      <rect class="bad" y="66" width="214" height="22"/><text class="t" x="8" y="81">Счётчик</text><text class="t" x="176" y="81">1</text>
+    </g>
+    <text class="s" x="16" y="200">Вложенные элементы попадают в спецификацию проекта</text>
+    <text class="s" x="16" y="216">отдельными строками.</text>
+  </g>
+  <path class="ar" d="M464 130 H492"/>
+  <g transform="translate(496,10)">
+    <rect class="ok" width="454" height="240" rx="10"/>
+    <text class="h" x="16" y="28">После: необщие</text>
+    <rect class="fam" x="16" y="48" width="180" height="110" rx="6"/>
+    <text class="t" x="28" y="70">Шкаф ЩР-1</text>
+    <rect class="nest2" x="28" y="82" width="74" height="30" rx="4"/><text class="t" x="34" y="102">Автомат</text>
+    <rect class="nest2" x="110" y="82" width="74" height="30" rx="4"/><text class="t" x="116" y="102">Счётчик</text>
+    <text class="s" x="28" y="138">часть семейства</text>
+    <text class="h" x="220" y="70" style="font-size:13px">Спецификация</text>
+    <g transform="translate(220,80)">
+      <rect class="hd" width="214" height="22"/><text class="s" x="8" y="15">Наименование</text><text class="s" x="170" y="15">Кол.</text>
+      <rect class="row" y="22" width="214" height="22"/><text class="t" x="8" y="37">Шкаф ЩР-1</text><text class="t" x="176" y="37">1</text>
+    </g>
+    <text class="s" x="16" y="200">Геометрия, типы и связи параметров (метки)</text>
+    <text class="s" x="16" y="216">вложенных семейств сохраняются — меняется только</text>
+    <text class="s" x="16" y="232">флажок «Общее».</text>
+  </g>
+</svg>

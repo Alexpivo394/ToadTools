@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="260" viewBox="0 0 960 260" font-family="Segoe UI, Arial, sans-serif">
+  <style>
+    .panel { fill: #f8fafc; stroke: #e2e8f0; }
+    .ok { fill: #f0fdf4; stroke: #bbf7d0; }
+    .h { font-size: 15px; font-weight: 600; fill: #0f172a; }
+    .s { font-size: 12px; fill: #64748b; }
+    .t { font-size: 12px; fill: #0f172a; }
+    .tray { fill: #e2e8f0; stroke: #475569; stroke-width: 1.5; }
+    .cov { fill: none; stroke: #dc2626; stroke-width: 2; stroke-dasharray: 6 4; }
+    .chk { fill: #2563eb; } .unchk { fill: #ffffff; stroke: #94a3b8; }
+    .hd { fill: #f1f5f9; stroke: #cbd5e1; } .row { fill: #ffffff; stroke: #e2e8f0; }
+    .ar { stroke: #94a3b8; stroke-width: 2; fill: none; marker-end: url(#a); }
+  </style>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#94a3b8"/></marker></defs>
+  <rect width="960" height="260" fill="#ffffff"/>
+
+  <g transform="translate(10,10)">
+    <rect class="panel" width="520" height="240" rx="10"/>
+    <text class="h" x="16" y="28">Лотки в модели</text>
+    <g transform="translate(16,52)">
+      <rect class="tray" x="0" y="0" width="300" height="26"/>
+      <rect class="cov" x="-3" y="-3" width="306" height="32"/>
+      <rect class="chk" x="320" y="5" width="16" height="16" rx="3"/><path d="M323 13 l4 4 l7 -8" stroke="#fff" stroke-width="2" fill="none"/>
+      <text class="t" x="344" y="18">ADSK_Крышка ✔ → крышка</text>
+    </g>
+    <g transform="translate(16,110)">
+      <rect class="tray" x="0" y="0" width="220" height="20"/>
+      <rect class="cov" x="-3" y="-3" width="226" height="26"/>
+      <rect class="chk" x="320" y="2" width="16" height="16" rx="3"/><path d="M323 10 l4 4 l7 -8" stroke="#fff" stroke-width="2" fill="none"/>
+      <text class="t" x="344" y="15">ADSK_Крышка ✔ → крышка</text>
+    </g>
+    <g transform="translate(16,162)">
+      <rect class="tray" x="0" y="0" width="260" height="26"/>
+      <rect class="unchk" x="320" y="5" width="16" height="16" rx="3"/>
+      <text class="t" x="344" y="18">без галочки — пропускается</text>
+    </g>
+    <text class="s" x="16" y="214">Крышка (семейство RP_Крышка) невидима: ставится в середину лотка</text>
+    <text class="s" x="16" y="230">с его шириной, высотой и длиной</text>
+  </g>
+  <path class="ar" d="M534 130 H562"/>
+  <g transform="translate(566,10)">
+    <rect class="ok" width="384" height="240" rx="10"/>
+    <text class="h" x="16" y="28">Спецификация крышек</text>
+    <g transform="translate(16,48)">
+      <rect class="hd" width="352" height="24"/><text class="s" x="8" y="16">Наименование</text><text class="s" x="252" y="16">Код</text><text class="s" x="306" y="16">Кол.</text>
+      <rect class="row" y="24" width="352" height="24"/><text class="t" x="8" y="40">Крышка на прямой элемент 300x100</text><text class="t" x="252" y="40">35525</text><text class="t" x="306" y="40">12,4</text>
+      <rect class="row" y="48" width="352" height="24"/><text class="t" x="8" y="64">Крышка на прямой элемент 200x80</text><text class="t" x="252" y="64">35524</text><text class="t" x="306" y="64">8,1</text>
+    </g>
+    <text class="s" x="16" y="150">Код и наименование подбираются по ширине</text>
+    <text class="s" x="16" y="166">и исполнению лотка автоматически, ваши правила</text>
+    <text class="s" x="16" y="182">переносят остальные параметры — например,</text>
+    <text class="s" x="16" y="198">систему или этаж для фильтра спецификации.</text>
+  </g>
+</svg>

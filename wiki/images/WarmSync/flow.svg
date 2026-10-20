@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="200" viewBox="0 0 960 200" font-family="Segoe UI, Arial, sans-serif">
+  <style>
+    .card { fill: #f8fafc; stroke: #e2e8f0; } .xl { fill: #f0fdf4; stroke: #bbf7d0; }
+    .h { font-size: 14px; font-weight: 600; fill: #0f172a; } .s { font-size: 12px; fill: #64748b; }
+    .n { font-size: 13px; font-weight: 700; fill: #ffffff; }
+    .ar { stroke: #94a3b8; stroke-width: 2; fill: none; marker-end: url(#a); }
+  </style>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#94a3b8"/></marker></defs>
+  <rect width="960" height="200" fill="#ffffff"/>
+  <g transform="translate(10,20)"><rect class="card" width="170" height="160" rx="10"/>
+    <circle cx="30" cy="30" r="14" fill="#2563eb"/><text class="n" x="30" y="35" text-anchor="middle">1</text>
+    <text class="h" x="16" y="72">Пространства</text><text class="s" x="16" y="94">плагином «Создание</text><text class="s" x="16" y="110">пространств»</text></g>
+  <path class="ar" d="M184 100 H200"/>
+  <g transform="translate(204,20)"><rect class="card" width="170" height="160" rx="10"/>
+    <circle cx="30" cy="30" r="14" fill="#2563eb"/><text class="n" x="30" y="35" text-anchor="middle">2</text>
+    <text class="h" x="16" y="72">Номера</text><text class="s" x="16" y="94">номера пространств</text><text class="s" x="16" y="110">из помещений АР</text></g>
+  <path class="ar" d="M378 100 H394"/>
+  <g transform="translate(398,20)"><rect class="card" width="170" height="160" rx="10"/>
+    <circle cx="30" cy="30" r="14" fill="#2563eb"/><text class="n" x="30" y="35" text-anchor="middle">3</text>
+    <text class="h" x="16" y="72">Запись ID</text><text class="s" x="16" y="94">ID пространства</text><text class="s" x="16" y="110">в «ID элемента»</text></g>
+  <path class="ar" d="M572 100 H588"/>
+  <g transform="translate(592,20)"><rect class="xl" width="170" height="160" rx="10"/>
+    <circle cx="30" cy="30" r="14" fill="#16a34a"/><text class="n" x="30" y="35" text-anchor="middle">4</text>
+    <text class="h" x="16" y="72">Экспорт в Excel</text><text class="s" x="16" y="94">заполните температуру</text><text class="s" x="16" y="110">и теплопотери</text></g>
+  <path class="ar" d="M766 100 H782"/>
+  <g transform="translate(786,20)"><rect class="card" width="164" height="160" rx="10"/>
+    <circle cx="30" cy="30" r="14" fill="#2563eb"/><text class="n" x="30" y="35" text-anchor="middle">5</text>
+    <text class="h" x="16" y="72">Импорт</text><text class="s" x="16" y="94">значения — в</text><text class="s" x="16" y="110">пространства и марки</text></g>
+</svg>

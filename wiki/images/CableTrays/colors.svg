@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="300" viewBox="0 0 960 300" font-family="Segoe UI, Arial, sans-serif">
+  <style>
+    .panel { fill: #f8fafc; stroke: #e2e8f0; }
+    .h { font-size: 15px; font-weight: 600; fill: #0f172a; }
+    .s { font-size: 12px; fill: #334155; }
+    .tr { fill: none; stroke-width: 9; stroke-linecap: butt; }
+    .fit { fill: #ffffff; stroke: #000000; stroke-width: 2; }
+    .lg { stroke-width: 6; }
+  </style>
+  <rect width="960" height="300" fill="#ffffff"/>
+
+  <!-- по перфорации -->
+  <g transform="translate(10,10)">
+    <rect class="panel" width="300" height="280" rx="10"/>
+    <text class="h" x="16" y="28">Покрасить по перфорации</text>
+    <path class="tr" d="M24 90 H150" stroke="#00AE98"/>
+    <path class="tr" d="M150 90 H276" stroke="#984C98"/>
+    <path class="tr" d="M150 90 V170" stroke="#FFFF00"/>
+    <path class="tr" d="M150 170 H276" stroke="#000000"/>
+    <rect class="fit" x="143" y="83" width="14" height="14"/><rect class="fit" x="143" y="163" width="14" height="14"/>
+    <g transform="translate(16,200)">
+      <line class="lg" x1="0" y1="0" x2="26" y2="0" stroke="#00AE98"/><text class="s" x="34" y="4">перфорированный</text>
+      <line class="lg" x1="150" y1="0" x2="176" y2="0" stroke="#984C98"/><text class="s" x="184" y="4">неперфор.</text>
+      <line class="lg" x1="0" y1="22" x2="26" y2="22" stroke="#FFFF00"/><text class="s" x="34" y="26">проволочный</text>
+      <line class="lg" x1="150" y1="22" x2="176" y2="22" stroke="#000000"/><text class="s" x="184" y="26">другие, детали</text>
+      <text class="s" x="0" y="54" style="fill:#64748b">по «ADSK_Наименование (по типу)»</text>
+    </g>
+  </g>
+
+  <!-- по исполнению -->
+  <g transform="translate(330,10)">
+    <rect class="panel" width="300" height="280" rx="10"/>
+    <text class="h" x="16" y="28">Покрасить по исполнению</text>
+    <path class="tr" d="M24 90 H150" stroke="#FF80C0"/>
+    <path class="tr" d="M150 90 H276" stroke="#0080C0"/>
+    <path class="tr" d="M150 90 V170" stroke="#008000"/>
+    <path class="tr" d="M150 170 H276" stroke="#000000"/>
+    <rect class="fit" x="143" y="83" width="14" height="14" style="stroke:#0080C0"/><rect class="fit" x="143" y="163" width="14" height="14"/>
+    <g transform="translate(16,200)">
+      <line class="lg" x1="0" y1="0" x2="26" y2="0" stroke="#FF80C0"/><text class="s" x="34" y="4">1 — Сендзимир</text>
+      <line class="lg" x1="150" y1="0" x2="176" y2="0" stroke="#0080C0"/><text class="s" x="184" y="4">2 — гор. цинк</text>
+      <line class="lg" x1="0" y1="22" x2="26" y2="22" stroke="#008000"/><text class="s" x="34" y="26">3 — нержавейка</text>
+      <line class="lg" x1="150" y1="22" x2="176" y2="22" stroke="#000000"/><text class="s" x="184" y="26">0 или нет</text>
+      <text class="s" x="0" y="54" style="fill:#64748b">по «ADSK_Исполнение», лотки и детали</text>
+    </g>
+  </g>
+
+  <!-- крышки -->
+  <g transform="translate(650,10)">
+    <rect class="panel" width="300" height="280" rx="10"/>
+    <text class="h" x="16" y="28">Покрасить крышки</text>
+    <path class="tr" d="M24 90 H150" stroke="#FF0000"/>
+    <path class="tr" d="M150 90 H276" stroke="#000000"/>
+    <path class="tr" d="M150 90 V170" stroke="#FF0000"/>
+    <path class="tr" d="M150 170 H276" stroke="#000000"/>
+    <rect class="fit" x="143" y="83" width="14" height="14" style="stroke:#FF0000"/><rect class="fit" x="143" y="163" width="14" height="14"/>
+    <g transform="translate(16,200)">
+      <line class="lg" x1="0" y1="0" x2="26" y2="0" stroke="#FF0000"/><text class="s" x="34" y="4">с крышкой</text>
+      <line class="lg" x1="150" y1="0" x2="176" y2="0" stroke="#000000"/><text class="s" x="184" y="4">без крышки</text>
+      <text class="s" x="0" y="54" style="fill:#64748b">по галочке «ADSK_Крышка», лотки и детали</text>
+    </g>
+  </g>
+</svg>

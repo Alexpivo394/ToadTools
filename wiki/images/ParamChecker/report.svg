@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="380" viewBox="0 0 960 380" font-family="Segoe UI, Arial, sans-serif">
+  <style>
+    .sheet { fill: #ffffff; stroke: #cbd5e1; }
+    .hd { fill: #f1f5f9; stroke: #cbd5e1; }
+    .c { fill: #ffffff; stroke: #e2e8f0; }
+    .g { fill: #22c55e; stroke: #e2e8f0; } .y { fill: #facc15; stroke: #e2e8f0; } .r { fill: #ef4444; stroke: #e2e8f0; }
+    .t { font-size: 12px; fill: #0f172a; } .tw { font-size: 12px; fill: #ffffff; font-weight: 600; }
+    .th { font-size: 12px; fill: #0f172a; font-weight: 600; }
+    .tab { fill: #f8fafc; stroke: #cbd5e1; } .tabon { fill: #ffffff; stroke: #16a34a; }
+    .s { font-size: 12px; fill: #64748b; } .h { font-size: 15px; font-weight: 600; fill: #0f172a; }
+  </style>
+  <rect width="960" height="380" fill="#ffffff"/>
+  <text class="h" x="16" y="26">Объект_ОВ_К1_LOIReport.xlsx — лист «Воздуховоды»</text>
+
+  <g transform="translate(16,42)">
+    <rect class="sheet" width="660" height="288"/>
+    <!-- header -->
+    <rect class="hd" x="0" y="0" width="150" height="28"/><text class="th" x="8" y="18">Имя элемента</text>
+    <rect class="hd" x="150" y="0" width="90" height="28"/><text class="th" x="158" y="18">ID элемента</text>
+    <rect class="hd" x="240" y="0" width="150" height="28"/><text class="th" x="248" y="18">ADSK_Наименование</text>
+    <rect class="hd" x="390" y="0" width="120" height="28"/><text class="th" x="398" y="18">ADSK_Марка</text>
+    <rect class="hd" x="510" y="0" width="150" height="28"/><text class="th" x="518" y="18">ADSK_Код изделия</text>
+    <!-- rows -->
+    <g class="t">
+      <rect class="c" x="0" y="28" width="150" height="26"/><text x="8" y="45">Воздуховод</text>
+      <rect class="c" x="150" y="28" width="90" height="26"/><text x="158" y="45">4512870</text>
+      <rect class="g" x="240" y="28" width="150" height="26"/><text x="248" y="45">Воздуховод Ø200</text>
+      <rect class="g" x="390" y="28" width="120" height="26"/><text x="398" y="45">П1</text>
+      <rect class="y" x="510" y="28" width="150" height="26"/>
+
+      <rect class="c" x="0" y="54" width="150" height="26"/><text x="8" y="71">Воздуховод</text>
+      <rect class="c" x="150" y="54" width="90" height="26"/><text x="158" y="71">4512871</text>
+      <rect class="g" x="240" y="54" width="150" height="26"/><text x="248" y="71">Воздуховод Ø160</text>
+      <rect class="g" x="390" y="54" width="120" height="26"/><text x="398" y="71">П1</text>
+      <rect class="g" x="510" y="54" width="150" height="26"/><text x="518" y="71">ВЗ-160</text>
+
+      <rect class="c" x="0" y="80" width="150" height="26"/><text x="8" y="97">Гибкий воздуховод</text>
+      <rect class="c" x="150" y="80" width="90" height="26"/><text x="158" y="97">4513002</text>
+      <rect class="y" x="240" y="80" width="150" height="26"/>
+      <rect class="g" x="390" y="80" width="120" height="26"/><text x="398" y="97">П1</text>
+      <rect class="r" x="510" y="80" width="150" height="26"/><text class="tw" x="518" y="97">N/A</text>
+
+      <rect class="c" x="0" y="106" width="150" height="26"/><text x="8" y="123">Воздуховод</text>
+      <rect class="c" x="150" y="106" width="90" height="26"/><text x="158" y="123">4513150</text>
+      <rect class="g" x="240" y="106" width="150" height="26"/><text x="248" y="123">Воздуховод 300×200</text>
+      <rect class="y" x="390" y="106" width="120" height="26"/>
+      <rect class="g" x="510" y="106" width="150" height="26"/><text x="518" y="123">ВП-300×200</text>
+    </g>
+    <!-- totals -->
+    <g class="t">
+      <text class="th" x="8" y="160">Итоги</text>
+      <text x="8" y="182">Отсутствующих параметров</text><text x="200" y="182">1</text>
+      <text x="8" y="202">Пустых параметров</text><text x="200" y="202">3</text>
+      <text x="8" y="222">Заполненных параметров</text><text x="200" y="222">8</text>
+      <text x="8" y="242">Всего параметров</text><text x="200" y="242">12</text>
+    </g>
+    <!-- tabs -->
+    <g class="t">
+      <rect class="tabon" x="0" y="262" width="100" height="26"/><text x="14" y="279">Воздуховоды</text>
+      <rect class="tab" x="100" y="262" width="90" height="26"/><text x="114" y="279">Арматура</text>
+      <rect class="tab" x="190" y="262" width="110" height="26"/><text x="204" y="279">Оборудование</text>
+      <rect class="tab" x="300" y="262" width="70" height="26"/><text x="316" y="279">Итоги</text>
+    </g>
+  </g>
+
+  <g transform="translate(700,42)">
+    <rect class="g" x="0" y="4" width="22" height="16" rx="2"/><text class="t" x="32" y="17">заполнен</text>
+    <rect class="y" x="0" y="34" width="22" height="16" rx="2"/><text class="t" x="32" y="47">есть, но пустой</text>
+    <rect class="r" x="0" y="64" width="22" height="16" rx="2"/><text class="t" x="32" y="77">у элемента нет параметра</text>
+    <text class="t" x="32" y="93">(в ячейке «N/A»)</text>
+    <text class="s" x="0" y="134">Лист на каждое правило,</text>
+    <text class="s" x="0" y="150">строка — элемент,</text>
+    <text class="s" x="0" y="166">столбец — проверяемый параметр.</text>
+    <text class="s" x="0" y="196">Внизу каждого листа и на листе</text>
+    <text class="s" x="0" y="212">«Итоги» — счётчики по цветам.</text>
+  </g>
+  <text class="s" x="16" y="364">Файл &lt;модель&gt;_LOIReport.xlsx на каждую модель, по умолчанию — на рабочем столе</text>
+</svg>

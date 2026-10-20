@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="330" viewBox="0 0 960 330" font-family="Segoe UI, Arial, sans-serif">
+  <style>
+    .sheet { fill: #ffffff; stroke: #cbd5e1; }
+    .hd { fill: #f1f5f9; stroke: #cbd5e1; }
+    .c { fill: #ffffff; stroke: #e2e8f0; }
+    .t { font-size: 12px; fill: #0f172a; } .th { font-size: 12px; fill: #64748b; }
+    .tab { fill: #f8fafc; stroke: #cbd5e1; } .tabon { fill: #ffffff; stroke: #16a34a; stroke-width: 1.5; }
+    .s { font-size: 12px; fill: #64748b; } .h { font-size: 15px; font-weight: 600; fill: #0f172a; }
+    .call { fill: #eff6ff; stroke: #bfdbfe; }
+    .ar { stroke: #2563eb; stroke-width: 1.5; fill: none; marker-end: url(#a); }
+  </style>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#2563eb"/></marker></defs>
+  <rect width="960" height="330" fill="#ffffff"/>
+  <text class="h" x="16" y="26">Рабочие наборы.xlsx</text>
+
+  <g transform="translate(16,40)">
+    <rect class="sheet" width="330" height="270"/>
+    <rect class="hd" x="0" y="0" width="34" height="22"/><rect class="hd" x="34" y="0" width="200" height="22"/><text class="th" x="128" y="15">A</text>
+    <rect class="hd" x="234" y="0" width="96" height="22"/><text class="th" x="278" y="15">B</text>
+    <g class="t">
+      <rect class="hd" x="0" y="22" width="34" height="24"/><text class="th" x="13" y="38">1</text><rect class="c" x="34" y="22" width="200" height="24"/><text x="42" y="38">#Связи_АР</text><rect class="c" x="234" y="22" width="96" height="24"/>
+      <rect class="hd" x="0" y="46" width="34" height="24"/><text class="th" x="13" y="62">2</text><rect class="c" x="34" y="46" width="200" height="24"/><text x="42" y="62">#Связи_КР</text><rect class="c" x="234" y="46" width="96" height="24"/>
+      <rect class="hd" x="0" y="70" width="34" height="24"/><text class="th" x="13" y="86">3</text><rect class="c" x="34" y="70" width="200" height="24"/><text x="42" y="86">#Связи_DWG</text><rect class="c" x="234" y="70" width="96" height="24"/>
+      <rect class="hd" x="0" y="94" width="34" height="24"/><text class="th" x="13" y="110">4</text><rect class="c" x="34" y="94" width="200" height="24"/><text x="42" y="110">#Оси и уровни</text><rect class="c" x="234" y="94" width="96" height="24"/>
+      <rect class="hd" x="0" y="118" width="34" height="24"/><text class="th" x="13" y="134">5</text><rect class="c" x="34" y="118" width="200" height="24"/><text x="42" y="134">#Отверстия</text><rect class="c" x="234" y="118" width="96" height="24"/>
+      <rect class="hd" x="0" y="142" width="34" height="24"/><text class="th" x="13" y="158">6</text><rect class="c" x="34" y="142" width="200" height="24"/><text x="42" y="158">ОВ_Вентиляция</text><rect class="c" x="234" y="142" width="96" height="24"/>
+      <rect class="hd" x="0" y="166" width="34" height="24"/><text class="th" x="13" y="182">7</text><rect class="c" x="34" y="166" width="200" height="24"/><text x="42" y="182">ОВ_Отопление</text><rect class="c" x="234" y="166" width="96" height="24"/>
+      <rect class="hd" x="0" y="190" width="34" height="24"/><text class="th" x="13" y="206">8</text><rect class="c" x="34" y="190" width="200" height="24" style="fill:#fef2f2"/><rect class="c" x="234" y="190" width="96" height="24"/>
+    </g>
+    <g class="t">
+      <rect class="tab" x="0" y="244" width="50" height="26"/><text x="15" y="261">АР</text>
+      <rect class="tab" x="50" y="244" width="50" height="26"/><text x="65" y="261">КР</text>
+      <rect class="tabon" x="100" y="244" width="50" height="26"/><text x="115" y="261">ОВ</text>
+      <rect class="tab" x="150" y="244" width="50" height="26"/><text x="165" y="261">ВК</text>
+      <rect class="tab" x="200" y="244" width="56" height="26"/><text x="212" y="261">ЭОМ</text>
+    </g>
+  </g>
+
+  <path class="ar" d="M360 120 H408"/>
+  <g transform="translate(412,70)">
+    <rect class="call" width="530" height="100" rx="10"/>
+    <text class="h" x="16" y="28">Столбец A — имена рабочих наборов</text>
+    <text class="s" x="16" y="52">по одному в строке, начиная с первой. Список заканчивается</text>
+    <text class="s" x="16" y="68">на первой пустой ячейке — всё, что ниже неё, плагин не видит.</text>
+    <text class="s" x="16" y="84">РН, которые уже есть в модели, не создаются повторно.</text>
+  </g>
+  <path class="ar" d="M290 298 C 360 298 380 250 408 250"/>
+  <g transform="translate(412,200)">
+    <rect class="call" width="530" height="84" rx="10"/>
+    <text class="h" x="16" y="28">Лист = раздел</text>
+    <text class="s" x="16" y="52">Имена листов попадают в список «Выберите раздел проекта».</text>
+    <text class="s" x="16" y="68">Новый раздел — просто новый лист, плагин подхватит его сам.</text>
+  </g>
+</svg>

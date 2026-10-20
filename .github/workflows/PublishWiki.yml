@@ -3,7 +3,7 @@ name: Publish wiki
 on:
   push:
     branches:
-      - main
+      - master
     paths:
       - 'wiki/**'
   workflow_dispatch:

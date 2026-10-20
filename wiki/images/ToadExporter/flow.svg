@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="250" viewBox="0 0 960 250" font-family="Segoe UI, Arial, sans-serif">
+  <style>
+    .card { fill: #f8fafc; stroke: #e2e8f0; }
+    .ok { fill: #f0fdf4; stroke: #bbf7d0; }
+    .h { font-size: 14px; font-weight: 600; fill: #0f172a; }
+    .s { font-size: 12px; fill: #64748b; }
+    .ar { stroke: #94a3b8; stroke-width: 2; fill: none; marker-end: url(#a); }
+    .n { font-size: 13px; font-weight: 700; fill: #ffffff; }
+  </style>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#94a3b8"/></marker></defs>
+  <rect width="960" height="250" fill="#ffffff"/>
+
+  <g transform="translate(10,20)">
+    <rect class="card" width="170" height="210" rx="10"/>
+    <circle cx="30" cy="32" r="14" fill="#2563eb"/><text class="n" x="30" y="37" text-anchor="middle">1</text>
+    <text class="h" x="16" y="72">Источник</text>
+    <text class="s" x="16" y="94">Revit Server или папка;</text>
+    <text class="s" x="16" y="110">исходник не меняется</text>
+  </g>
+  <path class="ar" d="M184 125 H206"/>
+  <g transform="translate(210,20)">
+    <rect class="card" width="200" height="210" rx="10"/>
+    <circle cx="30" cy="32" r="14" fill="#2563eb"/><text class="n" x="30" y="37" text-anchor="middle">2</text>
+    <text class="h" x="16" y="72">Открытие</text>
+    <text class="s" x="16" y="94">«Не загружать связи»:</text>
+    <text class="s" x="16" y="110">копия во временной папке,</text>
+    <text class="s" x="16" y="126">связи в ней отключены.</text>
+    <text class="s" x="16" y="150">Открывается с отсоединением,</text>
+    <text class="s" x="16" y="166">рабочие наборы сохраняются</text>
+  </g>
+  <path class="ar" d="M414 70 H446"/>
+  <path class="ar" d="M414 180 H446"/>
+  <g transform="translate(450,20)">
+    <rect class="card" width="250" height="95" rx="10"/>
+    <circle cx="30" cy="30" r="14" fill="#0d9488"/><text class="n" x="30" y="35" text-anchor="middle">3</text>
+    <text class="h" x="54" y="35">NWC</text>
+    <text class="s" x="16" y="62">экспорт 3D-вида с заданным именем</text>
+    <text class="s" x="16" y="78">(нужен Navisworks Exporter)</text>
+  </g>
+  <g transform="translate(450,135)">
+    <rect class="card" width="250" height="95" rx="10"/>
+    <circle cx="30" cy="30" r="14" fill="#7c3aed"/><text class="n" x="30" y="35" text-anchor="middle">4</text>
+    <text class="h" x="54" y="35">RVT</text>
+    <text class="s" x="16" y="62">удаление связей / CAD / облаков,</text>
+    <text class="s" x="16" y="78">очистка, сжатие → локальная копия</text>
+  </g>
+  <path class="ar" d="M704 70 H736"/>
+  <path class="ar" d="M704 180 H736"/>
+  <g transform="translate(740,20)">
+    <rect class="ok" width="210" height="210" rx="10"/>
+    <circle cx="30" cy="32" r="14" fill="#16a34a"/><text class="n" x="30" y="37" text-anchor="middle">5</text>
+    <text class="h" x="16" y="72">Папка результатов</text>
+    <text class="s" x="16" y="94">ПР_ОВ_К1_R22.rvt</text>
+    <text class="s" x="16" y="110">ПР_ОВ_К1_R22.nwc</text>
+    <text class="s" x="16" y="126">ToadExporter_&lt;дата&gt;.log</text>
+    <text class="s" x="16" y="160">Имя — как у оригинала,</text>
+    <text class="s" x="16" y="176">старые файлы</text>
+    <text class="s" x="16" y="192">перезаписываются</text>
+  </g>
+</svg>

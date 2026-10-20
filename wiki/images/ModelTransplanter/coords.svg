@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="290" viewBox="0 0 960 290" font-family="Segoe UI, Arial, sans-serif">
+  <style>
+    .panel { fill: #f8fafc; stroke: #e2e8f0; }
+    .ok { fill: #f0fdf4; stroke: #bbf7d0; }
+    .h { font-size: 15px; font-weight: 600; fill: #0f172a; }
+    .s { font-size: 12px; fill: #64748b; }
+    .bld { fill: #dbeafe; stroke: #2563eb; stroke-width: 1.5; }
+    .ghost { fill: none; stroke: #2563eb; stroke-width: 1.5; stroke-dasharray: 5 4; }
+    .grid { stroke: #e2e8f0; stroke-width: 1; }
+    .io { stroke: #dc2626; stroke-width: 2; }
+    .sp { fill: #16a34a; }
+    .ar { stroke: #94a3b8; stroke-width: 2; fill: none; marker-end: url(#a); }
+  </style>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#94a3b8"/></marker>
+    <g id="io"><path class="io" d="M-7 -7 L7 7 M7 -7 L-7 7"/></g>
+    <g id="sp"><path class="sp" d="M0 -9 L8 6 L-8 6 z"/></g>
+  </defs>
+  <rect width="960" height="290" fill="#ffffff"/>
+
+  <g transform="translate(10,10)">
+    <rect class="panel" width="290" height="230" rx="10"/>
+    <text class="h" x="16" y="28">Исходная модель</text>
+    <rect class="bld" x="150" y="80" width="90" height="70"/>
+    <use href="#io" x="40" y="70"/><text class="s" x="54" y="74">внутр. начало</text>
+    <use href="#sp" x="130" y="170"/><text class="s" x="140" y="186">точка съёмки</text>
+  </g>
+  <g transform="translate(330,10)">
+    <rect class="panel" width="290" height="230" rx="10"/>
+    <text class="h" x="16" y="28">Целевая модель</text>
+    <use href="#io" x="220" y="80"/><text class="s" x="140" y="70">внутр. начало</text>
+    <use href="#sp" x="130" y="170"/><text class="s" x="140" y="186">точка съёмки</text>
+    <text class="s" x="16" y="210">внутреннее начало в другом месте</text>
+  </g>
+  <path class="ar" d="M624 125 H646"/>
+  <g transform="translate(650,10)">
+    <rect class="ok" width="300" height="230" rx="10"/>
+    <text class="h" x="16" y="28">Результат</text>
+    <rect class="bld" x="150" y="80" width="90" height="70"/>
+    <use href="#io" x="220" y="80"/>
+    <use href="#sp" x="130" y="170"/><text class="s" x="140" y="186">точка съёмки</text>
+    <text class="s" x="16" y="210">элементы встали на своё место</text>
+    <text class="s" x="16" y="226">относительно общих координат</text>
+  </g>
+  <text class="s" x="16" y="270">Плагин считает смещение по точке съёмки, внутреннему началу и углу истинного севера обеих моделей и применяет его при копировании.</text>
+</svg>

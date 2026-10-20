@@ -41,8 +41,10 @@
                 <ItemsControl ItemsSource="{Binding FilteredParameters}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <CheckBox Content="{Binding Name}"
-                                      IsChecked="{Binding IsSelected}" />
+                            <!-- Имя текстом, а не Content-строкой: иначе «_» в ADSK_… съедается как клавиша доступа. -->
+                            <CheckBox IsChecked="{Binding IsSelected}">
+                                <TextBlock Text="{Binding Name}" />
+                            </CheckBox>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>

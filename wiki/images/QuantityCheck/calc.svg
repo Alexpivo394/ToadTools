@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="220" viewBox="0 0 960 220" font-family="Segoe UI, Arial, sans-serif">
+  <style>
+    .panel { fill: #f8fafc; stroke: #e2e8f0; }
+    .h { font-size: 15px; font-weight: 600; fill: #0f172a; }
+    .s { font-size: 12px; fill: #64748b; }
+    .big { font-size: 22px; font-weight: 600; fill: #0f172a; }
+    .acc { font-size: 22px; font-weight: 700; fill: #16a34a; }
+    .pipe { stroke: #2563eb; stroke-width: 8; fill: none; }
+    .eq { fill: #dbeafe; stroke: #2563eb; stroke-width: 1.5; }
+  </style>
+  <rect width="960" height="220" fill="#ffffff"/>
+  <g transform="translate(10,10)">
+    <rect class="panel" width="460" height="200" rx="10"/>
+    <text class="h" x="16" y="28">Штучные элементы</text>
+    <text class="s" x="16" y="48">оборудование, арматура, фитинги, приборы, светильники…</text>
+    <rect class="eq" x="30" y="78" width="40" height="34" rx="3"/><rect class="eq" x="90" y="78" width="40" height="34" rx="3"/><rect class="eq" x="150" y="78" width="40" height="34" rx="3"/>
+    <text class="big" x="230" y="104">каждый =</text><text class="acc" x="340" y="104">1</text>
+    <text class="s" x="16" y="150">Запас не применяется: в спецификации сумма количества</text>
+    <text class="s" x="16" y="166">= реальному числу элементов в модели.</text>
+  </g>
+  <g transform="translate(490,10)">
+    <rect class="panel" width="460" height="200" rx="10"/>
+    <text class="h" x="16" y="28">Линейные элементы</text>
+    <text class="s" x="16" y="48">трубы, воздуховоды (в т. ч. гибкие), изоляция, лотки</text>
+    <path class="pipe" d="M30 95 H200"/>
+    <text class="big" x="220" y="104">12,5 м × 1,10 =</text><text class="acc" x="392" y="104">13,75</text>
+    <text class="s" x="16" y="150">Количество = длина в метрах × (1 + запас / 100).</text>
+    <text class="s" x="16" y="166">Пример — запас 10 %.</text>
+  </g>
+</svg>

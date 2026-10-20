@@ -4,19 +4,21 @@
 - [ParamChecker](ParamChecker)
 - [ToadExporter](ToadExporter)
 - [Создание рабочих наборов](WorkingSet)
-- [Копирование элементов](ModelTransplanter)
 - [Проверка рабочих наборов](WorksetCheck)
-- [Замена общих семейств](ChangeSharedFamilies)
-
-**Лотки**
-- [Разместить крышки](CreateCover)
+- [Копирование элементов](ModelTransplanter)
+- [Общие → необщие](ChangeSharedFamilies)
 
 **Общие**
-- [Создание пространств](CreateSpaces)
-- [Записать количество](QuantityCheck)
-- [Записать прочерк](WriteDash)
-- [Код по классификатору](ClassifierCode)
 - [Умные выноски](SmartTags)
+- [Запись количества](QuantityCheck)
+- [Запись прочерков](WriteDash)
+- [Код классификатора](ClassifierCode)
+- [Длина элементов](Length)
+- [Создание пространств](CreateSpaces)
+
+**Лотки**
+- [Кабельные лотки](CableTrays)
+- [Разместить крышки](CreateCover)
 
 **Сети связи**
 - [Структурная схема](SSPlan)
@@ -27,3 +29,6 @@
 **АР**
 - [Открывание дверей](DoorSide)
 - [Основание отделки](ParamToFinish)
+
+**КР**
+- [Армирование по цвету](ReinforcementByColor)

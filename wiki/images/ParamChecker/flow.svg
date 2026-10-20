@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="210" viewBox="0 0 960 210" font-family="Segoe UI, Arial, sans-serif">
+  <style>
+    .card { fill: #f8fafc; stroke: #e2e8f0; }
+    .h { font-size: 14px; font-weight: 600; fill: #0f172a; }
+    .s { font-size: 12px; fill: #64748b; }
+    .ar { stroke: #94a3b8; stroke-width: 2; fill: none; marker-end: url(#a); }
+    .ic { font-size: 22px; }
+  </style>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#94a3b8"/></marker></defs>
+  <rect width="960" height="210" fill="#ffffff"/>
+
+  <g transform="translate(10,20)">
+    <rect class="card" width="210" height="170" rx="10"/>
+    <circle cx="30" cy="32" r="14" fill="#2563eb"/><text x="30" y="37" text-anchor="middle" font-size="13" font-weight="700" fill="#ffffff">1</text>
+    <text class="h" x="16" y="70">Профиль</text>
+    <text class="s" x="16" y="92">например, на раздел или</text>
+    <text class="s" x="16" y="108">объект. Галочка — участвует</text>
+    <text class="s" x="16" y="124">в запуске</text>
+  </g>
+  <path class="ar" d="M224 105 H252"/>
+  <g transform="translate(256,20)">
+    <rect class="card" width="210" height="170" rx="10"/>
+    <circle cx="30" cy="32" r="14" fill="#2563eb"/><text x="30" y="37" text-anchor="middle" font-size="13" font-weight="700" fill="#ffffff">2</text>
+    <text class="h" x="16" y="70">Модели</text>
+    <text class="s" x="16" y="92">путь на Revit Server,</text>
+    <text class="s" x="16" y="108">вид для сбора элементов,</text>
+    <text class="s" x="16" y="124">какие РН не открывать</text>
+  </g>
+  <path class="ar" d="M470 105 H498"/>
+  <g transform="translate(502,20)">
+    <rect class="card" width="210" height="170" rx="10"/>
+    <circle cx="30" cy="32" r="14" fill="#2563eb"/><text x="30" y="37" text-anchor="middle" font-size="13" font-weight="700" fill="#ffffff">3</text>
+    <text class="h" x="16" y="70">Правила</text>
+    <text class="s" x="16" y="92">фильтр: какие элементы</text>
+    <text class="s" x="16" y="108">проверять; список</text>
+    <text class="s" x="16" y="124">параметров для проверки</text>
+  </g>
+  <path class="ar" d="M716 105 H744"/>
+  <g transform="translate(748,20)">
+    <rect class="card" width="202" height="170" rx="10" style="fill:#f0fdf4;stroke:#bbf7d0"/>
+    <circle cx="30" cy="32" r="14" fill="#2563eb"/><text x="30" y="37" text-anchor="middle" font-size="13" font-weight="700" fill="#ffffff">4</text>
+    <text class="h" x="16" y="70">Отчёт Excel</text>
+    <text class="s" x="16" y="92">на каждую модель:</text>
+    <text class="s" x="16" y="108">лист на правило + «Итоги»;</text>
+    <text class="s" x="16" y="124">при желании — сводный</text>
+    <text class="s" x="16" y="140">отчёт BIM-отдела</text>
+  </g>
+</svg>

@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="290" viewBox="0 0 960 290" font-family="Segoe UI, Arial, sans-serif">
+  <style>
+    .panel { fill: #f8fafc; stroke: #e2e8f0; } .ok { fill: #f0fdf4; stroke: #bbf7d0; }
+    .h { font-size: 15px; font-weight: 600; fill: #0f172a; } .s { font-size: 12px; fill: #64748b; } .t { font-size: 12px; fill: #0f172a; }
+    .reg { fill: #fca5a5; fill-opacity: .55; stroke: #dc2626; stroke-width: 1.5; }
+    .bar { stroke: #1d4ed8; stroke-width: 2; }
+    .base { stroke: #1d4ed8; stroke-width: 3; }
+    .ar { stroke: #94a3b8; stroke-width: 2; fill: none; marker-end: url(#a); }
+  </style>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#94a3b8"/></marker></defs>
+  <rect width="960" height="290" fill="#ffffff"/>
+  <g transform="translate(10,10)">
+    <rect class="panel" width="300" height="270" rx="10"/>
+    <text class="h" x="16" y="28">Цветовая область</text>
+    <rect class="reg" x="60" y="60" width="180" height="140"/>
+    <text class="t" x="96" y="135">REI_d12_s200</text>
+    <text class="s" x="16" y="232">тип области = диаметр 12 и шаг 200</text>
+  </g>
+  <path class="ar" d="M314 145 H336"/>
+  <g transform="translate(340,10)">
+    <rect class="ok" width="300" height="270" rx="10"/>
+    <text class="h" x="16" y="28">«… по Y»</text>
+    <g class="bar">
+      <line x1="70" y1="60" x2="70" y2="200"/><line x1="100" y1="60" x2="100" y2="200"/><line x1="130" y1="60" x2="130" y2="200"/>
+      <line x1="160" y1="60" x2="160" y2="200"/><line x1="190" y1="60" x2="190" y2="200"/><line x1="220" y1="60" x2="220" y2="200"/>
+    </g>
+    <line class="base" x1="60" y1="200" x2="240" y2="200"/>
+    <text class="s" x="16" y="232">семейство — по нижней стороне,</text>
+    <text class="s" x="16" y="248">стержни вдоль Y на всю высоту</text>
+  </g>
+  <g transform="translate(650,10)">
+    <rect class="ok" width="300" height="270" rx="10"/>
+    <text class="h" x="16" y="28">«… по X»</text>
+    <g class="bar">
+      <line x1="60" y1="70" x2="240" y2="70"/><line x1="60" y1="98" x2="240" y2="98"/><line x1="60" y1="126" x2="240" y2="126"/>
+      <line x1="60" y1="154" x2="240" y2="154"/><line x1="60" y1="182" x2="240" y2="182"/>
+    </g>
+    <line class="base" x1="60" y1="60" x2="60" y2="200"/>
+    <text class="s" x="16" y="232">семейство — по левой стороне,</text>
+    <text class="s" x="16" y="248">стержни вдоль X на всю ширину</text>
+  </g>
+</svg>

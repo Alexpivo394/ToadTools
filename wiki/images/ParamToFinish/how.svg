@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="270" viewBox="0 0 960 270" font-family="Segoe UI, Arial, sans-serif">
+  <style>
+    .panel { fill: #f8fafc; stroke: #e2e8f0; } .ok { fill: #f0fdf4; stroke: #bbf7d0; }
+    .h { font-size: 15px; font-weight: 600; fill: #0f172a; } .s { font-size: 12px; fill: #64748b; } .t { font-size: 12px; fill: #0f172a; }
+    .main { fill: #e2e8f0; stroke: #475569; stroke-width: 1.5; } .main2 { fill: #cbd5e1; stroke: #475569; stroke-width: 1.5; }
+    .fin { fill: #fde68a; stroke: #b45309; stroke-width: 1.2; }
+    .ar { stroke: #94a3b8; stroke-width: 2; fill: none; marker-end: url(#a); }
+    .val { font-size: 12px; font-weight: 600; fill: #15803d; }
+  </style>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#94a3b8"/></marker></defs>
+  <rect width="960" height="270" fill="#ffffff"/>
+  <g transform="translate(10,10)">
+    <rect class="panel" width="450" height="250" rx="10"/>
+    <text class="h" x="16" y="28">До</text>
+    <rect class="main" x="30" y="80" width="220" height="30"/><text class="t" x="262" y="99">Комментарии: Кирпич 250</text>
+    <rect class="fin" x="30" y="110" width="220" height="8"/><text class="t" x="262" y="124">Комментарии: Отделка-1</text>
+    <rect class="main2" x="30" y="170" width="220" height="24"/><text class="t" x="262" y="187">Комментарии: Бетон 200</text>
+    <rect class="fin" x="30" y="194" width="220" height="8"/><text class="t" x="262" y="208">Комментарии: Отделка-2</text>
+    <text class="s" x="16" y="240">Отделочные стены — те, в чьём параметре есть слово «Отделка»</text>
+  </g>
+  <path class="ar" d="M464 135 H492"/>
+  <g transform="translate(496,10)">
+    <rect class="ok" width="454" height="250" rx="10"/>
+    <text class="h" x="16" y="28">После</text>
+    <rect class="main" x="30" y="80" width="220" height="30"/>
+    <rect class="fin" x="30" y="110" width="220" height="8"/><text class="t" x="262" y="124">Марка: </text><text class="val" x="306" y="124">Кирпич 250</text>
+    <rect class="main2" x="30" y="170" width="220" height="24"/>
+    <rect class="fin" x="30" y="194" width="220" height="8"/><text class="t" x="262" y="208">Марка: </text><text class="val" x="306" y="208">Бетон 200</text>
+    <text class="s" x="16" y="240">В «Марку» отделки записано значение её стены-основания</text>
+  </g>
+</svg>
