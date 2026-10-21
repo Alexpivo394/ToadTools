@@ -21,6 +21,7 @@
     <ItemGroup>
         <Compile Include="..\ToadExporter\Core\**\*.cs" Link="Linked\Core\%(RecursiveDir)%(Filename)%(Extension)"/>
         <Compile Include="..\ToadExporter\ViewModels\Tree\**\*.cs" Link="Linked\Tree\%(RecursiveDir)%(Filename)%(Extension)"/>
+        <Compile Include="..\ToadTools.UI\RevitServer\**\*.cs" Link="Linked\RevitServer\%(RecursiveDir)%(Filename)%(Extension)"/>
     </ItemGroup>
 
 </Project>

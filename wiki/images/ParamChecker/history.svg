@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="300" viewBox="0 0 960 300" font-family="Segoe UI, Arial, sans-serif">
+  <style>
+    .card { fill: #f8fafc; stroke: #e2e8f0; }
+    .head { fill: #44546a; }
+    .h { font-size: 14px; font-weight: 600; fill: #ffffff; }
+    .t { font-size: 12px; fill: #0f172a; }
+    .k { font-size: 12px; fill: #2563eb; font-weight: 600; }
+    .s { font-size: 12px; fill: #64748b; }
+    .ln { stroke: #94a3b8; stroke-width: 1.5; fill: none; stroke-dasharray: 4 3; }
+  </style>
+  <rect width="960" height="300" fill="#ffffff"/>
+
+  <!-- Models -->
+  <g transform="translate(10,20)">
+    <rect class="card" width="290" height="230" rx="10"/>
+    <path class="head" d="M0 10 a10 10 0 0 1 10 -10 h270 a10 10 0 0 1 10 10 v26 h-290 z"/>
+    <text class="h" x="14" y="24">Models — лист «Модели»</text>
+    <text class="k" x="14" y="58">Запуск · Профиль · Модель</text>
+    <text class="t" x="14" y="80">Путь, Статус, Ошибка</text>
+    <text class="t" x="14" y="98">Длительность, с</text>
+    <text class="t" x="14" y="116">Элементов, Заполнены полностью</text>
+    <text class="t" x="14" y="134">Полнота</text>
+    <text class="t" x="14" y="152">Значений, Заполнено, Пусто, Нет параметра</text>
+    <text class="t" x="14" y="170">Заполненность</text>
+    <text class="s" x="14" y="204">строка — модель в запуске,</text>
+    <text class="s" x="14" y="220">в том числе с ошибкой или пропущенная</text>
+  </g>
+
+  <!-- Rules -->
+  <g transform="translate(335,20)">
+    <rect class="card" width="290" height="230" rx="10"/>
+    <path class="head" d="M0 10 a10 10 0 0 1 10 -10 h270 a10 10 0 0 1 10 10 v26 h-290 z"/>
+    <text class="h" x="14" y="24">Rules — лист «Правила»</text>
+    <text class="k" x="14" y="58">Запуск · Профиль · Модель</text>
+    <text class="t" x="14" y="80">Правило</text>
+    <text class="t" x="14" y="98">Элементов, Заполнены полностью</text>
+    <text class="t" x="14" y="116">Полнота</text>
+    <text class="t" x="14" y="134">Значений, Заполнено, Пусто, Нет параметра</text>
+    <text class="t" x="14" y="152">Заполненность</text>
+    <text class="s" x="14" y="204">строка — правило модели</text>
+    <text class="s" x="14" y="220">в запуске</text>
+  </g>
+
+  <!-- Parameters -->
+  <g transform="translate(660,20)">
+    <rect class="card" width="290" height="230" rx="10"/>
+    <path class="head" d="M0 10 a10 10 0 0 1 10 -10 h270 a10 10 0 0 1 10 10 v26 h-290 z"/>
+    <text class="h" x="14" y="24">Parameters — лист «Параметры»</text>
+    <text class="k" x="14" y="58">Запуск · Профиль · Модель</text>
+    <text class="t" x="14" y="80">Правило, Параметр</text>
+    <text class="t" x="14" y="98">Элементов</text>
+    <text class="t" x="14" y="116">Заполнено, Пусто, Нет параметра</text>
+    <text class="t" x="14" y="134">Заполненность</text>
+    <text class="s" x="14" y="204">строка — параметр правила модели</text>
+    <text class="s" x="14" y="220">в запуске</text>
+  </g>
+
+  <path class="ln" d="M300 74 H335"/>
+  <path class="ln" d="M625 74 H660"/>
+  <text class="s" x="10" y="282">Связь таблиц — по «Запуск» + «Профиль» + «Модель». Последнее состояние модели — строки с наибольшим «Запуск»; история — все строки.</text>
+</svg>

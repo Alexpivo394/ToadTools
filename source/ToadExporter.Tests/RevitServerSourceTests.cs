@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http;
 using Shouldly;
 using ToadExporter.Core;
+using ToadTools.UI.RevitServer;
 
 namespace ToadExporter.Tests;
 

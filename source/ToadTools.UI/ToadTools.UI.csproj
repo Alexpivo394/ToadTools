@@ -4,8 +4,14 @@
          and each add-in loads them in its isolated context (EnableDynamicLoading). -->
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.Mvvm"/>
+        <PackageReference Include="Newtonsoft.Json"/>
         <PackageReference Include="WPF-UI"/>
         <PackageReference Include="WPF-UI.Abstractions"/>
+    </ItemGroup>
+
+    <!-- HttpClient для REST API Revit Server; на .NET входит в рантайм -->
+    <ItemGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))' == '.NETFramework'">
+        <Reference Include="System.Net.Http"/>
     </ItemGroup>
 
 </Project>

@@ -35,7 +35,13 @@ public sealed partial class ToadProgressWindow
         InitializeComponent();
         DataContext = viewModel;
 
-        Loaded += (_, _) => CenterOverAnchor();
+        Loaded += (_, _) =>
+        {
+            // FluentWindow красит подложку по глобальной теме WPF-UI, а словарь у окна свой. Если тему окон плагина
+            // ещё никто не применил, подложка выходила светлой под белым текстом тёмной темы.
+            WindowBackgroundManager.UpdateBackground(this, theme, WindowBackdropType);
+            CenterOverAnchor();
+        };
         Closing += OnClosing;
 
         _refreshTimer = new DispatcherTimer(DispatcherPriority.Background) { Interval = RefreshInterval };
