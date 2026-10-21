@@ -12,8 +12,6 @@ public sealed class CheckService
     private readonly Document _document;
     private readonly WorksetRules _rules;
     private List<Workset> _worksets = [];
-    private List<Workset> _linkWorksets = [];
-    private string _separator = "_";
 
     public CheckService(Document document, WorksetRules rules)
     {
@@ -38,8 +36,6 @@ public sealed class CheckService
             .ToWorksets()
             .OrderBy(workset => workset.Name, StringComparer.CurrentCultureIgnoreCase)
             .ToList();
-        _linkWorksets = _worksets.Where(workset => _rules.IsLinksWorkset(workset.Name)).ToList();
-        _separator = DetectSeparator();
 
         var issues = new List<WorksetIssue>();
         var checkedElements = 0;
@@ -80,7 +76,10 @@ public sealed class CheckService
         switch (element)
         {
             case RevitLinkInstance:
-                return Kind.Link;
+                // Вложенная связь приходит вместе с родительской — её РН отдельно не меняется.
+                return element.Document.GetElement(element.GetTypeId()) is RevitLinkType { IsNestedLink: true }
+                    ? Kind.Ignore
+                    : Kind.Link;
             case ImportInstance:
                 return element.ViewSpecific ? Kind.Ignore : Kind.Cad;
             case PointCloudInstance:
@@ -106,7 +105,7 @@ public sealed class CheckService
     {
         var inGrids = _rules.IsGridsWorkset(workset);
         var inOpenings = _rules.IsOpeningsWorkset(workset);
-        var inLinks = _rules.IsLinksWorkset(workset);
+        var inLinks = _rules.IsCadWorkset(workset) || WorksetRules.IsLinkFileWorkset(workset);
 
         switch (kind)
         {
@@ -117,11 +116,11 @@ public sealed class CheckService
                     TargetByName(_rules.GridsWorkset));
 
             case Kind.Link:
-                return _rules.ChecksLinks ? CheckLink(element, workset, inLinks) : null;
+                return CheckLink(element, workset);
 
             case Kind.Cad:
-                if (!_rules.ChecksLinks || (inLinks && Sections.HasCadToken(workset))) return null;
-                return Issue(element, workset, "CAD-файл не в РН связей DWG", CadTarget());
+                if (!_rules.ChecksCad || _rules.IsCadWorkset(workset)) return null;
+                return Issue(element, workset, "CAD-файл не в РН связей DWG", TargetByName(_rules.CadWorkset));
 
             case Kind.Model:
                 if (inLinks)
@@ -137,62 +136,17 @@ public sealed class CheckService
         }
     }
 
-    private WorksetIssue? CheckLink(Element link, string workset, bool inLinks)
+    /// <summary>У каждой связи свой РН «#Связь имя_файла»: нет такого — создаём, связь в другом — переносим.</summary>
+    private WorksetIssue? CheckLink(Element link, string workset)
     {
-        var linkSections = Sections.Find(TypeName(link));
-        var inSectionWorkset = inLinks && !Sections.HasCadToken(workset);
+        var target = WorksetRules.LinkWorkset(TypeName(link));
+        if (string.Equals(workset, target, StringComparison.OrdinalIgnoreCase)) return null;
 
-        if (linkSections.Count == 0)
-        {
-            // Раздел по имени не понять — в любом РН связей (кроме DWG) связь считаем на месте.
-            if (inSectionWorkset) return null;
-            return Issue(link, workset, "Связь не в РН связей", Target.Manual("раздел не определён по имени файла"));
-        }
+        const string problem = "Связь не в своём РН";
+        if (!NamingUtils.IsValidName(target))
+            return Issue(link, workset, problem, Target.Manual($"имя «{target}» недопустимо для РН — переименуйте файл связи"));
 
-        if (inSectionWorkset && Sections.Find(workset).Intersect(linkSections).Any()) return null;
-
-        if (linkSections.Count > 1)
-        {
-            var names = string.Join(", ", linkSections);
-            return Issue(link, workset, $"Связь не в РН своего раздела ({names})",
-                Target.Manual($"по имени файла подходит несколько разделов: {names}"));
-        }
-
-        var section = linkSections[0];
-        return Issue(link, workset, $"Связь раздела {section} не в РН связей {section}", SectionTarget(section));
-    }
-
-    /// <summary>РН связей раздела: если такого нет — создаём «префикс_раздел».</summary>
-    private Target SectionTarget(Section section)
-    {
-        var candidates = _linkWorksets
-            .Where(workset => !Sections.HasCadToken(workset.Name) && Sections.Find(workset.Name).Contains(section))
-            .ToList();
-
-        // «#Связи_ОВ_ВК» подходит и ОВ, и ВК — если есть РН только под раздел, берём его.
-        if (candidates.Count > 1)
-        {
-            var exact = candidates.Where(workset => Sections.Find(workset.Name).Count == 1).ToList();
-            if (exact.Count > 0) candidates = exact;
-        }
-
-        return candidates.Count switch
-        {
-            0 => Target.Create(_rules.LinksPrefix + _separator + section.Name),
-            1 => Target.Move(candidates[0].Name),
-            _ => Target.Manual("подходит несколько РН: " + string.Join(", ", candidates.Select(workset => workset.Name)))
-        };
-    }
-
-    private Target CadTarget()
-    {
-        var candidates = _linkWorksets.Where(workset => Sections.HasCadToken(workset.Name)).ToList();
-        return candidates.Count switch
-        {
-            0 => Target.Create(_rules.LinksPrefix + _separator + Sections.CadToken),
-            1 => Target.Move(candidates[0].Name),
-            _ => Target.Manual("подходит несколько РН DWG: " + string.Join(", ", candidates.Select(workset => workset.Name)))
-        };
+        return Issue(link, workset, problem, TargetByName(target));
     }
 
     private Target TargetByName(string name)
@@ -200,25 +154,6 @@ public sealed class CheckService
         var existing = _worksets.FirstOrDefault(workset =>
             string.Equals(workset.Name, name, StringComparison.OrdinalIgnoreCase));
         return existing is null ? Target.Create(name) : Target.Move(existing.Name);
-    }
-
-    /// <summary>
-    ///     Разделитель между префиксом и разделом в новых РН — как в уже существующих:
-    ///     «#Связи_АР» → «_», «#АР» → без разделителя. По умолчанию «_».
-    /// </summary>
-    private string DetectSeparator()
-    {
-        return _linkWorksets
-                   .Select(workset => workset.Name)
-                   .Select(name => (name, index: Sections.FirstMarkerIndex(name)))
-                   .Where(pair => pair.index >= _rules.LinksPrefix.Length)
-                   .Select(pair => pair.name.Substring(_rules.LinksPrefix.Length, pair.index - _rules.LinksPrefix.Length))
-                   .Where(separator => separator.All(c => !char.IsLetterOrDigit(c)))
-                   .GroupBy(separator => separator)
-                   .OrderByDescending(group => group.Count())
-                   .Select(group => group.Key)
-                   .FirstOrDefault()
-               ?? "_";
     }
 
     private WorksetIssue Issue(Element element, string workset, string problem, Target target)

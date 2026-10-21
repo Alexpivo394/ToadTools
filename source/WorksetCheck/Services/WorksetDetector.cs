@@ -4,7 +4,7 @@ using WorksetCheck.Models;
 namespace WorksetCheck.Services;
 
 /// <summary>Что удалось определить по модели; null — не нашлось.</summary>
-public sealed record DetectedWorksets(string? LinksPrefix, string? GridsWorkset, string? OpeningsWorkset);
+public sealed record DetectedWorksets(string? CadWorkset, string? GridsWorkset, string? OpeningsWorkset);
 
 /// <summary>
 ///     Угадывает имена РН по смыслу: где лежат оси, уровни и связи, и как называются наборы.
@@ -14,8 +14,8 @@ public sealed class WorksetDetector(Document document)
 {
     private static readonly Regex GridsName = new(@"ос[иья]\b|уровн|сетк|grid|level", RegexOptions.IgnoreCase);
     private static readonly Regex OpeningsName = new(@"отверст|проём|проем|\bзно\b|задани|opening|hole", RegexOptions.IgnoreCase);
-    private static readonly Regex LinksName = new(@"связ|link|rvt|dwg", RegexOptions.IgnoreCase);
-    private static readonly char[] Separators = [' ', '_', '-', '.', ':', '(', ')'];
+    private static readonly Regex CadName = new(@"dwg|cad|подлож", RegexOptions.IgnoreCase);
+    private static readonly Regex LinksName = new(@"связ|link", RegexOptions.IgnoreCase);
 
     private readonly Dictionary<int, string> _names = new FilteredWorksetCollector(document)
         .OfKind(WorksetKind.UserWorkset)
@@ -26,8 +26,7 @@ public sealed class WorksetDetector(Document document)
     {
         var grids = DetectGrids();
         var openings = DetectOpenings(grids);
-        var prefix = DetectLinksPrefix(grids, openings);
-        return new DetectedWorksets(prefix, grids, openings);
+        return new DetectedWorksets(DetectCad(grids, openings), grids, openings);
     }
 
     /// <summary>РН, где больше всего осей и уровней, если его имя про оси/уровни; иначе — просто по имени.</summary>
@@ -52,41 +51,20 @@ public sealed class WorksetDetector(Document document)
     }
 
     /// <summary>
-    ///     Префикс — общее начало имён РН, где лежат связи, до слова-раздела: «#Связи_АР», «#Связи_КР» → «#Связи».
-    ///     Наборы, не похожие на РН связей (например, «Рабочий набор1» со случайной связью), не учитываются.
+    ///     РН, где больше всего CAD-подложек, если его имя про DWG или связи; иначе — по имени, сначала с «DWG».
+    ///     РН «#Связь имя_файла» — для связей Revit, их не предлагаем.
     /// </summary>
-    private string? DetectLinksPrefix(string? grids, string? openings)
+    private string? DetectCad(string? grids, string? openings)
     {
-        var links = new FilteredElementCollector(document)
-            .WherePasses(new LogicalOrFilter(new ElementClassFilter(typeof(RevitLinkInstance)),
-                new ElementClassFilter(typeof(ImportInstance))))
+        var imports = new FilteredElementCollector(document)
+            .OfClass(typeof(ImportInstance))
             .WhereElementIsNotElementType()
             .Where(element => !element.ViewSpecific);
 
-        var withLinks = ByPopularity(links).Where(name => name != grids && name != openings).ToList();
-        return MostCommonBase(withLinks)
-               ?? MostCommonBase(_names.Values.Where(name => name != grids && name != openings && LinksName.IsMatch(name)));
-    }
+        bool Candidate(string name) => name != grids && name != openings && !WorksetRules.IsLinkFileWorkset(name);
 
-    private static string? MostCommonBase(IEnumerable<string> names)
-    {
-        return names
-            .Select(BaseOf)
-            .Where(prefix => prefix.Length > 0 && (LinksName.IsMatch(prefix) || !char.IsLetter(prefix[0])))
-            .GroupBy(prefix => prefix, StringComparer.OrdinalIgnoreCase)
-            .OrderByDescending(group => group.Count())
-            .ThenBy(group => group.Key.Length)
-            .Select(group => group.Key)
-            .FirstOrDefault();
-    }
-
-    /// <summary>Имя без раздела и того, что после него: «#Связи_АР_корпус1» → «#Связи».</summary>
-    private static string BaseOf(string name)
-    {
-        var index = Sections.FirstMarkerIndex(name);
-        var prefix = index >= 0 ? name.Substring(0, index) : name;
-        var trimmed = prefix.TrimEnd(Separators);
-        return trimmed.Length > 0 ? trimmed : prefix;
+        return ByPopularity(imports).FirstOrDefault(name => Candidate(name) && (CadName.IsMatch(name) || LinksName.IsMatch(name)))
+               ?? _names.Values.FirstOrDefault(name => Candidate(name) && CadName.IsMatch(name));
     }
 
     /// <summary>Имена РН, отсортированные по числу элементов в них.</summary>

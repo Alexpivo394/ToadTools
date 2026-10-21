@@ -48,14 +48,17 @@
             <StackPanel>
                 <TextBlock Margin="0,6,0,0" TextWrapping="Wrap" Opacity="0.8"
                            Text="Проверяется открытая модель. Имена рабочих наборов подставлены автоматически — проверьте их и при необходимости поправьте." />
+                <TextBlock Margin="0,6,0,0" TextWrapping="Wrap" Opacity="0.8"
+                           Text="Каждая связь Revit должна лежать в своём РН «#Связь имя_файла» — это проверяется всегда." />
 
                 <TextBlock Style="{StaticResource FieldLabel}">
-                    <Run Text="Префикс РН связей" />
-                    <Run Text="{Binding LinksSource, Mode=OneWay}" FontWeight="Normal" FontStyle="Italic" />
+                    <Run Text="РН связей DWG" />
+                    <Run Text="{Binding CadSource, Mode=OneWay}" FontWeight="Normal" FontStyle="Italic" />
                 </TextBlock>
-                <ui:TextBox Text="{Binding LinksPrefix, UpdateSourceTrigger=PropertyChanged}"
-                            PlaceholderText="Например, #Связи" />
-                <TextBlock Style="{StaticResource FieldHint}" Text="{Binding LinksHint}" />
+                <ComboBox IsEditable="True"
+                          ItemsSource="{Binding Worksets}"
+                          Text="{Binding CadWorkset, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBlock Style="{StaticResource FieldHint}" Text="{Binding CadHint}" />
 
                 <TextBlock Style="{StaticResource FieldLabel}">
                     <Run Text="РН осей и уровней" />
