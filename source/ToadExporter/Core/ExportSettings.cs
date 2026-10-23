@@ -1,3 +1,4 @@
+using Alexpivo394.Revit.Export.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace ToadExporter.Core;
@@ -53,18 +54,42 @@ public sealed partial class ExportSettings : ObservableObject
     [ObservableProperty] private bool _nwcContentExpanded;
     [ObservableProperty] private bool _nwcExtraExpanded;
     [ObservableProperty] private bool _darkTheme = true;
+
+    /// <summary>
+    ///     Настройки выгрузки для пакета ToadExport. Ручная выгрузка, как и раньше, открывает модель более старой версии
+    ///     с обновлением — так же поступает сам Revit.
+    /// </summary>
+    public ExportOptions ToOptions() => new()
+    {
+        SkipLinks = SkipLinks,
+        Audit = Audit,
+        WorksetKeyword = WorksetKeyword,
+        AllowUpgrade = true,
+        DeleteRevitLinks = DeleteRevitLinks,
+        DeleteCad = DeleteCad,
+        DeletePointClouds = DeletePointClouds,
+        Purge = Purge,
+        Compact = Compact,
+        NwcViewName = NwcViewName,
+        NwcSharedCoordinates = NwcSharedCoordinates,
+        NwcConvertElementProperties = NwcConvertElementProperties,
+        NwcParameters = NwcParameters,
+        NwcDivideIntoLevels = NwcDivideIntoLevels,
+        NwcExportLinks = NwcExportLinks,
+        NwcConvertLinkedCad = NwcConvertLinkedCad,
+        NwcExportParts = NwcExportParts,
+        NwcRoomGeometry = NwcRoomGeometry,
+        NwcRoomAsAttribute = NwcRoomAsAttribute,
+        NwcConvertLights = NwcConvertLights,
+        NwcExportElementIds = NwcExportElementIds,
+        NwcExportUrls = NwcExportUrls,
+        NwcFindMissingMaterials = NwcFindMissingMaterials,
+        NwcFacetingFactor = NwcFacetingFactor
+    };
 }
 
 public enum SourceKind
 {
     Server,
     Folder
-}
-
-/// <summary>Какие параметры элементов попадают в NWC (как <c>Autodesk.Revit.DB.NavisworksParameters</c>).</summary>
-public enum NwcParameters
-{
-    None,
-    Elements,
-    All
 }

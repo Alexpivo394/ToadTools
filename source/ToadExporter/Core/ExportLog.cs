@@ -1,12 +1,13 @@
 using System.IO;
 using System.Text;
+using Alexpivo394.Revit.Export.Core;
 
 namespace ToadExporter.Core;
 
 /// <summary>
 ///     Журнал выгрузки в папке результатов. Пишется сразу на диск, чтобы остаться, даже если Revit упадёт посреди выгрузки.
 /// </summary>
-public sealed class ExportLog : IDisposable
+public sealed class ExportLog : IExportLog, IDisposable
 {
     private readonly StreamWriter _writer;
 

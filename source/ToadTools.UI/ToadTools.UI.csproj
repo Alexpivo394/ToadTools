@@ -9,6 +9,11 @@
         <PackageReference Include="WPF-UI.Abstractions"/>
     </ItemGroup>
 
+    <!-- Клиент Revit Server (дерево моделей), общий с ToadFlow -->
+    <ItemGroup>
+        <PackageReference Include="Alexpivo394.Revit.Export.Sources"/>
+    </ItemGroup>
+
     <!-- HttpClient для REST API Revit Server; на .NET входит в рантайм -->
     <ItemGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))' == '.NETFramework'">
         <Reference Include="System.Net.Http"/>

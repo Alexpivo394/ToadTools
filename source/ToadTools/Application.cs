@@ -18,6 +18,9 @@ namespace ToadTools
 
         public override async Task OnStartupAsync()
         {
+            // Кэш каталогов Revit Server — в прежней папке ToadTools, а не в папке пакета по умолчанию.
+            Alexpivo394.Revit.Export.Sources.ServerCatalog.CacheRoot = System.IO.Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ToadTools", "RevitServerCache");
             await Host.StartAsync();
             CreateRibbon();
         }

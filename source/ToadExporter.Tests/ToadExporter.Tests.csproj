@@ -3,11 +3,13 @@
     <!-- Тесты логики ToadExporter без Revit API: файлы Core и дерева подключаются ссылками,
          поэтому проекту не нужны ни Revit SDK, ни Revit-конфигурации. -->
     <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
+        <TargetFramework>net10.0-windows</TargetFramework>
         <OutputType>Exe</OutputType>
         <IsPackable>false</IsPackable>
         <!-- source/Directory.Build.props включает WPF и Revit API всем проектам — тестам они не нужны -->
         <UseWPF>false</UseWPF>
+        <!-- Пакет Alexpivo394.Revit.Export для net10.0 — сборка для Revit 2027; тесты используют только его типы без Revit API -->
+        <RevitVersion>2027</RevitVersion>
     </PropertyGroup>
 
     <ItemGroup>
@@ -16,12 +18,13 @@
         <PackageReference Include="Shouldly"/>
         <PackageReference Include="CommunityToolkit.Mvvm"/>
         <PackageReference Include="Newtonsoft.Json"/>
+        <PackageReference Include="Alexpivo394.Revit.Export"/>
+        <PackageReference Include="Alexpivo394.Revit.Export.Sources"/>
     </ItemGroup>
 
     <ItemGroup>
         <Compile Include="..\ToadExporter\Core\**\*.cs" Link="Linked\Core\%(RecursiveDir)%(Filename)%(Extension)"/>
         <Compile Include="..\ToadExporter\ViewModels\Tree\**\*.cs" Link="Linked\Tree\%(RecursiveDir)%(Filename)%(Extension)"/>
-        <Compile Include="..\ToadTools.UI\RevitServer\**\*.cs" Link="Linked\RevitServer\%(RecursiveDir)%(Filename)%(Extension)"/>
     </ItemGroup>
 
 </Project>

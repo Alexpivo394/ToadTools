@@ -34,6 +34,10 @@
         <PackageVersion Include="Nice3point.Revit.Extensions" Version="2026.1.2" Condition="$(RevitVersion) == '2026'"/>
         <PackageVersion Include="Nice3point.Revit.Extensions" Version="2027.0.2" Condition="$(RevitVersion) == '2027'"/>
 
+        <!-- Ядро выгрузки и клиент Revit Server, общие с фермой ToadFlow: https://github.com/Alexpivo394/ToadExport -->
+        <PackageVersion Include="Alexpivo394.Revit.Export" Version="$(RevitVersion).*" Condition="$(RevitVersion) != ''"/>
+        <PackageVersion Include="Alexpivo394.Revit.Export.Sources" Version="1.*"/>
+
     </ItemGroup>
 
     <!-- Core Dependencies -->

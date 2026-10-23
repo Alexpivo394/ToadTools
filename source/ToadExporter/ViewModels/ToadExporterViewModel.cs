@@ -12,7 +12,9 @@ using ToadExporter.ViewModels.Tree;
 using ToadTools.UI.Models;
 using ToadTools.UI.Services;
 using Wpf.Ui.Appearance;
-using ToadTools.UI.RevitServer;
+using Alexpivo394.Revit.Export.Core;
+using Alexpivo394.Revit.Export.Services;
+using Alexpivo394.Revit.Export.Sources;
 
 namespace ToadExporter.ViewModels;
 
@@ -211,7 +213,7 @@ public sealed partial class ToadExporterViewModel : ObservableObject
     {
         var jobs = Tree.CollectJobs(IsServerMode);
 
-        var errors = RunValidator.Errors(jobs, Settings);
+        var errors = RunValidator.Errors(jobs, Settings.ToOptions(), Settings.OutputFolder);
         if (errors.Count > 0)
         {
             ToadDialogService.Show(Title, string.Join("\n", errors), DialogButtons.OK, DialogIcon.Warning);
