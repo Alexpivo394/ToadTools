@@ -2,7 +2,7 @@
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using ParamChecker.Core;
+using Alexpivo394.Revit.ParamCheck.Profiles;
 using Alexpivo394.Revit.Export.Sources;
 
 namespace ParamChecker.ViewModels;

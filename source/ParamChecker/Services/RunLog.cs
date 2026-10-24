@@ -1,12 +1,13 @@
 using System.IO;
 using System.Text;
+using Alexpivo394.Revit.ParamCheck.Core;
 
-namespace ParamChecker.Core.Reports;
+namespace ParamChecker.Services;
 
 /// <summary>
 ///     Журнал запуска в папке отчётов. Пишется сразу на диск, чтобы остаться, даже если Revit упадёт посреди проверки.
 /// </summary>
-public sealed class RunLog : IDisposable
+public sealed class RunLog : ICheckLog, IDisposable
 {
     private readonly StreamWriter _writer;
 

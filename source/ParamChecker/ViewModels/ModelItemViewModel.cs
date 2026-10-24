@@ -1,7 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using ParamChecker.Core;
-using ParamChecker.Core.Profiles;
+using Alexpivo394.Revit.ParamCheck.Profiles;
 
 namespace ParamChecker.ViewModels;
 

@@ -2,8 +2,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using ParamChecker.Core;
-using ParamChecker.Core.Profiles;
+using Alexpivo394.Revit.ParamCheck.Profiles;
 using ToadTools.UI.Models;
 
 namespace ParamChecker.ViewModels;

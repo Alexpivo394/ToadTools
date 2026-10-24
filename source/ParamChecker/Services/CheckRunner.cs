@@ -1,11 +1,11 @@
 using System.Diagnostics;
 using System.IO;
+using Alexpivo394.Revit.ParamCheck.Core;
+using Alexpivo394.Revit.ParamCheck.Profiles;
+using Alexpivo394.Revit.ParamCheck.Reports;
+using Alexpivo394.Revit.ParamCheck.Services;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
-using ParamChecker.Core;
-using ParamChecker.Core.Checking;
-using ParamChecker.Core.Profiles;
-using ParamChecker.Core.Reports;
 using ToadTools.UI.Progress;
 using Wpf.Ui.Controls;
 
@@ -15,16 +15,15 @@ namespace ParamChecker.Services;
 public sealed record RunSummary(IReadOnlyList<ModelOutcome> Outcomes, bool Cancelled, string LogPath, string ReportsFolder, string? HistoryError);
 
 /// <summary>
-///     Проверяет модели по одной: открыть → проверить правила → отчёт → закрыть. Ошибка или пропуск модели не
-///     останавливает остальные; «Прервать» останавливает после закрытия текущей.
+///     Проверяет модели по одной: открыть → проверить правила → отчёт → закрыть (<see cref="ModelInspector" />). Ошибка или
+///     пропуск модели не останавливает остальные; «Прервать» останавливает после закрытия текущей.
 /// </summary>
 public sealed class CheckRunner(UIApplication uiApplication, CheckerSettings settings)
 {
-    private readonly ModelOpener _opener = new(uiApplication);
+    private readonly ModelInspector _inspector = new(uiApplication.Application);
 
     public RunSummary Run(IReadOnlyList<CheckProfile> profiles)
     {
-        TempWorkspace.CleanupUnused();
         var jobs = profiles.SelectMany(profile => profile.Models.Select(model => (Profile: profile, Model: model))).ToList();
 
         return Execute($"проверка {jobs.Count} моделей", (progress, log, history, outcomes) =>
@@ -35,7 +34,18 @@ public sealed class CheckRunner(UIApplication uiApplication, CheckerSettings set
                 progress.Stage($"Профиль «{profile.Name}»");
                 progress.Report(index, jobs.Count, $"{index + 1} из {jobs.Count}: {model.Name}");
 
-                var outcome = CheckServerModel(profile, model, progress, log);
+                progress.BeginItem(model.Name, canSkip: true);
+                ModelOutcome outcome;
+                try
+                {
+                    outcome = _inspector.Check(model.Path, profile, Options(model.ViewName ?? profile.ViewName, model.WorksetKeyword ?? profile.WorksetKeyword),
+                        ReportPath(profile, model.Name), new ItemProgress(progress), log);
+                }
+                finally
+                {
+                    progress.EndItem();
+                }
+
                 outcomes.Add(outcome);
                 history?.Add(outcome);
                 if (progress.IsCancelled) return true;
@@ -60,7 +70,8 @@ public sealed class CheckRunner(UIApplication uiApplication, CheckerSettings set
             ModelOutcome outcome;
             try
             {
-                outcome = CheckDocument(document, profile, name, path, profile.ViewName, stopwatch, progress, log);
+                outcome = ModelInspector.CheckOpen(document, profile, name, path, Options(profile.ViewName, ""), ReportPath(profile, name),
+                    new ItemProgress(progress), log, stopwatch);
             }
             catch (OperationCanceledException) when (progress.IsCancelled)
             {
@@ -106,6 +117,17 @@ public sealed class CheckRunner(UIApplication uiApplication, CheckerSettings set
         return document.PathName;
     }
 
+    private CheckOptions Options(string? viewName, string? worksetKeyword) => new()
+    {
+        SkipLinks = settings.SkipLinks,
+        ViewName = viewName ?? "",
+        WorksetKeyword = worksetKeyword ?? "",
+        ProblemsOnly = settings.ProblemsOnly
+    };
+
+    private string ReportPath(CheckProfile profile, string modelName) =>
+        Path.Combine(Path.GetFullPath(settings.ReportsFolder.Trim()), ModelNames.ToFileName(profile.Name), ReportNames.ForModel(modelName));
+
     private RunSummary Execute(string title, Func<ToadProgress, RunLog, HistoryBuffer?, List<ModelOutcome>, bool> body)
     {
         var started = DateTime.Now;
@@ -146,73 +168,14 @@ public sealed class CheckRunner(UIApplication uiApplication, CheckerSettings set
         return new RunSummary(outcomes, cancelled, log.FilePath, folder, history?.Error);
     }
 
-    private ModelOutcome CheckServerModel(CheckProfile profile, ModelSource model, ToadProgress progress, RunLog log)
+    /// <summary>Модель в окне прогресса: шаги и ход проверки — в строку модели, «Пропустить» и «Прервать» — просьба бросить её.</summary>
+    private sealed class ItemProgress(ToadProgress progress) : ICheckProgress
     {
-        var name = model.Name;
-        var path = model.Path.Trim();
-        var stopwatch = Stopwatch.StartNew();
-        progress.BeginItem(name, canSkip: true);
+        public bool ShouldAbort => progress.ShouldAbortItem;
 
-        // Копия модели без связей удаляется, когда документ уже закрыт.
-        using var temp = TempWorkspace.Create();
-        Document? document = null;
-        try
-        {
-            document = _opener.Open(path, model.WorksetKeyword ?? profile.WorksetKeyword, settings.SkipLinks, temp, log, progress);
-            return CheckDocument(document, profile, name, path, model.ViewName ?? profile.ViewName, stopwatch, progress, log);
-        }
-        catch (Exception exception) when (progress.ShouldAbortItem)
-        {
-            // Revit прервал открытие по нашей просьбе или модель бросили посреди проверки — это решение пользователя.
-            log.Step(name, progress.IsCancelled ? "проверка прервана" : $"пропущена пользователем ({exception.GetType().Name})");
-            return new ModelOutcome(profile.Name, name, path, ModelStatus.Skipped, stopwatch.Elapsed);
-        }
-        catch (CheckException exception)
-        {
-            log.Step(name, $"не проверена: {exception.Message}");
-            return new ModelOutcome(profile.Name, name, path, ModelStatus.Failed, stopwatch.Elapsed, Error: exception.Message);
-        }
-        catch (Exception exception)
-        {
-            log.Error(name, "проверка не выполнена", exception);
-            return new ModelOutcome(profile.Name, name, path, ModelStatus.Failed, stopwatch.Elapsed, Error: exception.Message);
-        }
-        finally
-        {
-            Close(document, name, progress, log);
-            progress.EndItem();
-        }
-    }
+        public void Status(string? status) => progress.ItemStatus(status);
 
-    private ModelOutcome CheckDocument(Document document, CheckProfile profile, string name, string path, string? viewName,
-        Stopwatch stopwatch, ToadProgress progress, RunLog log)
-    {
-        var report = ModelChecker.Check(document, profile, name, path, viewName ?? "", settings.ProblemsOnly, progress, log);
-
-        progress.ItemStatus("Сохранение отчёта");
-        var target = Path.Combine(Path.GetFullPath(settings.ReportsFolder.Trim()), ModelNames.ToFileName(profile.Name),
-            ModelNames.ToFileName(name) + "_LOIReport.xlsx");
-        var saved = ReportWriter.Write(report, target, settings.ProblemsOnly);
-        log.Step(name, $"готово за {stopwatch.Elapsed:mm\\:ss}: полнота {ModelChecker.Percent(report.Completeness)}, " +
-                       $"заполненность {ModelChecker.Percent(report.FillRate)}; отчёт {saved}" +
-                       (saved == target ? "" : " (прежний отчёт занят — открыт в Excel?)"));
-
-        return new ModelOutcome(profile.Name, name, path, ModelStatus.Checked, stopwatch.Elapsed, report, ReportPath: saved);
-    }
-
-    private static void Close(Document? document, string name, ToadProgress progress, RunLog log)
-    {
-        if (document is null || !document.IsValidObject) return;
-
-        progress.ItemStatus("Закрытие модели");
-        try
-        {
-            document.Close(false);
-        }
-        catch (Exception exception)
-        {
-            log.Error(name, "модель не закрылась", exception);
-        }
+        public void Report(int current, int total, string? status) => progress.ItemReport(current, total, status);
     }
 
     /// <summary>

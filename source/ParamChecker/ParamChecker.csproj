@@ -1,8 +1,8 @@
 <Project Sdk="Nice3point.Revit.Sdk/6.2.2">
 
     <ItemGroup>
+        <PackageReference Include="Alexpivo394.Revit.ParamCheck"/>
         <PackageReference Include="CommunityToolkit.Mvvm"/>
-        <PackageReference Include="EPPlus"/>
         <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf"/>
         <PackageReference Include="Newtonsoft.Json"/>
         <PackageReference Include="WPF-UI"/>

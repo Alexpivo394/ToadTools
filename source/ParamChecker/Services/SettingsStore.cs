@@ -3,7 +3,7 @@ using System.Reflection;
 using Autodesk.Revit.DB;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using ParamChecker.Core.Profiles;
+using Alexpivo394.Revit.ParamCheck.Profiles;
 
 namespace ParamChecker.Services;
 

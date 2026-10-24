@@ -38,6 +38,9 @@
         <PackageVersion Include="Alexpivo394.Revit.Export" Version="$(RevitVersion).*" Condition="$(RevitVersion) != ''"/>
         <PackageVersion Include="Alexpivo394.Revit.Export.Sources" Version="1.*"/>
 
+        <!-- Ядро ParamChecker (проверка LOI), общее с ToadFlow: https://github.com/Alexpivo394/ToadParamCheck -->
+        <PackageVersion Include="Alexpivo394.Revit.ParamCheck" Version="$(RevitVersion).*" Condition="$(RevitVersion) != ''"/>
+
     </ItemGroup>
 
     <!-- Core Dependencies -->
@@ -64,6 +67,9 @@
         <!-- Serialization & Office -->
         <PackageVersion Include="Newtonsoft.Json" Version="13.0.3"/>
         <PackageVersion Include="EPPlus" Version="8.0.1"/>
+        <!-- EPPlus 8.0.1 тянет 9.0.3 с известными уязвимостями (GHSA-2fmv-rv2c-59x7 и др.) — закрепляем исправленные -->
+        <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="9.0.21"/>
+        <PackageVersion Include="System.Security.Cryptography.Xml" Version="9.0.21"/>
 
         <!-- net48 facade assemblies (explicitly referenced to resolve versions) -->
         <PackageVersion Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2"/>

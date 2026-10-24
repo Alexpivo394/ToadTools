@@ -1,8 +1,8 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using ParamChecker.Core.Checking;
-using ParamChecker.Core.Profiles;
+using Alexpivo394.Revit.ParamCheck.Core;
+using Alexpivo394.Revit.ParamCheck.Profiles;
 
 namespace ParamChecker.ViewModels;
 
@@ -69,7 +69,7 @@ public sealed partial class FilterEditorViewModel : ObservableObject
         Categories = _categories.Where(c => c.IsSelected).Select(c => c.Key).ToList(),
         Mode = Mode,
         Logic = Logic,
-        Conditions = Conditions.Select(c => c.ToModel()).Where(ConditionEvaluator.IsComplete).ToList()
+        Conditions = Conditions.Select(c => c.ToModel()).Where(ConditionRules.IsComplete).ToList()
     };
 
     internal void RefreshCount() => SelectedCount = _categories.Count(c => c.IsSelected);
@@ -153,7 +153,7 @@ public sealed partial class ConditionItemViewModel : ConditionNodeViewModel
 
     public FilterEditorViewModel Editor => _editor;
 
-    public bool NeedsValue => ConditionEvaluator.NeedsValue(Operator);
+    public bool NeedsValue => ConditionRules.NeedsValue(Operator);
 
     /// <summary>Имени нет ни в ФОП, ни в проекте, ни среди системных — похоже на опечатку.</summary>
     public bool IsUnknown => _editor.IsSuspicious(Parameter);

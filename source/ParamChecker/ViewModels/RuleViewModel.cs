@@ -1,10 +1,10 @@
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using ParamChecker.Core.Checking;
-using ParamChecker.Core.Profiles;
+using Alexpivo394.Revit.ParamCheck.Core;
+using Alexpivo394.Revit.ParamCheck.Profiles;
 using ToadTools.UI.Models;
-using Condition = ParamChecker.Core.Profiles.Condition;
+using Condition = Alexpivo394.Revit.ParamCheck.Profiles.Condition;
 
 namespace ParamChecker.ViewModels;
 
@@ -35,7 +35,7 @@ public sealed partial class RuleViewModel : ObservableObject
         get
         {
             var categories = _filter.Categories.Select(_context.Categories.NameOf).ToList();
-            var conditions = _filter.Conditions.Count(ConditionEvaluator.IsComplete);
+            var conditions = _filter.Conditions.Count(ConditionRules.IsComplete);
             var categoryText = categories.Count == 0 ? "категории не выбраны" : Words.List(categories, 2);
             var conditionText = conditions == 0 ? "без условий" : Words.Count(conditions, "условие", "условия", "условий");
 
@@ -58,7 +58,7 @@ public sealed partial class RuleViewModel : ObservableObject
                 lines.Add("Категории: " + (_filter.Categories.Count == 0 ? "—" : string.Join(", ", _filter.Categories.Select(_context.Categories.NameOf))));
             if (_filter.UsesConditions)
             {
-                foreach (var condition in _filter.Conditions.Where(ConditionEvaluator.IsComplete))
+                foreach (var condition in _filter.Conditions.Where(ConditionRules.IsComplete))
                     lines.Add((_filter.Logic == ConditionLogic.Or ? "или " : "и ") + Describe(condition));
             }
 
@@ -69,8 +69,8 @@ public sealed partial class RuleViewModel : ObservableObject
     public bool FilterHasProblem => _filter.Mode switch
     {
         SelectionMode.CategoriesOnly or SelectionMode.CategoriesAndParameters => _filter.Categories.Count == 0,
-        SelectionMode.ParametersOnly => !ConditionEvaluator.HasConditions(_filter),
-        _ => _filter.Categories.Count == 0 && !ConditionEvaluator.HasConditions(_filter)
+        SelectionMode.ParametersOnly => !ConditionRules.HasConditions(_filter),
+        _ => _filter.Categories.Count == 0 && !ConditionRules.HasConditions(_filter)
     };
 
     public string ParametersSummary => _parameters.Count == 0 ? "параметры не выбраны" : Words.List(_parameters, 3);
@@ -171,10 +171,10 @@ public sealed partial class RuleViewModel : ObservableObject
 
     private static string Describe(Condition condition)
     {
-        if (condition.IsGroup) return "(" + string.Join(" и ", condition.Group!.Where(ConditionEvaluator.IsComplete).Select(Describe)) + ")";
+        if (condition.IsGroup) return "(" + string.Join(" и ", condition.Group!.Where(ConditionRules.IsComplete).Select(Describe)) + ")";
 
         var op = EnumText(condition.Operator!.Value).ToLowerInvariant();
-        return ConditionEvaluator.NeedsValue(condition.Operator.Value)
+        return ConditionRules.NeedsValue(condition.Operator.Value)
             ? $"{condition.Parameter} {op} «{condition.Value}»"
             : $"{condition.Parameter} — {op}";
     }
