@@ -3,6 +3,7 @@ using System;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Interop;
 using System.Windows.Threading;
 using ToadTools.UI.ViewModels;
 using Wpf.Ui.Appearance;
@@ -34,6 +35,10 @@ public sealed partial class ToadProgressWindow
         Resources.MergedDictionaries.Add(new ControlsDictionary());
         InitializeComponent();
         DataContext = viewModel;
+
+        ProgressTitleBar.MinimizeActionOverride = (_, _) => MinimizeKeepingActivation();
+        SourceInitialized += (_, _) =>
+            HwndSource.FromHwnd(new WindowInteropHelper(this).Handle)?.AddHook(InterceptMinimize);
 
         Loaded += (_, _) =>
         {
@@ -92,6 +97,29 @@ public sealed partial class ToadProgressWindow
 
     private static readonly uint CurrentProcessId = (uint)System.Diagnostics.Process.GetCurrentProcess().Id;
 
+    /// <summary>
+    ///     Обычное сворачивание отдаёт активность следующему окну — главному окну Revit, поток которого занят
+    ///     работой. Активация посреди операции (Revit сам прокачивает сообщения при открытии модели) вешала
+    ///     и роняла Revit. Поэтому окно сворачивается, оставаясь активным.
+    /// </summary>
+    private void MinimizeKeepingActivation() => ShowWindow(new WindowInteropHelper(this).Handle, SwShowMinimized);
+
+    /// <summary>Сворачивание из системного меню и с панели задач — так же, как кнопкой в заголовке.</summary>
+    private IntPtr InterceptMinimize(IntPtr hwnd, int message, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+        if (message == WmSysCommand && (wParam.ToInt64() & 0xFFF0) == ScMinimize)
+        {
+            MinimizeKeepingActivation();
+            handled = true;
+        }
+
+        return IntPtr.Zero;
+    }
+
+    private const int WmSysCommand = 0x0112;
+    private const int ScMinimize = 0xF020;
+    private const int SwShowMinimized = 2;
+
     /// <summary>Ставит окно по центру окна, из которого запущена команда (Revit или окно плагина).</summary>
     private void CenterOverAnchor()
     {
@@ -125,6 +153,10 @@ public sealed partial class ToadProgressWindow
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool IsIconic(IntPtr window);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool ShowWindow(IntPtr window, int command);
 
     [DllImport("user32.dll")]
     private static extern IntPtr GetForegroundWindow();
