@@ -43,4 +43,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOTNET_ENVIRONMENT: ${{ (github.ref_name == 'main' || github.ref_type == 'tag') && 'Production' || 'Development' }}
-          Publish__Version: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || github.ref_name }}
+          # Версия релиза — из тега (BuildOptions.Version). Без неё версию вычисляет GitVersion, а он на теге, где есть и
+          # ветка dev, падает: стратегия Mainline не умеет приращение Inherit из шаблона ветки develop.
+          Build__Version: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || github.ref_name }}
