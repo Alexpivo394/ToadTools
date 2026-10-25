@@ -5,9 +5,13 @@
         <PackageReference Include="CommunityToolkit.Mvvm"/>
         <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf"/>
         <PackageReference Include="Newtonsoft.Json"/>
-        <PackageReference Include="System.Security.Cryptography.ProtectedData"/>
         <PackageReference Include="WPF-UI"/>
         <PackageReference Include="WPF-UI.Abstractions"/>
+    </ItemGroup>
+
+    <!-- DPAPI для токена ToadFlow; с .NET 10 (Revit 2027) входит в Windows Desktop -->
+    <ItemGroup Condition="'$(RevitVersion)' &lt; '2027'">
+        <PackageReference Include="System.Security.Cryptography.ProtectedData"/>
     </ItemGroup>
 
     <!-- net48 facade assemblies; on .NET they ship with the runtime -->
