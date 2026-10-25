@@ -72,6 +72,30 @@
             </ui:Card>
 
             <ui:Card Padding="14,10" Margin="0,0,0,8">
+                <StackPanel>
+                    <TextBlock Text="Аналитика ToadFlow" FontWeight="SemiBold" Margin="0,0,0,6" />
+                    <CheckBox Content="Отправлять итоги проверенных моделей в ToadFlow" IsChecked="{Binding Settings.ToadFlowEnabled}" />
+                    <TextBlock Margin="28,0,0,8" Opacity="0.7" FontSize="12" TextWrapping="Wrap"
+                               Text="Ручные проверки попадут на страницу «Аналитика LOI» сервиса ToadFlow рядом с проверками по расписанию. Отправляются только итоги — без элементов. Если сервер недоступен, итоги ждут в очереди и уходят при следующей проверке." />
+                    <Grid IsEnabled="{Binding Settings.ToadFlowEnabled}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ui:TextBox Text="{Binding Settings.ToadFlowUrl, UpdateSourceTrigger=LostFocus}" PlaceholderText="http://toadflow:8080" />
+                        <ui:PasswordBox Grid.Column="1" Margin="8,0,0,0" Password="{Binding Settings.ToadFlowToken, UpdateSourceTrigger=LostFocus}"
+                                        PlaceholderText="Токен доступа" />
+                        <ui:Button Grid.Column="2" Content="Проверить связь" Margin="8,0,0,0" VerticalAlignment="Stretch"
+                                   Command="{Binding TestToadFlowCommand}" />
+                    </Grid>
+                    <TextBlock Margin="0,6,0,0" Opacity="0.7" FontSize="12" TextWrapping="Wrap"
+                               Text="Токен создаётся в веб-интерфейсе ToadFlow: «Настройки → Токены доступа». В настройках он хранится зашифрованным для вашей учётной записи Windows." />
+                    <TextBlock Margin="0,4,0,0" FontSize="12" Text="{Binding ToadFlowQueue}" />
+                </StackPanel>
+            </ui:Card>
+
+            <ui:Card Padding="14,10" Margin="0,0,0,8">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Тема" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,16,0" />
                     <ui:ToggleSwitch IsChecked="{Binding Settings.DarkTheme, Mode=TwoWay}" OffContent="Светлая" OnContent="Тёмная" />

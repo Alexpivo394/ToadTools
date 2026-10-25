@@ -281,7 +281,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         var outcome = summary.Outcomes.FirstOrDefault();
-        if (outcome?.Status == ModelStatus.Checked && outcome.ReportPath is not null && summary.HistoryError is null)
+        if (outcome?.Status == ModelStatus.Checked && outcome.ReportPath is not null && summary.HistoryError is null && summary.ToadFlow?.Error is null)
         {
             var answer = _context.Windows.Show(
                 $"{outcome.ModelName}: {Totals(outcome.Report!)}.\n\nОткрыть отчёт?", DialogButtons.YesNo, DialogIcon.Info);
@@ -335,10 +335,20 @@ public sealed partial class MainViewModel : ObservableObject
             lines.Add(summary.HistoryError);
         }
 
+        if (summary.ToadFlow is { } sent)
+        {
+            lines.Add("");
+            lines.Add(sent.Error is null
+                ? $"Итоги отправлены в аналитику ToadFlow: {sent.Sent}."
+                : $"В ToadFlow отправлено {sent.Sent}, ждут отправки {sent.Pending} — {sent.Error}. Они уйдут при следующей проверке.");
+        }
+
         lines.Add("");
         lines.Add("Открыть папку с отчётами?");
 
-        var icon = failed.Count > 0 || summary.Cancelled || summary.HistoryError is not null ? DialogIcon.Warning : DialogIcon.Info;
+        var icon = failed.Count > 0 || summary.Cancelled || summary.HistoryError is not null || summary.ToadFlow?.Error is not null
+            ? DialogIcon.Warning
+            : DialogIcon.Info;
         if (_context.Windows.Show(string.Join("\n", lines), DialogButtons.YesNo, icon) == "Yes") Open(summary.ReportsFolder);
     }
 
@@ -359,6 +369,23 @@ public sealed partial class MainViewModel : ObservableObject
         var path = _context.Windows.PickSaveFile("Файл базы для дашбордов", "Книга Excel (*.xlsx)|*.xlsx", "ParamChecker_База.xlsx",
             Path.GetDirectoryName(Settings.HistoryPath()));
         if (path is not null) Settings.HistoryFile = path;
+    }
+
+    /// <summary>Итогов в очереди ToadFlow — для подсказки в настройках.</summary>
+    public string ToadFlowQueue => ToadFlowSender.PendingCount() is var pending and > 0 ? $"Ждут отправки: {pending}" : "";
+
+    [RelayCommand]
+    private void TestToadFlow()
+    {
+        var (ok, message) = ToadFlowSender.Test(Settings.ToadFlowUrl, Settings.ToadFlowToken);
+        if (ok && ToadFlowSender.PendingCount() > 0 && Settings.ToadFlowEnabled)
+        {
+            var sent = new ToadFlowSender(Settings).Flush();
+            message += $"\n\nОтправлено итогов из очереди: {sent.Sent}" + (sent.Error is null ? "." : $"; не ушли: {sent.Pending} — {sent.Error}.");
+            OnPropertyChanged(nameof(ToadFlowQueue));
+        }
+
+        _context.Windows.Show(message, DialogButtons.OK, ok ? DialogIcon.Info : DialogIcon.Warning);
     }
 
     [RelayCommand]

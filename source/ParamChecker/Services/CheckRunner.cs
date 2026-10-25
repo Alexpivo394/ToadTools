@@ -12,7 +12,9 @@ using Wpf.Ui.Controls;
 namespace ParamChecker.Services;
 
 /// <param name="HistoryError">База не дописалась туда, куда настроено; текст — что случилось и куда записано.</param>
-public sealed record RunSummary(IReadOnlyList<ModelOutcome> Outcomes, bool Cancelled, string LogPath, string ReportsFolder, string? HistoryError);
+/// <param name="ToadFlow">Отправка итогов в аналитику ToadFlow; null — отправка выключена.</param>
+public sealed record RunSummary(IReadOnlyList<ModelOutcome> Outcomes, bool Cancelled, string LogPath, string ReportsFolder, string? HistoryError,
+    SendResult? ToadFlow = null);
 
 /// <summary>
 ///     Проверяет модели по одной: открыть → проверить правила → отчёт → закрыть (<see cref="ModelInspector" />). Ошибка или
@@ -21,6 +23,7 @@ public sealed record RunSummary(IReadOnlyList<ModelOutcome> Outcomes, bool Cance
 public sealed class CheckRunner(UIApplication uiApplication, CheckerSettings settings)
 {
     private readonly ModelInspector _inspector = new(uiApplication.Application);
+    private readonly ToadFlowSender _toadFlow = new(settings);
 
     public RunSummary Run(IReadOnlyList<CheckProfile> profiles)
     {
@@ -48,6 +51,7 @@ public sealed class CheckRunner(UIApplication uiApplication, CheckerSettings set
 
                 outcomes.Add(outcome);
                 history?.Add(outcome);
+                Enqueue(outcome, profile, log);
                 if (progress.IsCancelled) return true;
             }
 
@@ -94,6 +98,7 @@ public sealed class CheckRunner(UIApplication uiApplication, CheckerSettings set
 
             outcomes.Add(outcome);
             history?.Add(outcome);
+            Enqueue(outcome, profile, log);
             return progress.IsCancelled;
         });
     }
@@ -144,6 +149,7 @@ public sealed class CheckRunner(UIApplication uiApplication, CheckerSettings set
 
         var history = settings.HistoryEnabled ? new HistoryBuffer(settings.HistoryPath(), started, log) : null;
         var outcomes = new List<ModelOutcome>();
+        SendResult? sent = null;
         bool cancelled;
         using (var progress = ToadProgress.Show("ParamChecker", new ProgressOptions
                {
@@ -158,14 +164,36 @@ public sealed class CheckRunner(UIApplication uiApplication, CheckerSettings set
                 progress.Stage("Запись базы для дашбордов");
                 history.Flush(final: true);
             }
+
+            if (_toadFlow.Enabled)
+            {
+                progress.Stage("Отправка итогов в ToadFlow");
+                sent = _toadFlow.Flush();
+            }
         }
 
         log.Blank();
         log.Line($"Проверено: {outcomes.Count(o => o.Status == ModelStatus.Checked)}, пропущено: " +
                  $"{outcomes.Count(o => o.Status == ModelStatus.Skipped)}, с ошибками: {outcomes.Count(o => o.Status == ModelStatus.Failed)}");
+        if (sent is not null)
+            log.Line($"В ToadFlow отправлено итогов: {sent.Sent}" + (sent.Pending > 0 ? $", ждут отправки: {sent.Pending}" : "") +
+                     (sent.Error is null ? "" : $" — {sent.Error}"));
         if (cancelled) log.Line("Проверка прервана пользователем");
 
-        return new RunSummary(outcomes, cancelled, log.FilePath, folder, history?.Error);
+        return new RunSummary(outcomes, cancelled, log.FilePath, folder, history?.Error, sent);
+    }
+
+    /// <summary>Итог — в очередь ToadFlow сразу после модели: если Revit упадёт посреди запуска, он не потеряется.</summary>
+    private void Enqueue(ModelOutcome outcome, CheckProfile profile, RunLog log)
+    {
+        try
+        {
+            _toadFlow.Enqueue(outcome, profile);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            log.Line($"{outcome.ModelName}: итог не положен в очередь ToadFlow: {exception.Message}");
+        }
     }
 
     /// <summary>Модель в окне прогресса: шаги и ход проверки — в строку модели, «Пропустить» и «Прервать» — просьба бросить её.</summary>
