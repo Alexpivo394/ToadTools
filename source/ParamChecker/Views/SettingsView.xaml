@@ -84,7 +84,7 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <ui:TextBox Text="{Binding Settings.ToadFlowUrl, UpdateSourceTrigger=LostFocus}" PlaceholderText="http://toadflow:8080" />
-                        <ui:PasswordBox Grid.Column="1" Margin="8,0,0,0" Password="{Binding Settings.ToadFlowToken, UpdateSourceTrigger=LostFocus}"
+                        <ui:PasswordBox Grid.Column="1" Margin="8,0,0,0" Password="{Binding Settings.ToadFlowToken, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                         PlaceholderText="Токен доступа" />
                         <ui:Button Grid.Column="2" Content="Проверить связь" Margin="8,0,0,0" VerticalAlignment="Stretch"
                                    Command="{Binding TestToadFlowCommand}" />
