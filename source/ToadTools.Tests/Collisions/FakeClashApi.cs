@@ -8,6 +8,7 @@ public sealed class FakeClashApi : IClashApi
     public List<ModelCollisionRow> Rows { get; set; } = [];
     public int Mine { get; set; }
     public int Other { get; set; }
+    public int Fresh { get; set; }
     public ModelFacets Facets { get; set; } = new([], [], []);
     public Func<string?, string?, ModelResolve> Resolve { get; set; } = (_, _) => new ModelResolve("none", []);
     public Exception? Fail { get; set; }
@@ -23,7 +24,7 @@ public sealed class FakeClashApi : IClashApi
     {
         PageRequests.Add((key, query, page));
         var items = Rows.Skip((page - 1) * ClashApi.PageSize).Take(ClashApi.PageSize).ToList();
-        return new ModelCollisionPage(Rows.Count, Mine, Other, items, Facets);
+        return new ModelCollisionPage(Rows.Count, Mine, Other, items, Facets, Fresh);
     });
 
     public Task<CollisionCardDto> CardAsync(Guid id, CancellationToken ct) => Run(() =>

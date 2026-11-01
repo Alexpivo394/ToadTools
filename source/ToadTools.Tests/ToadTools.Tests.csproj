@@ -24,6 +24,7 @@
         <Compile Include="..\ToadTools.Connection\Core\**\*.cs" Link="Linked\Connection\%(RecursiveDir)%(Filename)%(Extension)"/>
         <Compile Include="..\ToadTools.Connection\ViewModels\**\*.cs" Link="Linked\ConnectionViewModels\%(RecursiveDir)%(Filename)%(Extension)"/>
         <Compile Include="..\Collisions\Core\**\*.cs" Link="Linked\Collisions\%(RecursiveDir)%(Filename)%(Extension)"/>
+        <Compile Include="..\Collisions\ViewModels\**\*.cs" Link="Linked\CollisionsViewModels\%(RecursiveDir)%(Filename)%(Extension)"/>
     </ItemGroup>
 
     <!-- Ответы сервера ToadFlow (задача 3 этапа 7), снятые с живого маршрута -->

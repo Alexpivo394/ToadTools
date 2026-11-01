@@ -21,6 +21,8 @@ namespace ToadTools
             // Кэш каталогов Revit Server — в прежней папке ToadTools, а не в папке пакета по умолчанию.
             Alexpivo394.Revit.Export.Sources.ServerCatalog.CacheRoot = System.IO.Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ToadTools", "RevitServerCache");
+            // Закрепляемую панель Revit принимает только во время запуска — до первого await.
+            Collisions.CollisionsPane.Register(Application);
             await Host.StartAsync();
             CreateRibbon();
         }
@@ -62,6 +64,10 @@ namespace ToadTools
             panel.AddPushButton<Commands.ConnectionCommand>("Подключение\nк ToadFlow")
                 .WithIcon("ToadFlow")
                 .WithInfo("Вход в ToadFlow для ParamChecker,\nплагина «Коллизии» и других.", "ToadFlow");
+
+            panel.AddPushButton<Commands.CollisionsCommand>("Коллизии")
+                .WithIcon("Collisions")
+                .WithInfo("Панель с коллизиями открытой модели\nиз ToadFlow: список, миниатюры, фильтры.\nПовторное нажатие скрывает панель.", "Collisions");
 
             panel.AddPushButton<Commands.ToadExporterCommand>("Toad\nExporter")
                 .WithIcon("ToadExporter")

@@ -13,6 +13,7 @@ public sealed class CollisionListState(IClashApi api, string modelKey)
     public int Total { get; private set; }
     public int Mine { get; private set; }
     public int Other { get; private set; }
+    public int NewSinceVisit { get; private set; }
     public ModelFacets Facets { get; private set; } = new([], [], []);
     public CollisionQuery Query { get; private set; } = new();
     public ModelCollisionRow? Selected { get; set; }
@@ -59,7 +60,7 @@ public sealed class CollisionListState(IClashApi api, string modelKey)
     private void Apply(ModelCollisionPage page, List<ModelCollisionRow> items, int pages)
     {
         var selectedId = Selected?.Collision.Id;
-        (Items, Total, Mine, Other, Facets, _pages) = (items, page.Total, page.Mine, page.Other, page.Facets, pages);
+        (Items, Total, Mine, Other, NewSinceVisit, Facets, _pages) = (items, page.Total, page.Mine, page.Other, page.NewSinceVisit, page.Facets, pages);
         Selected = selectedId is { } id ? items.FirstOrDefault(i => i.Collision.Id == id) : null;
     }
 }

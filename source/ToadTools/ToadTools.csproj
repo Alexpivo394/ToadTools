@@ -48,6 +48,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\CableTrays\CableTrays.csproj" />
+      <ProjectReference Include="..\Collisions\Collisions.csproj" />
       <ProjectReference Include="..\ChangeSharedFamilies\ChangeSharedFamilies.csproj" />
       <ProjectReference Include="..\ClassifierCode\ClassifierCode.csproj" />
       <ProjectReference Include="..\CreateCover\CreateCover.csproj" />
@@ -157,6 +158,8 @@
       <Resource Include="Resources\Icons\ToadExporter32.png" />
       <Resource Include="Resources\Icons\ToadFlow16.png" />
       <Resource Include="Resources\Icons\ToadFlow32.png" />
+      <Resource Include="Resources\Icons\Collisions16.png" />
+      <Resource Include="Resources\Icons\Collisions32.png" />
     </ItemGroup>
 
 </Project>

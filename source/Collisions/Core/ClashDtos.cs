@@ -101,7 +101,8 @@ public sealed record Facet(string Value, string Label, int Count);
 
 public sealed record ModelFacets(IReadOnlyList<Facet> Pairs, IReadOnlyList<Facet> Levels, IReadOnlyList<Facet> Statuses);
 
-public sealed record ModelCollisionPage(int Total, int Mine, int Other, IReadOnlyList<ModelCollisionRow> Items, ModelFacets Facets);
+/// <param name="NewSinceVisit">Открытые коллизии модели, найденные или вернувшиеся после прошлого захода; без учёта фильтров.</param>
+public sealed record ModelCollisionPage(int Total, int Mine, int Other, IReadOnlyList<ModelCollisionRow> Items, ModelFacets Facets, int NewSinceVisit = 0);
 
 /// <summary>Запись ленты коллизии.</summary>
 public sealed record FeedEntryDto(
