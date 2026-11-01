@@ -14,8 +14,9 @@ public interface ICardDialogs
     /// <returns>Текст примечания; null — человек передумал.</returns>
     string? AskNote(string title);
 
+    /// <param name="options">Кому можно передать — без текущего «кто правит», с подписями разделов.</param>
     /// <returns>null — человек передумал.</returns>
-    PassChoice? AskPass(CollisionAssignee current);
+    PassChoice? AskPass(IReadOnlyList<SideOption> options);
 
     void OpenUrl(string url);
 }
@@ -59,12 +60,7 @@ public sealed partial class CardViewModel : ObservableObject
     public string Depth => $"{Collision.DepthMm:0} мм";
     public string Own => _row.Own.Title;
     public string Other => $"{_row.Other.ModelName}: {_row.Other.Title}";
-    public string Assignee => Collision.Assignee switch
-    {
-        CollisionAssignee.SideA => "сторона A",
-        CollisionAssignee.SideB => "сторона B",
-        _ => "обе стороны"
-    };
+    public string Assignee => SideNames.Label(Collision, Collision.Assignee);
 
     private bool ReadOnly => _me.IsViewer;
     private bool Mine => _me.Disciplines.Contains(Collision.DisciplineA) || _me.Disciplines.Contains(Collision.DisciplineB);
@@ -91,18 +87,16 @@ public sealed partial class CardViewModel : ObservableObject
             OnPropertyChanged(name);
     }
 
-    /// <summary>Карточка, параметры элементов и картинка. Нет выгрузки элемента — его таблица просто пустая.</summary>
+    /// <summary>Карточка, картинка и короткие параметры обоих элементов — из строки списка, без запроса выгрузки.</summary>
     public async Task LoadAsync()
     {
         IsBusy = true;
         try
         {
+            OwnParameters = Parameters(_row.Own);
+            OtherParameters = Parameters(_row.Other);
             var image = LoadImageAsync();
-            var own = ParametersAsync(_row.Own);
-            var other = ParametersAsync(_row.Other);
             await ReloadAsync();
-            OwnParameters = await own;
-            OtherParameters = await other;
             Image = await image;
         }
         catch (Exception exception) when (exception is ToadFlowRequestException or ToadFlowUnavailableException or ToadFlowAuthRequiredException)
@@ -143,7 +137,9 @@ public sealed partial class CardViewModel : ObservableObject
     [RelayCommand]
     private Task Pass()
     {
-        if (_dialogs.AskPass(Collision.Assignee) is not { } choice || string.IsNullOrWhiteSpace(choice.Note)) return Task.CompletedTask;
+        var options = new[] { CollisionAssignee.Both, CollisionAssignee.SideA, CollisionAssignee.SideB }
+            .Where(a => a != Collision.Assignee).Select(a => new SideOption(a, SideNames.Label(Collision, a))).ToList();
+        if (_dialogs.AskPass(options) is not { } choice || string.IsNullOrWhiteSpace(choice.Note)) return Task.CompletedTask;
         return ActAsync(() => _api.PassAsync(Collision.Id, choice.Assignee.ToString(), choice.Note.Trim(), CancellationToken.None));
     }
 
@@ -208,17 +204,14 @@ public sealed partial class CardViewModel : ObservableObject
         return $"{entry.At.ToLocalTime():dd.MM.yyyy HH:mm} · {entry.UserName ?? "система"}: {body}";
     }
 
-    private async Task<IReadOnlyList<KeyValuePair<string, string>>> ParametersAsync(CollisionSide side)
-    {
-        try
-        {
-            return await _api.ElementAsync(Collision.Id, side.ModelKey, side.UniqueId, CancellationToken.None);
-        }
-        catch (ToadFlowRequestException)
-        {
-            return [];
-        }
-    }
+    /// <summary>Семейство, тип, модель и ID — больше под картинкой не нужно.</summary>
+    private static IReadOnlyList<KeyValuePair<string, string>> Parameters(CollisionSide side) =>
+    [
+        new("Семейство", side.Family ?? "—"),
+        new("Тип", side.Type ?? "—"),
+        new("Модель", side.ModelName),
+        new("ID", side.ElementId.ToString())
+    ];
 
     private async Task<byte[]?> LoadImageAsync()
     {
@@ -233,22 +226,15 @@ public sealed partial class CardViewModel : ObservableObject
     }
 }
 
-/// <summary>Окно примечания: «Сохранить» недоступна, пока поле пустое. Для «Передать…» ещё выбор стороны.</summary>
-public sealed partial class NoteViewModel(string title, CollisionAssignee? current = null) : ObservableObject
+/// <summary>Окно примечания: «Сохранить» недоступна, пока поле пустое. Для «Передать…» ещё выбор, кто правит.</summary>
+public sealed partial class NoteViewModel(string title, IReadOnlyList<SideOption>? sides = null) : ObservableObject
 {
     public string Title => title;
 
-    /// <summary>Окно передачи: показывается выбор стороны.</summary>
-    public bool ChoosesSide => current is not null;
+    /// <summary>Окно передачи: показывается выбор, кто правит.</summary>
+    public bool ChoosesSide => sides is not null;
 
-    public IReadOnlyList<KeyValuePair<CollisionAssignee, string>> Sides { get; } =
-        new[]
-            {
-                new KeyValuePair<CollisionAssignee, string>(CollisionAssignee.Both, "обе стороны"),
-                new KeyValuePair<CollisionAssignee, string>(CollisionAssignee.SideA, "сторона A"),
-                new KeyValuePair<CollisionAssignee, string>(CollisionAssignee.SideB, "сторона B")
-            }
-            .Where(s => s.Key != current).ToList();
+    public IReadOnlyList<SideOption> Sides { get; } = sides ?? [];
 
     [ObservableProperty] [NotifyCanExecuteChangedFor(nameof(SaveCommand))] private string _text = "";
     [ObservableProperty] [NotifyCanExecuteChangedFor(nameof(SaveCommand))] private CollisionAssignee? _side;

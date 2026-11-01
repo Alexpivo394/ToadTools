@@ -86,7 +86,21 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="3*" MinHeight="160" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="2*" MinHeight="120" />
+                <!-- Место карточки: пока коллизия не выбрана, список занимает всю высоту -->
+                <RowDefinition>
+                    <RowDefinition.Style>
+                        <Style TargetType="RowDefinition">
+                            <Setter Property="Height" Value="2*" />
+                            <Setter Property="MinHeight" Value="120" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Card}" Value="{x:Null}">
+                                    <Setter Property="Height" Value="0" />
+                                    <Setter Property="MinHeight" Value="0" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </RowDefinition.Style>
+                </RowDefinition>
             </Grid.RowDefinitions>
         <DockPanel Grid.Row="0">
             <Grid DockPanel.Dock="Top" Margin="0,0,0,6">

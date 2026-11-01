@@ -56,7 +56,10 @@ public static class CollisionNavigator
         return new NavigateResult(own is not null, state, link?.Name);
     }
 
-    /// <summary>Вид «ToadClash» (созданный при первом переходе) с кубом; одна транзакция.</summary>
+    /// <summary>
+    ///     Вид «ToadClash» с кубом; одна транзакция. Вид создаётся при первом переходе: изометрия, детализация «высокая»,
+    ///     стиль «тонированный»; дальше его настройки — на усмотрение человека.
+    /// </summary>
     private static View3D PrepareView(Document document, Box3 cubeMm, Transform shared)
     {
         using var transaction = new Transaction(document, TransactionName);
@@ -70,6 +73,10 @@ public static class CollisionNavigator
                 .First(t => t.ViewFamily == ViewFamily.ThreeDimensional);
             view = View3D.CreateIsometric(document, type.Id);
             view.Name = ViewName;
+            // Шаблон, который тип вида назначает новым видам, мог бы запретить детализацию и стиль — у этого вида шаблона нет.
+            view.ViewTemplateId = ElementId.InvalidElementId;
+            view.DetailLevel = ViewDetailLevel.Fine;
+            view.DisplayStyle = DisplayStyle.Shading;
         }
 
         // Куб задан в общей системе (футы), его Transform переводит в модель.

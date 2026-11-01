@@ -67,11 +67,9 @@
             </Border>
 
             <TextBlock Text="Свой элемент" FontWeight="SemiBold" Margin="0,10,0,2" />
-            <TextBlock Text="{Binding Own}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,4" />
             <ItemsControl ItemsSource="{Binding OwnParameters}" ItemTemplate="{StaticResource ParameterTemplate}" />
 
             <TextBlock Text="Второй элемент" FontWeight="SemiBold" Margin="0,10,0,2" />
-            <TextBlock Text="{Binding Other}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,4" />
             <ItemsControl ItemsSource="{Binding OtherParameters}" ItemTemplate="{StaticResource ParameterTemplate}" />
 
             <TextBlock Text="Лента" FontWeight="SemiBold" Margin="0,10,0,2" />

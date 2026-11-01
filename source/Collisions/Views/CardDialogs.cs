@@ -15,9 +15,9 @@ public sealed class CardDialogs(IntPtr owner) : ICardDialogs
         return Show(model) ? model.Text : null;
     }
 
-    public PassChoice? AskPass(CollisionAssignee current)
+    public PassChoice? AskPass(IReadOnlyList<SideOption> options)
     {
-        var model = new NoteViewModel("Передать", current);
+        var model = new NoteViewModel("Передать", options);
         return Show(model) && model.Side is { } side ? new PassChoice(side, model.Text) : null;
     }
 

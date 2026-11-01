@@ -43,8 +43,14 @@ public sealed class FakeClashApi : IClashApi
         return Card?.Invoke(id) ?? new CollisionCardDto(Rows.Single(r => r.Collision.Id == id).Collision, []);
     });
 
+    public int ElementRequests { get; private set; }
+
     public Task<IReadOnlyList<KeyValuePair<string, string>>> ElementAsync(Guid collisionId, string modelKey, string uniqueId, CancellationToken ct) =>
-        Run<IReadOnlyList<KeyValuePair<string, string>>>(() => [new("ID", uniqueId)]);
+        Run<IReadOnlyList<KeyValuePair<string, string>>>(() =>
+        {
+            ElementRequests++;
+            return [new("ID", uniqueId)];
+        });
 
     public Task<byte[]> ImageAsync(Guid id, string version, CancellationToken ct) => Run(() => new byte[] { 1 });
 

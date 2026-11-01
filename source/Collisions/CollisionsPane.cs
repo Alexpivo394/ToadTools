@@ -72,7 +72,8 @@ public static class CollisionsPane
     /// </summary>
     private static void OnViewActivated(object? sender, ViewActivatedEventArgs args)
     {
-        if (ReferenceEquals(args.Document, _document)) return;
+        // Revit на каждый вызов отдаёт новую обёртку того же документа: сравнивать по ссылке нельзя, только Equals.
+        if (_document is not null && args.Document is not null && _document.Equals(args.Document)) return;
         if (sender is UIApplication application && !IsShown(application))
         {
             _document = null;

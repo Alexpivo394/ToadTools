@@ -17,7 +17,10 @@
     ShowInTaskbar="False"
     ResizeMode="NoResize"
     SizeToContent="Height"
-    Width="420">
+    Width="420"
+    MinWidth="0"
+    MinHeight="0">
+    <!-- Стиль FluentWindow задаёт минимум 460 × 320: окно было шире и выше содержимого, с пустой полосой внизу -->
 
     <Grid>
         <Grid.RowDefinitions>
@@ -25,12 +28,17 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Title="{Binding Title}" ShowMinimize="False" ShowMaximize="False" />
+        <!-- Значок выравнивает заголовок по левому краю полей: без него полоса заголовка оставляет пустое место -->
+        <ui:TitleBar Grid.Row="0" Title="{Binding Title}" ShowMinimize="False" ShowMaximize="False">
+            <ui:TitleBar.Icon>
+                <ui:SymbolIcon Symbol="Edit24" />
+            </ui:TitleBar.Icon>
+        </ui:TitleBar>
 
         <StackPanel Grid.Row="1" Margin="16,4,16,16">
             <StackPanel Visibility="{Binding ChoosesSide, Converter={conv:BooleanCollapsedVisibilityConverter}}">
                 <TextBlock Text="Кто правит" Margin="0,0,0,4" />
-                <ComboBox ItemsSource="{Binding Sides}" DisplayMemberPath="Value" SelectedValuePath="Key" SelectedValue="{Binding Side}" Margin="0,0,0,8" />
+                <ComboBox ItemsSource="{Binding Sides}" DisplayMemberPath="Label" SelectedValuePath="Assignee" SelectedValue="{Binding Side}" Margin="0,0,0,8" />
             </StackPanel>
             <TextBlock Text="Примечание" Margin="0,0,0,4" />
             <ui:TextBox x:Name="NoteBox" Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap"

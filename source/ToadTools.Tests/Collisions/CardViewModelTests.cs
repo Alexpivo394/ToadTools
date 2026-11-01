@@ -19,7 +19,14 @@ public sealed class FakeDialogs : ICardDialogs
         return Note;
     }
 
-    public PassChoice? AskPass(CollisionAssignee current) => Pass;
+    public IReadOnlyList<SideOption>? Offered { get; private set; }
+
+    public PassChoice? AskPass(IReadOnlyList<SideOption> options)
+    {
+        Offered = options;
+        return Pass;
+    }
+
     public void OpenUrl(string url) => Opened.Add(url);
 }
 
@@ -188,10 +195,61 @@ public class CardViewModelTests
 
         await card.LoadAsync();
 
-        card.OwnParameters.ShouldBe([new KeyValuePair<string, string>("ID", "ub-7")]);
-        card.OtherParameters.ShouldBe([new KeyValuePair<string, string>("ID", "ua-7")]);
         card.Feed.ShouldHaveSingleItem().ShouldEndWith("Петров: проверю");
         card.Image.ShouldBe(new byte[] { 1 });
+    }
+
+    /// <summary>Под картинкой — только семейство, тип, модель и ID обоих элементов, из строки списка: выгрузку элемента не запрашиваем.</summary>
+    [Test]
+    public async Task Card_Parameters_FamilyTypeModelIdOnly()
+    {
+        var (card, api, _, _, temp) = Create(User(Roles.Viewer));
+        using var _ = temp;
+
+        await card.LoadAsync();
+
+        card.OwnParameters.ShouldBe([Pair("Семейство", "Воздуховод"), Pair("Тип", "500x300"), Pair("Модель", "DON_OV.rvt"), Pair("ID", "100007")]);
+        card.OtherParameters.ShouldBe([Pair("Семейство", "Стена"), Pair("Тип", "200"), Pair("Модель", "DON_KR.rvt"), Pair("ID", "7")]);
+        api.ElementRequests.ShouldBe(0);
+    }
+
+    private static KeyValuePair<string, string> Pair(string key, string value) => new(key, value);
+
+    /// <summary>«Кто правит» и выбор в «Передать…» — разделами пары (КР × ОВ), а не «сторона A / B».</summary>
+    [Test]
+    public async Task Card_Sides_NamedByDisciplines()
+    {
+        var (card, _, dialogs, _, temp) = Create(User(Roles.Designer, "ОВ"));
+        using var _ = temp;
+        await card.LoadAsync();
+
+        card.Assignee.ShouldBe("КР и ОВ");
+        await card.PassCommand.ExecuteAsync(null);
+
+        dialogs.Offered.ShouldNotBeNull().Select(o => (o.Assignee, o.Label))
+            .ShouldBe([(CollisionAssignee.SideA, "КР"), (CollisionAssignee.SideB, "ОВ")]);
+    }
+
+    /// <summary>Коллизия внутри раздела: разделом стороны не различить — подписи по моделям; одна модель — «сторона A / B».</summary>
+    [Test]
+    public void Sides_SameDiscipline_NamedByModels()
+    {
+        var row = FakeClashApi.Row(7).Collision with { DisciplineA = "ОВ", ModelNameA = "DON_OV1.rvt", ModelNameB = "DON_OV2.rvt" };
+        SideNames.Label(row, CollisionAssignee.SideA).ShouldBe("DON_OV1");
+        SideNames.Label(row, CollisionAssignee.Both).ShouldBe("DON_OV1 и DON_OV2");
+
+        var same = row with { ModelNameB = "DON_OV1.rvt" };
+        SideNames.Label(same, CollisionAssignee.SideB).ShouldBe("сторона B");
+        SideNames.Label(same, CollisionAssignee.Both).ShouldBe("обе стороны");
+    }
+
+    /// <summary>Категория из выгрузки — код Revit; в списке и карточке — по-русски, как в вебе. Незнакомая — как есть.</summary>
+    [Test]
+    public void Side_Title_CategoryInRussian()
+    {
+        var side = FakeClashApi.Row(7).A with { Category = "OST_PipeCurves" };
+        side.Title.ShouldBe("Трубы · Стена · 200 · 7");
+        (side with { Category = "OST_Unknown" }).Title.ShouldStartWith("OST_Unknown · ");
     }
 
     /// <summary>Смена статуса в ленте — «было → стало», как в вебе; запись без автора — от системы.</summary>

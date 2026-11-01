@@ -69,8 +69,9 @@ public sealed record CollisionRowDto(
 public sealed record CollisionSide(string ModelKey, string ModelName, string UniqueId, long ElementId, string Discipline, string Category, string? Family,
     string? Type, string? Level)
 {
-    /// <summary>«Категория · семейство · тип · ID».</summary>
-    public string Title => string.Join(" · ", new[] { Category, Family, Type, ElementId.ToString() }.Where(s => !string.IsNullOrWhiteSpace(s)));
+    /// <summary>«Категория · семейство · тип · ID»; категория по-русски, как в вебе.</summary>
+    public string Title =>
+        string.Join(" · ", new[] { CategoryNames.Label(Category), Family, Type, ElementId.ToString() }.Where(s => !string.IsNullOrWhiteSpace(s)));
 }
 
 /// <param name="Side">Сторона открытой модели: <c>A</c>, <c>B</c> или <c>AB</c>.</param>

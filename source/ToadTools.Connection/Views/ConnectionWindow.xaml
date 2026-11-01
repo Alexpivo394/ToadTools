@@ -17,7 +17,10 @@
     ShowInTaskbar="False"
     ResizeMode="NoResize"
     SizeToContent="Height"
-    Width="460">
+    Width="460"
+    MinWidth="0"
+    MinHeight="0">
+    <!-- Стиль FluentWindow задаёт минимум 460 × 320: окно было выше содержимого, с пустой полосой внизу -->
 
     <Grid>
         <Grid.RowDefinitions>
@@ -25,7 +28,12 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Title="Подключение к ToadFlow" ShowMinimize="False" ShowMaximize="False" />
+        <!-- Значок выравнивает заголовок по левому краю полей: без него полоса заголовка оставляет пустое место -->
+        <ui:TitleBar Grid.Row="0" Title="Подключение к ToadFlow" ShowMinimize="False" ShowMaximize="False">
+            <ui:TitleBar.Icon>
+                <ui:SymbolIcon Symbol="PlugConnected24" />
+            </ui:TitleBar.Icon>
+        </ui:TitleBar>
 
         <StackPanel Grid.Row="1" Margin="16,4,16,16">
             <TextBlock TextWrapping="Wrap" Opacity="0.75" FontSize="12" Margin="0,0,0,12"
