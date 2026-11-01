@@ -18,6 +18,9 @@ namespace ToadTools.Connection;
 public sealed class ToadFlowClient
 {
     public const string TokenHeader = "X-ToadFlow-Token";
+
+    /// <summary>Отказ без текста от сервера (403): роли пользователя это действие не положено.</summary>
+    public const string NotEnoughRights = "Недостаточно прав в ToadFlow для этого действия";
     private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(15);
 
     public static readonly JsonSerializerSettings Json = new()
@@ -187,13 +190,16 @@ public sealed class ToadFlowClient
         return text;
     }
 
-    /// <summary>401 — токен не принят; 403 без текста — тоже (права токена изменились); 403 с текстом — отказ в действии.</summary>
+    /// <summary>
+    ///     401 — токен не принят, нужно войти заново. 403 — роли пользователя действие не положено: повторный вход не поможет,
+    ///     поэтому это отказ в действии, с текстом сервера или «недостаточно прав».
+    /// </summary>
     private static void Fail(HttpResponseMessage response, string text)
     {
         var status = (int)response.StatusCode;
         var error = ErrorOf(text);
-        if (response.StatusCode == HttpStatusCode.Unauthorized || (response.StatusCode == HttpStatusCode.Forbidden && error is null))
-            throw new ToadFlowAuthRequiredException();
+        if (response.StatusCode == HttpStatusCode.Unauthorized) throw new ToadFlowAuthRequiredException();
+        if (response.StatusCode == HttpStatusCode.Forbidden && error is null) throw new ToadFlowRequestException(status, NotEnoughRights);
         throw new ToadFlowRequestException(status, error ?? $"ToadFlow ответил {status}");
     }
 

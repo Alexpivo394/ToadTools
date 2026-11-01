@@ -340,8 +340,8 @@ public sealed partial class MainViewModel : ObservableObject
         if (summary.ToadFlow is { } sent)
         {
             lines.Add("");
-            lines.Add(sent.Error is null
-                ? $"Итоги отправлены в аналитику ToadFlow: {sent.Sent}."
+            lines.Add(sent.Error is null ? $"Итоги отправлены в аналитику ToadFlow: {sent.Sent}."
+                : sent.Pending == 0 ? $"Итоги в ToadFlow не отправлены. {sent.Error}."
                 : $"В ToadFlow отправлено {sent.Sent}, ждут отправки {sent.Pending} — {sent.Error}. Они уйдут при следующей проверке.");
         }
 

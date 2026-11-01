@@ -21,6 +21,8 @@ public sealed class ToadFlowSender(CheckerSettings settings)
 {
     public const string SignInAgain = "Подключение к ToadFlow устарело — войдите заново (ToadTools → Подключение к ToadFlow)";
 
+    public const string NotEnoughRights = "Недостаточно прав: статистику LOI в ToadFlow отправляют только координаторы и администраторы";
+
     private static readonly string Outbox =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ToadTools", "ParamChecker", "outbox");
 
@@ -63,7 +65,8 @@ public sealed class ToadFlowSender(CheckerSettings settings)
 
     /// <summary>
     ///     Отправляет очередь по порядку. Сеть пропала или сервер недоступен — останавливается, остальное уйдёт в следующий раз;
-    ///     итог, который сервер отверг как неверный, откладывается в outbox\rejected, чтобы не мешать остальным.
+    ///     итог, который сервер отверг как неверный, откладывается в outbox\rejected, чтобы не мешать остальным. Отказ по правам
+    ///     (проектировщик, наблюдатель) сбрасывает очередь: отправлять статистику им не положено.
     /// </summary>
     public SendResult Flush()
     {
@@ -83,6 +86,13 @@ public sealed class ToadFlowSender(CheckerSettings settings)
             catch (ToadFlowAuthRequiredException)
             {
                 error = SignInAgain;
+                break;
+            }
+            catch (ToadFlowRequestException exception) when (exception.Status == 403)
+            {
+                // Роли не положено: очередь не уйдёт и позже, поэтому сбрасывается, а не копится.
+                foreach (var pending in Directory.GetFiles(Outbox, "*.json")) File.Delete(pending);
+                error = NotEnoughRights;
                 break;
             }
             catch (ToadFlowRequestException exception) when (exception.Status == 400)

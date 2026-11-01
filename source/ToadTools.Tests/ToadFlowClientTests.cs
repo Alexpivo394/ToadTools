@@ -165,6 +165,20 @@ public class ToadFlowClientTests
     }
 
     [Test]
+    public async Task Client_403WithoutText_RaisesNotEnoughRights()
+    {
+        var connection = Connected();
+        var (client, store, _, temp) = Create((_, _) => new HttpResponseMessage(HttpStatusCode.Forbidden), connection);
+        using var _ = temp;
+
+        var error = await Should.ThrowAsync<ToadFlowRequestException>(() => client.PostAsync<JObject>("/api/loi/checks", new { }, CancellationToken.None));
+
+        error.Status.ShouldBe(403);
+        error.Message.ShouldStartWith("Недостаточно прав");
+        store.Load().ShouldBe(connection);
+    }
+
+    [Test]
     public async Task Client_NotConnected_RaisesAuthRequired()
     {
         var (client, _, http, temp) = Create((_, _) => FakeHttp.Ok("{}"));
