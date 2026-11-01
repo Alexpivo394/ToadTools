@@ -1,0 +1,22 @@
+<Project Sdk="Nice3point.Revit.Sdk/6.2.2">
+
+    <!-- Плагин «Коллизии»: закрепляемая панель с коллизиями открытой модели из ToadFlow.
+         Core и ViewModels — без Revit API (их проверяет ToadTools.Tests), Revit — за IRevitBridge. -->
+    <ItemGroup>
+        <PackageReference Include="CommunityToolkit.Mvvm"/>
+        <PackageReference Include="Newtonsoft.Json"/>
+        <PackageReference Include="WPF-UI"/>
+        <PackageReference Include="WPF-UI.Abstractions"/>
+    </ItemGroup>
+
+    <!-- HttpClient; на .NET входит в рантайм -->
+    <ItemGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))' == '.NETFramework'">
+        <Reference Include="System.Net.Http"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\ToadTools.UI\ToadTools.UI.csproj"/>
+        <ProjectReference Include="..\ToadTools.Connection\ToadTools.Connection.csproj"/>
+    </ItemGroup>
+
+</Project>
