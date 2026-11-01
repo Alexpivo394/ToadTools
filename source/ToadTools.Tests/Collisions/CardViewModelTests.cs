@@ -194,6 +194,30 @@ public class CardViewModelTests
         card.Image.ShouldBe(new byte[] { 1 });
     }
 
+    /// <summary>Смена статуса в ленте — «было → стало», как в вебе; запись без автора — от системы.</summary>
+    [Test]
+    public async Task Card_Feed_StatusChangesAndSystemEntries()
+    {
+        var (card, api, _, row, temp) = Create(User(Roles.Viewer));
+        using var _ = temp;
+        var at = new DateTimeOffset(2026, 11, 1, 10, 0, 0, TimeSpan.Zero);
+        api.Card = _ => new CollisionCardDto(row.Collision,
+        [
+            new FeedEntryDto(at, "Status", "Петров", "", CollisionStatus.Active, CollisionStatus.FixedPending, null, null, null),
+            new FeedEntryDto(at, "Status", "Петров", "в гильзе", CollisionStatus.Active, CollisionStatus.Fake, null, null, null),
+            new FeedEntryDto(at, "Found", null, "найдена прогоном", null, null, 1, 30, null)
+        ]);
+
+        await card.LoadAsync();
+
+        var time = at.ToLocalTime().ToString("dd.MM.yyyy HH:mm");
+        card.Feed.ShouldBe([
+            $"{time} · Петров: активная → исправлена (ждёт)",
+            $"{time} · Петров: активная → фиктивная — в гильзе",
+            $"{time} · система: найдена прогоном"
+        ]);
+    }
+
     [Test]
     public void Card_NavigateMessages()
     {

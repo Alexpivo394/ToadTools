@@ -194,7 +194,18 @@ public sealed partial class CardViewModel : ObservableObject
     {
         var card = await _api.CardAsync(Collision.Id, CancellationToken.None);
         Collision = card.Collision;
-        Feed = card.Feed.Select(e => $"{e.At.ToLocalTime():dd.MM.yyyy HH:mm} · {(e.UserName is { } who ? $"{who}: " : "")}{e.Text}").ToList();
+        Feed = card.Feed.Select(FeedLine).ToList();
+    }
+
+    /// <summary>Строка ленты как в веб-карточке: смена статуса «было → стало», затем текст; без автора — «система».</summary>
+    private static string FeedLine(FeedEntryDto entry)
+    {
+        var status = entry is { Kind: "Status", FromStatus: { } from, ToStatus: { } to }
+            ? $"{CollisionItemViewModel.StatusLabel(from)} → {CollisionItemViewModel.StatusLabel(to)}"
+            : null;
+        var text = string.IsNullOrWhiteSpace(entry.Text) ? null : entry.Text.Trim();
+        var body = status is null ? text ?? "" : text is null ? status : $"{status} — {text}";
+        return $"{entry.At.ToLocalTime():dd.MM.yyyy HH:mm} · {entry.UserName ?? "система"}: {body}";
     }
 
     private async Task<IReadOnlyList<KeyValuePair<string, string>>> ParametersAsync(CollisionSide side)
