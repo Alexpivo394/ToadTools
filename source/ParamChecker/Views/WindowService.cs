@@ -44,4 +44,6 @@ public sealed class WindowService : IWindowService
     }
 
     public string? Show(string message, DialogButtons buttons, DialogIcon icon) => ToadDialogService.Show(Title, message, buttons, icon, Owner);
+
+    public bool ConnectToadFlow() => ToadTools.Connection.ConnectionDialog.Show(Owner is null ? IntPtr.Zero : new System.Windows.Interop.WindowInteropHelper(Owner).Handle);
 }

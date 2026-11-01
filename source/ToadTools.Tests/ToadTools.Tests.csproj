@@ -22,6 +22,7 @@
 
     <ItemGroup>
         <Compile Include="..\ToadTools.Connection\Core\**\*.cs" Link="Linked\Connection\%(RecursiveDir)%(Filename)%(Extension)"/>
+        <Compile Include="..\ToadTools.Connection\ViewModels\**\*.cs" Link="Linked\ConnectionViewModels\%(RecursiveDir)%(Filename)%(Extension)"/>
     </ItemGroup>
 
 </Project>

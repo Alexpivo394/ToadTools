@@ -61,6 +61,7 @@
       <ProjectReference Include="..\SmartTags\SmartTags.csproj" />
       <ProjectReference Include="..\SSPlan\SSPlan.csproj" />
       <ProjectReference Include="..\ToadExporter\ToadExporter.csproj" />
+      <ProjectReference Include="..\ToadTools.Connection\ToadTools.Connection.csproj" />
       <ProjectReference Include="..\WarmSync\WarmSync.csproj" />
       <ProjectReference Include="..\WorkingSet\WorkingSet.csproj" />
       <ProjectReference Include="..\WorksetCheck\WorksetCheck.csproj" />
@@ -154,6 +155,8 @@
       <Resource Include="Resources\Icons\ToadExporter16.png" />
       <None Remove="Resources\Icons\ToadExporter32.png" />
       <Resource Include="Resources\Icons\ToadExporter32.png" />
+      <Resource Include="Resources\Icons\ToadFlow16.png" />
+      <Resource Include="Resources\Icons\ToadFlow32.png" />
     </ItemGroup>
 
 </Project>

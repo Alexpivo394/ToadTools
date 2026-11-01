@@ -1,0 +1,17 @@
+using ToadTools.Connection.ViewModels;
+using ToadTools.UI.Services;
+
+namespace ToadTools.Connection.Views;
+
+public sealed partial class ConnectionWindow
+{
+    public ConnectionWindow(ConnectionViewModel viewModel)
+    {
+        ThemeWatcherService.Initialize();
+        ThemeWatcherService.ApplyTheme(ThemeWatcherService.CurrentTheme);
+        InitializeComponent();
+        ThemeWatcherService.Watch(this);
+        DataContext = viewModel;
+        Loaded += async (_, _) => await viewModel.CheckAsync();
+    }
+}

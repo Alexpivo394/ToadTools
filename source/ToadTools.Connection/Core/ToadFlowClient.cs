@@ -156,6 +156,23 @@ public sealed class ToadFlowClient
 
     public Task<UserInfo> MeAsync(CancellationToken ct) => GetAsync<UserInfo>("/api/auth/me", ct);
 
+    /// <summary>Владелец токена не из хранилища (перенос из старых настроек ParamChecker); null — сервер не ответил или не принял токен.</summary>
+    public async Task<UserInfo?> MeWithAsync(string url, string token, CancellationToken ct)
+    {
+        try
+        {
+            var probe = new ToadFlowConnection(NormalizeUrl(url), "", "", "", Guid.Empty, token.Trim());
+            using var request = Request(probe, HttpMethod.Get, "/api/auth/me");
+            using var response = await SendRawAsync(request, ct).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode) return null;
+            return JsonConvert.DeserializeObject<UserInfo>(await ReadAsync(response).ConfigureAwait(false), Json);
+        }
+        catch (Exception exception) when (exception is ToadFlowUnavailableException or UriFormatException or JsonException)
+        {
+            return null;
+        }
+    }
+
     /// <summary>Адрес страницы веб-интерфейса; null — подключения нет.</summary>
     public string? WebUrl(string relative) => _store.Load() is { } connection ? connection.Url + "/" + relative.TrimStart('/') : null;
 

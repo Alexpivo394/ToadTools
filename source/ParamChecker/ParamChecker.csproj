@@ -24,6 +24,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\ToadTools.UI\ToadTools.UI.csproj"/>
+        <ProjectReference Include="..\ToadTools.Connection\ToadTools.Connection.csproj"/>
     </ItemGroup>
 
 </Project>

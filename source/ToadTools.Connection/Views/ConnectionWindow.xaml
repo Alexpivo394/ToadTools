@@ -1,0 +1,59 @@
+<ui:FluentWindow
+    x:Class="ToadTools.Connection.Views.ConnectionWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:vm="clr-namespace:ToadTools.Connection.ViewModels"
+    xmlns:conv="clr-namespace:ToadTools.UI.Converters;assembly=ToadTools.UI"
+    d:DataContext="{d:DesignInstance Type=vm:ConnectionViewModel}"
+    mc:Ignorable="d"
+    Title="Подключение к ToadFlow"
+    WindowStartupLocation="CenterOwner"
+    WindowBackdropType="Mica"
+    WindowCornerPreference="Round"
+    ExtendsContentIntoTitleBar="True"
+    ShowInTaskbar="False"
+    ResizeMode="NoResize"
+    SizeToContent="Height"
+    Width="460">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Grid.Row="0" Title="Подключение к ToadFlow" ShowMinimize="False" ShowMaximize="False" />
+
+        <StackPanel Grid.Row="1" Margin="16,4,16,16">
+            <TextBlock TextWrapping="Wrap" Opacity="0.75" FontSize="12" Margin="0,0,0,12"
+                       Text="Один вход для всех плагинов ToadTools: ParamChecker, «Коллизии» и других. Пароль не сохраняется — на этом компьютере остаётся личный токен, который можно отозвать в веб-интерфейсе." />
+
+            <!-- Вход -->
+            <StackPanel Visibility="{Binding IsConnected, Converter={conv:InverseBooleanCollapsedVisibilityConverter}}">
+                <TextBlock Text="Адрес сервера" Margin="0,0,0,4" />
+                <ui:TextBox Text="{Binding Url, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="http://toadflow:8080" Margin="0,0,0,8" />
+                <TextBlock Text="Логин" Margin="0,0,0,4" />
+                <ui:TextBox Text="{Binding Login, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
+                <TextBlock Text="Пароль" Margin="0,0,0,4" />
+                <ui:PasswordBox Password="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
+                <ui:Button Content="Войти" Appearance="Primary" HorizontalAlignment="Right" IsDefault="True"
+                           Command="{Binding SignInCommand}" />
+            </StackPanel>
+
+            <!-- Кто вошёл -->
+            <StackPanel Visibility="{Binding IsConnected, Converter={conv:BooleanCollapsedVisibilityConverter}}">
+                <ui:Button Content="Выйти" HorizontalAlignment="Right" Margin="0,8,0,0" Command="{Binding SignOutCommand}" />
+            </StackPanel>
+
+            <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Margin="0,12,0,0"
+                       Visibility="{Binding Status, Converter={conv:StringVisibilityConverter}}" />
+            <TextBlock Text="{Binding Error}" TextWrapping="Wrap" Margin="0,8,0,0" Foreground="#E0605A"
+                       Visibility="{Binding Error, Converter={conv:StringVisibilityConverter}}" />
+            <ui:ProgressRing IsIndeterminate="True" Width="20" Height="20" Margin="0,8,0,0" HorizontalAlignment="Left"
+                             Visibility="{Binding IsBusy, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
+        </StackPanel>
+    </Grid>
+</ui:FluentWindow>

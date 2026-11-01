@@ -17,6 +17,9 @@ public interface IWindowService
 
     /// <returns>Нажатая кнопка: OK, Yes, No, Cancel.</returns>
     string? Show(string message, ToadTools.UI.Models.DialogButtons buttons, ToadTools.UI.Models.DialogIcon icon);
+
+    /// <summary>Общее окно «Подключение к ToadFlow»; true — после него подключение есть.</summary>
+    bool ConnectToadFlow();
 }
 
 /// <summary>Общее для всех моделей представления окна ParamChecker.</summary>

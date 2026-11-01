@@ -222,6 +222,22 @@ public class ToadFlowClientTests
         (me.Login, me.DisplayName, me.Role, me.Disciplines.Length).ShouldBe(("ivanov", "Иванов И. И.", "Operator", 0));
     }
 
+    /// <summary>Перенос из ParamChecker: кто владелец старого токена — без сохранённого подключения.</summary>
+    [Test]
+    public async Task MeWith_TokenFromOldSettings_UserOrNull()
+    {
+        var (client, store, http, temp) = Create((request, _) => request.Headers.GetValues("X-ToadFlow-Token").Single() == "tf_old"
+            ? FakeHttp.Ok("""{ "id": "7b1d3c55-3f0e-4c4a-9a52-2f1f1a0c0001", "login": "ivanov", "displayName": "Иванов", "role": "Designer", "disciplines": [] }""")
+            : new HttpResponseMessage(HttpStatusCode.Unauthorized));
+        using var _ = temp;
+
+        (await client.MeWithAsync("toadflow:8080", "tf_old", CancellationToken.None))!.Login.ShouldBe("ivanov");
+        (await client.MeWithAsync("toadflow:8080", "tf_bad", CancellationToken.None)).ShouldBeNull();
+
+        http.Requests[0].Request.RequestUri!.ToString().ShouldBe("http://toadflow:8080/api/auth/me");
+        store.Load().ShouldBeNull();
+    }
+
     [Test]
     public async Task SignOut_RevokesCurrentAndClears()
     {

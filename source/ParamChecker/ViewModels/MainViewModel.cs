@@ -11,6 +11,7 @@ using Alexpivo394.Revit.ParamCheck.Services;
 using ParamChecker.Services;
 using ToadTools.UI.Models;
 using Alexpivo394.Revit.Export.Sources;
+using ToadTools.Connection;
 using ToadTools.UI.Services;
 using Wpf.Ui.Appearance;
 
@@ -56,6 +57,7 @@ public sealed partial class MainViewModel : ObservableObject
             ? Settings.Server.Trim()
             : ServerPickerViewModel.KnownServers(context.RevitYear, AllModelPaths()).FirstOrDefault();
         if (!string.IsNullOrEmpty(server)) _ = ServerCatalog.For(server!, context.RevitYear).EnsureFreshAsync();
+        _ = MigrateToadFlowAsync();
     }
 
     public ObservableCollection<ProfileViewModel> Profiles { get; } = [];
@@ -374,18 +376,42 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Итогов в очереди ToadFlow — для подсказки в настройках.</summary>
     public string ToadFlowQueue => ToadFlowSender.PendingCount() is var pending and > 0 ? $"Ждут отправки: {pending}" : "";
 
+    /// <summary>Кто вошёл в ToadFlow — из общего подключения ToadTools, без запроса к серверу.</summary>
+    public string ToadFlowStatus => ConnectionStore.Shared.Load() is { } connection
+        ? $"ToadFlow: вы вошли как {connection.DisplayName} ({connection.Url})"
+        : "ToadFlow: не подключено";
+
+    /// <summary>Общее окно подключения; после входа уходит очередь итогов.</summary>
     [RelayCommand]
-    private void TestToadFlow()
+    private void ConnectToadFlow()
     {
-        var (ok, message) = ToadFlowSender.Test(Settings.ToadFlowUrl, Settings.ToadFlowToken);
-        if (ok && ToadFlowSender.PendingCount() > 0 && Settings.ToadFlowEnabled)
+        var connected = _context.Windows.ConnectToadFlow();
+        OnPropertyChanged(nameof(ToadFlowStatus));
+        if (!connected || !Settings.ToadFlowEnabled || ToadFlowSender.PendingCount() == 0) return;
+
+        var sent = new ToadFlowSender(Settings).Flush();
+        OnPropertyChanged(nameof(ToadFlowQueue));
+        _context.Windows.Show($"Отправлено итогов из очереди: {sent.Sent}" + (sent.Error is null ? "." : $"; не ушли: {sent.Pending} — {sent.Error}."),
+            DialogButtons.OK, sent.Error is null ? DialogIcon.Info : DialogIcon.Warning);
+    }
+
+    /// <summary>Старые адрес и токен из настроек ParamChecker — в общее подключение, в фоне: /api/auth/me может ждать до 15 с.</summary>
+    private async Task MigrateToadFlowAsync()
+    {
+        if (Settings.LegacyToadFlowUrl.Length == 0 && Settings.LegacyToadFlowTokenProtected.Length == 0) return;
+        bool changed;
+        try
         {
-            var sent = new ToadFlowSender(Settings).Flush();
-            message += $"\n\nОтправлено итогов из очереди: {sent.Sent}" + (sent.Error is null ? "." : $"; не ушли: {sent.Pending} — {sent.Error}.");
-            OnPropertyChanged(nameof(ToadFlowQueue));
+            changed = await Task.Run(() => ToadFlowSender.MigrateLegacy(Settings));
+        }
+        catch (Exception)
+        {
+            return; // перенос — удобство: не вышло сейчас, попробуем при следующем открытии
         }
 
-        _context.Windows.Show(message, DialogButtons.OK, ok ? DialogIcon.Info : DialogIcon.Warning);
+        if (!changed) return;
+        _store.SaveSettings(Settings);
+        OnPropertyChanged(nameof(ToadFlowStatus));
     }
 
     [RelayCommand]

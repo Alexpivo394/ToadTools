@@ -32,32 +32,32 @@ public sealed partial class CheckerSettings : ObservableObject
     /// <summary>Отправлять итоги проверенных моделей в аналитику сервиса ToadFlow.</summary>
     [ObservableProperty] private bool _toadFlowEnabled;
 
-    /// <summary>Адрес ToadFlow, например <c>http://toadflow:8080</c>.</summary>
-    [ObservableProperty] private string _toadFlowUrl = "";
+    /// <summary>
+    ///     Адрес ToadFlow из настроек прежних версий — только для переноса в общее подключение ToadTools
+    ///     (<see cref="ToadFlowSender.MigrateLegacy" />); после переноса стирается.
+    /// </summary>
+    [JsonProperty("ToadFlowUrl")]
+    public string LegacyToadFlowUrl { get; set; } = "";
 
-    /// <summary>Личный токен ToadFlow, зашифрованный для текущего пользователя Windows (DPAPI) — в файле настроек он не лежит открытым.</summary>
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(ToadFlowToken))]
-    private string _toadFlowTokenProtected = "";
+    /// <summary>Токен ToadFlow из настроек прежних версий (DPAPI) — только для переноса; после переноса стирается.</summary>
+    [JsonProperty("ToadFlowTokenProtected")]
+    public string LegacyToadFlowTokenProtected { get; set; } = "";
 
-    /// <summary>Личный токен ToadFlow (из «Настройки → Токены доступа» в веб-интерфейсе).</summary>
-    [JsonIgnore]
-    public string ToadFlowToken
+    public bool ShouldSerializeLegacyToadFlowUrl() => LegacyToadFlowUrl.Length > 0;
+    public bool ShouldSerializeLegacyToadFlowTokenProtected() => LegacyToadFlowTokenProtected.Length > 0;
+
+    /// <summary>Расшифрованный старый токен; пусто — его нет или настройки с другого компьютера.</summary>
+    public string LegacyToadFlowToken()
     {
-        get
+        if (LegacyToadFlowTokenProtected.Length == 0) return "";
+        try
         {
-            if (ToadFlowTokenProtected.Length == 0) return "";
-            try
-            {
-                return Encoding.UTF8.GetString(ProtectedData.Unprotect(Convert.FromBase64String(ToadFlowTokenProtected), null, DataProtectionScope.CurrentUser));
-            }
-            catch (Exception exception) when (exception is CryptographicException or FormatException)
-            {
-                return ""; // настройки с другого компьютера или пользователя — токен нужно ввести заново
-            }
+            return Encoding.UTF8.GetString(ProtectedData.Unprotect(Convert.FromBase64String(LegacyToadFlowTokenProtected), null, DataProtectionScope.CurrentUser));
         }
-        set => ToadFlowTokenProtected = string.IsNullOrWhiteSpace(value)
-            ? ""
-            : Convert.ToBase64String(ProtectedData.Protect(Encoding.UTF8.GetBytes(value.Trim()), null, DataProtectionScope.CurrentUser));
+        catch (Exception exception) when (exception is CryptographicException or FormatException)
+        {
+            return "";
+        }
     }
 
     public string HistoryPath() =>

@@ -59,6 +59,10 @@ namespace ToadTools
                 .WithIcon("Export")
                 .WithInfo("Выгружает из моделей на сервере\nотчет по заполнению параметров.", "ParamChecker");
 
+            panel.AddPushButton<Commands.ConnectionCommand>("Подключение\nк ToadFlow")
+                .WithIcon("ToadFlow")
+                .WithInfo("Вход в ToadFlow для ParamChecker,\nплагина «Коллизии» и других.", "ToadFlow");
+
             panel.AddPushButton<Commands.ToadExporterCommand>("Toad\nExporter")
                 .WithIcon("ToadExporter")
                 .WithInfo("Выгружает модели с Revit Server\nили из папки в RVT и NWC.", "ToadExporter");
