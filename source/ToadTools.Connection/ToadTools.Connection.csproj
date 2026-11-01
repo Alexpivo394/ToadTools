@@ -1,0 +1,26 @@
+<Project Sdk="Nice3point.Revit.Sdk/6.2.2">
+
+    <!-- Общее подключение плагинов ToadTools к ToadFlow: хранилище личного токена, HTTP-клиент и окно входа.
+         Обычная библиотека без Revit API, как ToadTools.UI. -->
+    <ItemGroup>
+        <PackageReference Include="CommunityToolkit.Mvvm"/>
+        <PackageReference Include="Newtonsoft.Json"/>
+        <PackageReference Include="WPF-UI"/>
+        <PackageReference Include="WPF-UI.Abstractions"/>
+    </ItemGroup>
+
+    <!-- DPAPI для токена; с .NET 10 (Revit 2027) входит в Windows Desktop -->
+    <ItemGroup Condition="'$(RevitVersion)' &lt; '2027'">
+        <PackageReference Include="System.Security.Cryptography.ProtectedData"/>
+    </ItemGroup>
+
+    <!-- HttpClient; на .NET входит в рантайм -->
+    <ItemGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))' == '.NETFramework'">
+        <Reference Include="System.Net.Http"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\ToadTools.UI\ToadTools.UI.csproj"/>
+    </ItemGroup>
+
+</Project>
