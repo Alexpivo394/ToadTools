@@ -30,7 +30,7 @@ public static class CollisionsPane
         var thumbnails = new ThumbnailCache(ThumbnailCache.DefaultFolder, api.ImageAsync);
         var mainWindow = application.MainWindowHandle;
         _viewModel = new PaneViewModel(api, new RevitBridge(), ConnectionStore.Shared, new ModelChoices(ModelChoices.DefaultPath), thumbnails,
-            new PaneSession(), () => ConnectionDialog.Show(mainWindow));
+            new PaneSession(), () => ConnectionDialog.Show(mainWindow), new CardDialogs(mainWindow));
         var view = new CollisionsPaneView(_viewModel);
         _dispatcher = view.Dispatcher;
 

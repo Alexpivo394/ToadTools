@@ -8,6 +8,7 @@ public interface IClashApi
 {
     Task<ModelResolve> ResolveAsync(string? path, string? name, CancellationToken ct);
     Task<ModelCollisionPage> CollisionsAsync(string key, CollisionQuery query, int page, CancellationToken ct);
+    Task<UserInfo> MeAsync(CancellationToken ct);
     Task<CollisionCardDto> CardAsync(Guid id, CancellationToken ct);
     Task<IReadOnlyList<KeyValuePair<string, string>>> ElementAsync(Guid collisionId, string modelKey, string uniqueId, CancellationToken ct);
     Task<byte[]> ImageAsync(Guid id, string version, CancellationToken ct);
@@ -39,6 +40,8 @@ public sealed class ClashApi(ToadFlowClient client) : IClashApi
         parts.Add($"pageSize={PageSize}");
         return client.GetAsync<ModelCollisionPage>($"/api/clash/models/{E(key)}/collisions?{string.Join("&", parts)}", ct);
     }
+
+    public Task<UserInfo> MeAsync(CancellationToken ct) => client.MeAsync(ct);
 
     public Task<CollisionCardDto> CardAsync(Guid id, CancellationToken ct) => client.GetAsync<CollisionCardDto>($"/api/clash/collisions/{id}", ct);
 

@@ -8,13 +8,18 @@ namespace Collisions.Revit;
 public sealed class RevitBridge : IRevitBridge
 {
     private readonly AsyncRequestExternalEvent<(string? CentralPath, string FileName)?> _activeDocument = new(ActiveDocument);
+    private readonly AsyncRequestExternalEvent<NavigateRequest, NavigateResult> _show = new(Show);
 
     public Task<(string? CentralPath, string FileName)?> ActiveDocumentAsync() => _activeDocument.RaiseAsync();
 
-    // Переход к коллизии — задача 8 плана этапа 7.
-    public Task<NavigateResult> ShowAsync(NavigateRequest request) => throw new NotSupportedException("Переход к коллизии ещё не подключён");
+    public Task<NavigateResult> ShowAsync(NavigateRequest request) => _show.RaiseAsync(request);
 
     /// <summary>Документ проекта в активном окне; семейство или пустой Revit — null.</summary>
-    internal static (string? CentralPath, string FileName)? ActiveDocument(UIApplication application) =>
+    private static (string? CentralPath, string FileName)? ActiveDocument(UIApplication application) =>
         application.ActiveUIDocument?.Document is { IsFamilyDocument: false } document ? DocumentModel.Read(document) : null;
+
+    private static NavigateResult Show(UIApplication application, NavigateRequest request) =>
+        application.ActiveUIDocument is { Document.IsFamilyDocument: false } uiDocument
+            ? CollisionNavigator.Show(uiDocument, request)
+            : throw new InvalidOperationException("Откройте модель проекта");
 }

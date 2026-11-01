@@ -41,6 +41,8 @@ public sealed partial class PaneViewModel : ObservableObject
     private readonly ThumbnailCache _thumbnails;
     private readonly PaneSession _session;
     private readonly Func<bool> _connect;
+    private readonly ICardDialogs _dialogs;
+    private UserInfo? _me;
 
     private CollisionListState? _state;
     private string? _documentPath;
@@ -57,6 +59,7 @@ public sealed partial class PaneViewModel : ObservableObject
     [ObservableProperty] private bool _hasMore;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private CollisionItemViewModel? _selectedItem;
+    [ObservableProperty] private CardViewModel? _card;
 
     [ObservableProperty] private IReadOnlyList<FilterOption> _statusOptions = [];
     [ObservableProperty] private IReadOnlyList<FilterOption> _pairOptions = [];
@@ -68,9 +71,9 @@ public sealed partial class PaneViewModel : ObservableObject
     [ObservableProperty] private string _search = "";
 
     public PaneViewModel(IClashApi api, IRevitBridge revit, ConnectionStore store, ModelChoices choices, ThumbnailCache thumbnails, PaneSession session,
-        Func<bool> connect)
+        Func<bool> connect, ICardDialogs dialogs)
     {
-        (_api, _revit, _store, _choices, _thumbnails, _session, _connect) = (api, revit, store, choices, thumbnails, session, connect);
+        (_api, _revit, _store, _choices, _thumbnails, _session, _connect, _dialogs) = (api, revit, store, choices, thumbnails, session, connect, dialogs);
         ShowQuery(session.Query);
     }
 
@@ -79,7 +82,7 @@ public sealed partial class PaneViewModel : ObservableObject
     public IReadOnlyList<FilterOption> GroupOptions { get; } =
         [new("all", "Все"), new("mine", CollisionItemViewModel.MineGroup), new("other", CollisionItemViewModel.OtherGroup)];
 
-    /// <summary>Выбрана строка: панель Revit переходит к коллизии (задача карточки).</summary>
+    /// <summary>Выбрана строка (щелчком или ↑/↓): панель переходит к коллизии в Revit и открывает карточку.</summary>
     public event EventHandler<ModelCollisionRow>? NavigateRequested;
 
     /// <summary>Модель ToadFlow открытого документа; null — не определена.</summary>
@@ -174,7 +177,72 @@ public sealed partial class PaneViewModel : ObservableObject
     partial void OnSelectedItemChanged(CollisionItemViewModel? value)
     {
         if (_state is { } state) state.Selected = value?.Row;
-        if (!_quiet && value is not null) NavigateRequested?.Invoke(this, value.Row);
+        if (_quiet || value is null) return;
+        NavigateRequested?.Invoke(this, value.Row);
+        _ = OpenAsync(value);
+    }
+
+    /// <summary>Перейти к соседней строке (↑/↓); ниже последней строки — «Показать ещё» и дальше.</summary>
+    public async Task MoveAsync(int step)
+    {
+        var next = (SelectedItem is { } current ? Items.IndexOf(current) : -1) + step;
+        if (next >= Items.Count && HasMore) await LoadMoreCommand.ExecuteAsync(null);
+        if (next >= 0 && next < Items.Count) SelectedItem = Items[next];
+    }
+
+    /// <summary>
+    ///     Коллизия в Revit (вид «ToadClash», куб, выбор) и её карточка. Ошибка Revit не мешает карточке, ошибка сети не
+    ///     мешает виду.
+    /// </summary>
+    public async Task OpenAsync(CollisionItemViewModel item)
+    {
+        if (!ReferenceEquals(SelectedItem, item))
+        {
+            _quiet = true;
+            SelectedItem = item;
+            _quiet = false;
+        }
+
+        var row = item.Row;
+        var show = ShowInRevitAsync(row);
+        try
+        {
+            _me ??= await _api.MeAsync(CancellationToken.None);
+        }
+        catch (ToadFlowAuthRequiredException exception)
+        {
+            Show(PaneScreen.NotConnected, exception.Message);
+            return;
+        }
+        catch (Exception exception) when (exception is ToadFlowUnavailableException or ToadFlowRequestException)
+        {
+            Show(PaneScreen.Error, exception.Message);
+            return;
+        }
+
+        if (!ReferenceEquals(SelectedItem, item)) return;
+        var card = new CardViewModel(_api, row, _me, _dialogs, _thumbnails);
+        card.Changed += async (_, _) => await RefreshCommand.ExecuteAsync(null);
+        Card = card;
+        var load = card.LoadAsync();
+        var result = await show;
+        if (result is not null) card.ShowNavigation(result);
+        else card.NavigateMessage = "Не получилось показать коллизию в Revit";
+        await load;
+    }
+
+    private async Task<NavigateResult?> ShowInRevitAsync(ModelCollisionRow row)
+    {
+        var c = row.Collision;
+        try
+        {
+            // Пути другой модели в строке нет: связь ищется по имени файла.
+            return await _revit.ShowAsync(new NavigateRequest(row.Own.UniqueId, row.Other.ModelName, "", row.Other.UniqueId, (c.X, c.Y, c.Z)));
+        }
+        catch (Exception)
+        {
+            return null;
+        }
     }
 
     partial void OnStatusFilterChanged(string? value) => FilterChanged();

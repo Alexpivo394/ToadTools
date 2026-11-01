@@ -29,3 +29,13 @@ public sealed class TextVisibilityConverter : MarkupExtension, IValueConverter
 
     public override object ProvideValue(IServiceProvider serviceProvider) => this;
 }
+
+/// <summary>null — элемент скрыт.</summary>
+public sealed class NullVisibilityConverter : MarkupExtension, IValueConverter
+{
+    public object Convert(object? value, Type targetType, object parameter, CultureInfo culture) => value is null ? Visibility.Collapsed : Visibility.Visible;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotSupportedException();
+
+    public override object ProvideValue(IServiceProvider serviceProvider) => this;
+}

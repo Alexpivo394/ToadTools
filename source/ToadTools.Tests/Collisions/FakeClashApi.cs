@@ -1,4 +1,5 @@
 using Collisions.Core;
+using ToadTools.Connection;
 
 namespace ToadTools.Tests.Collisions;
 
@@ -17,6 +18,9 @@ public sealed class FakeClashApi : IClashApi
     public int Visits { get; private set; }
     public Func<Guid, CollisionCardDto>? Card { get; set; }
     public string Url { get; set; } = "http://toadflow:8080";
+    public UserInfo Me { get; set; } = new(Guid.NewGuid(), "ivanov", "Иванов", "Designer", ["ОВ"]);
+    public int CardRequests { get; private set; }
+    public int MeRequests { get; private set; }
 
     public Task<ModelResolve> ResolveAsync(string? path, string? name, CancellationToken ct) => Run(() => Resolve(path, name));
 
@@ -27,8 +31,17 @@ public sealed class FakeClashApi : IClashApi
         return new ModelCollisionPage(Rows.Count, Mine, Other, items, Facets, Fresh);
     });
 
+    public Task<UserInfo> MeAsync(CancellationToken ct) => Run(() =>
+    {
+        MeRequests++;
+        return Me;
+    });
+
     public Task<CollisionCardDto> CardAsync(Guid id, CancellationToken ct) => Run(() =>
-        Card?.Invoke(id) ?? new CollisionCardDto(Rows.Single(r => r.Collision.Id == id).Collision, []));
+    {
+        CardRequests++;
+        return Card?.Invoke(id) ?? new CollisionCardDto(Rows.Single(r => r.Collision.Id == id).Collision, []);
+    });
 
     public Task<IReadOnlyList<KeyValuePair<string, string>>> ElementAsync(Guid collisionId, string modelKey, string uniqueId, CancellationToken ct) =>
         Run<IReadOnlyList<KeyValuePair<string, string>>>(() => [new("ID", uniqueId)]);

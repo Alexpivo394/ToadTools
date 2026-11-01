@@ -42,7 +42,7 @@ public class PaneViewModelTests
         var choices = new ModelChoices(temp.File("models.json"));
         session ??= new PaneSession();
         var thumbnails = new ThumbnailCache(temp.File("images"), api.ImageAsync);
-        var model = new PaneViewModel(api, revit, store, choices, thumbnails, session, () => false);
+        var model = new PaneViewModel(api, revit, store, choices, thumbnails, session, () => false, new FakeDialogs());
         return new Setup(model, api, revit, store, choices, session, temp);
     }
 
@@ -199,6 +199,57 @@ public class PaneViewModelTests
 
         s.Model.Items.Count.ShouldBe(130);
         s.Model.HasMore.ShouldBeFalse();
+    }
+
+    [Test]
+    public async Task Pane_ArrowDownOnLast_LoadsMore()
+    {
+        using var s = Create();
+        s.Api.Resolve = (_, _) => new ModelResolve("path", [Match("k1")]);
+        s.Api.Rows = Enumerable.Range(1, 130).Select(i => FakeClashApi.Row(i)).ToList();
+        await s.Model.ActivateAsync();
+        s.Model.SelectedItem = s.Model.Items[99];
+
+        await s.Model.MoveAsync(1);
+
+        s.Api.PageRequests.Last().Page.ShouldBe(2);
+        s.Model.SelectedItem!.Number.ShouldBe(101);
+        await s.Model.MoveAsync(-1);
+        s.Model.SelectedItem!.Number.ShouldBe(100);
+    }
+
+    [Test]
+    public async Task Pane_OpenItem_ShowsInRevitAndOpensCard()
+    {
+        using var s = Create();
+        s.Api.Resolve = (_, _) => new ModelResolve("path", [Match("k1")]);
+        s.Api.Rows = [FakeClashApi.Row(1)];
+        s.Revit.Result = new NavigateResult(true, OtherState.NoLink, null);
+        await s.Model.ActivateAsync();
+
+        await s.Model.OpenAsync(s.Model.Items[0]);
+
+        var request = s.Revit.Shown.ShouldHaveSingleItem();
+        request.ShouldBe(new NavigateRequest("ub-1", "DON_KR.rvt", "", "ua-1", (1000, 2000, 3000)));
+        s.Model.Card.ShouldNotBeNull().Number.ShouldBe(1);
+        s.Model.Card.NavigateMessage.ShouldBe("Модель DON_KR.rvt не подгружена связью");
+        s.Api.MeRequests.ShouldBe(1);
+    }
+
+    [Test]
+    public async Task Pane_CardChanged_RefreshesList()
+    {
+        using var s = Create();
+        s.Api.Resolve = (_, _) => new ModelResolve("path", [Match("k1")]);
+        s.Api.Rows = [FakeClashApi.Row(1)];
+        await s.Model.ActivateAsync();
+        await s.Model.OpenAsync(s.Model.Items[0]);
+        var before = s.Api.PageRequests.Count;
+
+        await s.Model.Card!.TakeCommand.ExecuteAsync(null);
+
+        s.Api.PageRequests.Count.ShouldBe(before + 1);
+        s.Model.SelectedItem!.Number.ShouldBe(1);
     }
 
     [Test]

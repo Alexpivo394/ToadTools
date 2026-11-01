@@ -1,0 +1,44 @@
+<ui:FluentWindow
+    x:Class="Collisions.Views.NoteDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:vm="clr-namespace:Collisions.ViewModels"
+    xmlns:conv="clr-namespace:ToadTools.UI.Converters;assembly=ToadTools.UI"
+    d:DataContext="{d:DesignInstance Type=vm:NoteViewModel}"
+    mc:Ignorable="d"
+    Title="{Binding Title}"
+    WindowStartupLocation="CenterOwner"
+    WindowBackdropType="Mica"
+    WindowCornerPreference="Round"
+    ExtendsContentIntoTitleBar="True"
+    ShowInTaskbar="False"
+    ResizeMode="NoResize"
+    SizeToContent="Height"
+    Width="420">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Grid.Row="0" Title="{Binding Title}" ShowMinimize="False" ShowMaximize="False" />
+
+        <StackPanel Grid.Row="1" Margin="16,4,16,16">
+            <StackPanel Visibility="{Binding ChoosesSide, Converter={conv:BooleanCollapsedVisibilityConverter}}">
+                <TextBlock Text="Кто правит" Margin="0,0,0,4" />
+                <ComboBox ItemsSource="{Binding Sides}" DisplayMemberPath="Value" SelectedValuePath="Key" SelectedValue="{Binding Side}" Margin="0,0,0,8" />
+            </StackPanel>
+            <TextBlock Text="Примечание" Margin="0,0,0,4" />
+            <ui:TextBox x:Name="NoteBox" Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap"
+                        MinLines="3" MaxLines="8" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                <ui:Button Content="Сохранить" Appearance="Primary" Command="{Binding SaveCommand}" IsDefault="True" Margin="0,0,8,0" />
+                <ui:Button Content="Отмена" IsCancel="True" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</ui:FluentWindow>
