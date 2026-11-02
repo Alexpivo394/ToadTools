@@ -45,9 +45,9 @@ public sealed partial class ConnectionViewModel : ObservableObject
             Password = "";
             Show(connection);
         }
-        catch (SignInException exception)
+        catch (Exception exception)
         {
-            Error = exception.Message;
+            Error = ToadFlowErrors.Describe(exception);
         }
         finally
         {
@@ -67,6 +67,11 @@ public sealed partial class ConnectionViewModel : ObservableObject
             var revoked = await _client.SignOutAsync(CancellationToken.None);
             IsConnected = false;
             Status = revoked ? "Вы вышли" : "Вы вышли. Сервер недоступен — токен останется в списке токенов на сервере";
+        }
+        catch (Exception exception)
+        {
+            // файл подключения не стёрся (занят, нет прав)
+            Error = ToadFlowErrors.Describe(exception);
         }
         finally
         {
@@ -88,13 +93,10 @@ public sealed partial class ConnectionViewModel : ObservableObject
                 Show(connection);
             }
         }
-        catch (ToadFlowAuthRequiredException exception)
+        catch (Exception exception)
         {
-            Error = exception.Message;
-        }
-        catch (Exception exception) when (exception is ToadFlowUnavailableException or ToadFlowRequestException)
-        {
-            Error = exception.Message;
+            // в том числе не сохранилось обновлённое имя или роль: окно показывает причину, а не падает
+            Error = ToadFlowErrors.Describe(exception);
         }
     }
 

@@ -109,4 +109,37 @@ public class ConnectionViewModelTests
         model.Error.ShouldBe("Подключение к ToadFlow устарело — войдите заново");
         store.Load().ShouldNotBeNull(); // стирает только «Выйти»
     }
+
+    [Test]
+    public async Task ViewModel_Check_CannotSave_ShowsError()
+    {
+        const string me = """{ "id": "7b1d3c55-3f0e-4c4a-9a52-2f1f1a0c0001", "login": "ivanov", "displayName": "Иванов Иван", "role": "Designer", "disciplines": [] }""";
+        var (model, _, temp) = Create(_ => FakeHttp.Ok(me),
+            new ToadFlowConnection("http://toadflow", "ivanov", "Иванов И. И.", "Designer", Guid.NewGuid(), "tf_x"));
+        using var _ = temp;
+        var file = temp.File("toadflow.json");
+        File.SetAttributes(file, FileAttributes.ReadOnly);
+        try
+        {
+            await model.CheckAsync();
+        }
+        finally
+        {
+            File.SetAttributes(file, FileAttributes.Normal);
+        }
+
+        model.Error.ShouldNotBeNullOrWhiteSpace();
+    }
+
+    [Test]
+    public async Task ViewModel_Check_NotJson_ShowsError()
+    {
+        var (model, _, temp) = Create(_ => FakeHttp.Ok("<html>"),
+            new ToadFlowConnection("http://toadflow", "ivanov", "Иванов И. И.", "Designer", Guid.NewGuid(), "tf_x"));
+        using var _ = temp;
+
+        await model.CheckAsync();
+
+        model.Error.ShouldBe("ToadFlow прислал непонятный ответ");
+    }
 }

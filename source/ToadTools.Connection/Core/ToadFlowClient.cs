@@ -2,9 +2,9 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
 using System.Text;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 
@@ -23,10 +23,13 @@ public sealed class ToadFlowClient
     public const string NotEnoughRights = "Недостаточно прав в ToadFlow для этого действия";
     private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(15);
 
+    /// <summary>Одновременных запросов к серверу ToadFlow: миниатюры (до 4) не должны занимать все соединения.</summary>
+    private const int ParallelRequests = 8;
+
     public static readonly JsonSerializerSettings Json = new()
     {
         ContractResolver = new CamelCasePropertyNamesContractResolver(),
-        Converters = { new StringEnumConverter() },
+        Converters = { new TolerantEnumConverter() },
         NullValueHandling = NullValueHandling.Include
     };
 
@@ -110,7 +113,15 @@ public sealed class ToadFlowClient
 
         var connection = new ToadFlowConnection(root, (string?)user["login"] ?? login.Trim(), (string?)user["displayName"] ?? login.Trim(),
             (string?)user["role"] ?? "", Guid.TryParse((string?)created["view"]?["id"], out var id) ? id : Guid.Empty, (string)created["token"]!);
-        _store.Save(connection);
+        try
+        {
+            _store.Save(connection);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or CryptographicException)
+        {
+            throw new SignInException($"Не получилось сохранить подключение: {exception.Message}", exception);
+        }
+
         return connection;
     }
 
@@ -139,13 +150,13 @@ public sealed class ToadFlowClient
     public async Task<T> GetAsync<T>(string path, CancellationToken ct)
     {
         var text = await SendAsync(HttpMethod.Get, path, null, ct).ConfigureAwait(false);
-        return JsonConvert.DeserializeObject<T>(text, Json) ?? throw new ToadFlowRequestException(200, "ToadFlow прислал пустой ответ");
+        return Deserialize<T>(text) ?? throw new ToadFlowRequestException(200, "ToadFlow прислал пустой ответ");
     }
 
     public async Task<T?> PostAsync<T>(string path, object? body, CancellationToken ct)
     {
         var text = await SendAsync(HttpMethod.Post, path, body, ct).ConfigureAwait(false);
-        return text.Trim().Length == 0 ? default : JsonConvert.DeserializeObject<T>(text, Json);
+        return text.Trim().Length == 0 ? default : Deserialize<T>(text);
     }
 
     public async Task<byte[]> GetBytesAsync(string path, CancellationToken ct)
@@ -205,6 +216,9 @@ public sealed class ToadFlowClient
 
     private async Task<HttpResponseMessage> SendRawAsync(HttpRequestMessage request, CancellationToken ct)
     {
+#if NETFRAMEWORK
+        AllowParallelRequests(request.RequestUri);
+#endif
         try
         {
             return await _http.SendAsync(request, ct).ConfigureAwait(false);
@@ -220,6 +234,20 @@ public sealed class ToadFlowClient
         }
     }
 
+#if NETFRAMEWORK
+    /// <summary>
+    ///     .NET Framework в настольном приложении держит к одному серверу только 2 соединения: миниатюры занимали бы оба, а
+    ///     карточка и список ждали бы за ними до тайм-аута. Лимит поднимается только для сервера ToadFlow, перед каждым
+    ///     запросом: сменился адрес или Revit пересоздал точку подключения после простоя — лимит снова верный.
+    /// </summary>
+    private static void AllowParallelRequests(Uri? address)
+    {
+        if (address is null) return;
+        var point = ServicePointManager.FindServicePoint(address);
+        if (point.ConnectionLimit < ParallelRequests) point.ConnectionLimit = ParallelRequests;
+    }
+
+#endif
     private static HttpRequestMessage Request(ToadFlowConnection connection, HttpMethod method, string path)
     {
         var request = new HttpRequestMessage(method, Address(connection.Url, path));
@@ -233,6 +261,19 @@ public sealed class ToadFlowClient
 
     private static async Task<string> ReadAsync(HttpResponseMessage response) =>
         response.Content is null ? "" : await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+    /// <summary>Ответ, который не разобрать (страница прокси вместо JSON, другая форма), — отказ сервера, а не сбой плагина.</summary>
+    private static T? Deserialize<T>(string text)
+    {
+        try
+        {
+            return JsonConvert.DeserializeObject<T>(text, Json);
+        }
+        catch (JsonException exception)
+        {
+            throw new ToadFlowRequestException(200, "ToadFlow прислал непонятный ответ", exception);
+        }
+    }
 
     private static JObject? Parse(string text)
     {

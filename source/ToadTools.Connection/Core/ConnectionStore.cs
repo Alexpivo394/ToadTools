@@ -52,8 +52,9 @@ public sealed class ConnectionStore(string path)
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         var temp = path + ".tmp";
         File.WriteAllText(temp, JsonConvert.SerializeObject(file, Formatting.Indented), new UTF8Encoding(false));
-        if (File.Exists(path)) File.Delete(path);
-        File.Move(temp, path);
+        // Замена одним шагом: другой плагин, читающий файл в этот момент, видит старое подключение или новое, но не пустоту.
+        if (File.Exists(path)) File.Replace(temp, path, null);
+        else File.Move(temp, path);
         Changed?.Invoke(this, EventArgs.Empty);
     }
 

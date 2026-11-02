@@ -276,4 +276,48 @@ public class ToadFlowClientTests
 
         store.Load().ShouldBeNull();
     }
+
+    [Test]
+    public async Task Client_NotJsonAnswer_RaisesRequestError()
+    {
+        var (client, _, _, temp) = Create((_, _) => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("<html>прокси</html>") }, Connected());
+        using var _ = temp;
+
+        (await Should.ThrowAsync<ToadFlowRequestException>(() => client.MeAsync(CancellationToken.None))).Message.ShouldBe("ToadFlow прислал непонятный ответ");
+        (await Should.ThrowAsync<ToadFlowRequestException>(() => client.PostAsync<JToken>("/api/x", null, CancellationToken.None))).Message
+            .ShouldBe("ToadFlow прислал непонятный ответ");
+    }
+
+    private enum Shade
+    {
+        Light,
+        Dark,
+        Unknown
+    }
+
+    private sealed record Painted(Shade Shade, Shade? Maybe);
+
+    [Test]
+    public void Json_UnknownEnumValue_ToUnknown()
+    {
+        var painted = Newtonsoft.Json.JsonConvert.DeserializeObject<Painted>("""{ "shade": "Ultraviolet", "maybe": "Infrared" }""", ToadFlowClient.Json)!;
+
+        (painted.Shade, painted.Maybe).ShouldBe((Shade.Unknown, Shade.Unknown));
+        Newtonsoft.Json.JsonConvert.DeserializeObject<Painted>("""{ "shade": "Dark", "maybe": null }""", ToadFlowClient.Json)
+            .ShouldBe(new Painted(Shade.Dark, null));
+    }
+
+    [Test]
+    public async Task SignIn_CannotSave_Message()
+    {
+        using var temp = new TempFolder();
+        File.WriteAllText(temp.File("blocker"), "файл вместо папки");
+        var store = new ConnectionStore(Path.Combine(temp.File("blocker"), "toadflow.json"));
+        var client = new ToadFlowClient(store,
+            new FakeHttp((request, _) => FakeHttp.Ok(request.RequestUri!.AbsolutePath == "/api/auth/login" ? LoginJson : TokenJson)));
+
+        var exception = await Should.ThrowAsync<SignInException>(() => client.SignInAsync("http://toadflow", "ivanov", "p", CancellationToken.None));
+
+        exception.Message.ShouldStartWith("Не получилось сохранить подключение");
+    }
 }

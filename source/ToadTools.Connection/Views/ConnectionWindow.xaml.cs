@@ -12,6 +12,17 @@ public sealed partial class ConnectionWindow
         InitializeComponent();
         ThemeWatcherService.Watch(this);
         DataContext = viewModel;
-        Loaded += async (_, _) => await viewModel.CheckAsync();
+        Loaded += async (_, _) =>
+        {
+            // async void: исключение отсюда уронило бы Revit
+            try
+            {
+                await viewModel.CheckAsync();
+            }
+            catch (Exception exception)
+            {
+                viewModel.Error = ToadFlowErrors.Describe(exception);
+            }
+        };
     }
 }
