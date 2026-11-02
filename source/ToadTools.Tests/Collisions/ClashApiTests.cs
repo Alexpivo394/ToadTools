@@ -95,30 +95,30 @@ public class ClashApiTests
     }
 
     [Test]
-    public async Task Api_ElementAndImage()
+    public async Task Api_Image()
     {
-        var (api, http, temp) = Create(request => request.RequestUri!.AbsolutePath.EndsWith("/image")
-            ? new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent([1, 2, 3]) }
-            : FakeHttp.Ok("""
-                { "modelName": "DON_K1_OV.rvt", "discipline": "ОВ", "uniqueId": "ub-1", "elementId": 100001, "category": "Воздуховоды",
-                  "family": "Воздуховод", "type": "500x300", "level": "Этаж 1", "workset": "ОВ_Воздуховоды",
-                  "parameters": [ { "name": "Марка", "text": "В1", "number": null }, { "name": "Длина", "text": null, "number": 1250.5 } ] }
-                """));
+        var (api, http, temp) = Create(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent([1, 2, 3]) });
         using var _ = temp;
         var id = Guid.NewGuid();
 
-        var element = await api.ElementAsync(id, "abc", "ub 1/x", CancellationToken.None);
         var image = await api.ImageAsync(id, "v1", CancellationToken.None);
 
-        http.Requests[0].Request.RequestUri!.AbsolutePath.ShouldBe($"/api/clash/collisions/{id}/elements/abc/ub%201%2Fx");
-        http.Requests[1].Request.RequestUri!.PathAndQuery.ShouldBe($"/api/clash/collisions/{id}/image?v=v1");
+        http.Requests[0].Request.RequestUri!.PathAndQuery.ShouldBe($"/api/clash/collisions/{id}/image?v=v1");
         image.ShouldBe([1, 2, 3]);
-        element.Take(4).ShouldBe([
-            new("Модель", "DON_K1_OV.rvt"), new("ID", "100001"), new("Категория", "Воздуховоды"), new("Семейство", "Воздуховод")
-        ]);
-        element.ShouldContain(new KeyValuePair<string, string>("Рабочий набор", "ОВ_Воздуховоды"));
-        element.ShouldContain(new KeyValuePair<string, string>("Марка", "В1"));
-        element.ShouldContain(new KeyValuePair<string, string>("Длина", "1250.5"));
+    }
+
+    [Test]
+    public async Task Api_UnknownStatusAndAssignee_ReadAsUnknown()
+    {
+        var card = JObject.Parse(Sample("collision-card.json"));
+        card["collision"]!["status"] = "Archived";
+        card["collision"]!["assignee"] = "Nobody";
+        var (api, _, temp) = Create(_ => FakeHttp.Ok(card.ToString()));
+        using var _ = temp;
+
+        var read = await api.CardAsync(Guid.NewGuid(), CancellationToken.None);
+
+        (read.Collision.Status, read.Collision.Assignee).ShouldBe((CollisionStatus.Unknown, CollisionAssignee.Unknown));
     }
 
     [Test]

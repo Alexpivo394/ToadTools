@@ -1,6 +1,6 @@
 namespace Collisions.Core;
 
-/// <summary>Статус коллизии, как его отдаёт ToadFlow (строкой).</summary>
+/// <summary>Статус коллизии, как его отдаёт ToadFlow (строкой). <c>Unknown</c> — статус сервера новее плагина.</summary>
 public enum CollisionStatus
 {
     New,
@@ -10,15 +10,17 @@ public enum CollisionStatus
     FixedPending,
     Fixed,
     GoneByRules,
-    Unchecked
+    Unchecked,
+    Unknown
 }
 
-/// <summary>Кто правит коллизию.</summary>
+/// <summary>Кто правит коллизию. <c>Unknown</c> — значение сервера новее плагина.</summary>
 public enum CollisionAssignee
 {
     Both,
     SideA,
-    SideB
+    SideB,
+    Unknown
 }
 
 public sealed record ModelPart(Guid Id, string Name, DateTimeOffset? LastApprovedRunAt);
@@ -121,21 +123,6 @@ public sealed record FeedEntryDto(
     Guid? UserId);
 
 public sealed record CollisionCardDto(CollisionRowDto Collision, IReadOnlyList<FeedEntryDto> Feed);
-
-/// <summary>Свойства элемента из выгрузки (<c>/elements/{model}/{uniqueId}</c>).</summary>
-public sealed record ElementPropertiesDto(
-    string ModelName,
-    string? Discipline,
-    string UniqueId,
-    long ElementId,
-    string? Category,
-    string? Family,
-    string? Type,
-    string? Level,
-    string? Workset,
-    IReadOnlyList<ElementParameterDto>? Parameters);
-
-public sealed record ElementParameterDto(string Name, string? Text, double? Number);
 
 /// <param name="Status"><c>open</c>, <c>fake</c>, <c>fixed</c>, <c>all</c>.</param>
 /// <param name="Group"><c>mine</c>, <c>other</c>, <c>all</c>.</param>

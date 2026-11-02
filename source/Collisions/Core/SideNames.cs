@@ -18,6 +18,7 @@ public static class SideNames
         {
             CollisionAssignee.SideA => a ?? "сторона A",
             CollisionAssignee.SideB => b ?? "сторона B",
+            CollisionAssignee.Unknown => "неизвестно",
             _ => a is null || b is null ? "обе стороны" : $"{a} и {b}"
         };
     }

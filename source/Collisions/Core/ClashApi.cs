@@ -1,4 +1,3 @@
-using System.Globalization;
 using ToadTools.Connection;
 
 namespace Collisions.Core;
@@ -10,7 +9,6 @@ public interface IClashApi
     Task<ModelCollisionPage> CollisionsAsync(string key, CollisionQuery query, int page, CancellationToken ct);
     Task<UserInfo> MeAsync(CancellationToken ct);
     Task<CollisionCardDto> CardAsync(Guid id, CancellationToken ct);
-    Task<IReadOnlyList<KeyValuePair<string, string>>> ElementAsync(Guid collisionId, string modelKey, string uniqueId, CancellationToken ct);
     Task<byte[]> ImageAsync(Guid id, string version, CancellationToken ct);
     Task VisitAsync(CancellationToken ct);
 
@@ -48,31 +46,6 @@ public sealed class ClashApi(ToadFlowClient client) : IClashApi
     public Task<UserInfo> MeAsync(CancellationToken ct) => client.MeAsync(ct);
 
     public Task<CollisionCardDto> CardAsync(Guid id, CancellationToken ct) => client.GetAsync<CollisionCardDto>($"/api/clash/collisions/{id}", ct);
-
-    /// <summary>Свойства элемента парами «название — значение»: сначала основные, потом параметры по алфавиту.</summary>
-    public async Task<IReadOnlyList<KeyValuePair<string, string>>> ElementAsync(Guid collisionId, string modelKey, string uniqueId, CancellationToken ct)
-    {
-        var element = await client.GetAsync<ElementPropertiesDto>($"/api/clash/collisions/{collisionId}/elements/{E(modelKey)}/{E(uniqueId)}", ct)
-            .ConfigureAwait(false);
-        var result = new List<KeyValuePair<string, string>>();
-
-        void Add(string name, string? value)
-        {
-            if (!string.IsNullOrWhiteSpace(value)) result.Add(new KeyValuePair<string, string>(name, value!));
-        }
-
-        Add("Модель", element.ModelName);
-        Add("ID", element.ElementId.ToString(CultureInfo.InvariantCulture));
-        Add("Категория", element.Category);
-        Add("Семейство", element.Family);
-        Add("Тип", element.Type);
-        Add("Уровень", element.Level);
-        Add("Рабочий набор", element.Workset);
-        Add("UniqueId", element.UniqueId);
-        foreach (var parameter in element.Parameters ?? [])
-            Add(parameter.Name, parameter.Text ?? parameter.Number?.ToString(CultureInfo.InvariantCulture));
-        return result;
-    }
 
     public Task<byte[]> ImageAsync(Guid id, string version, CancellationToken ct) => client.GetBytesAsync($"/api/clash/collisions/{id}/image?v={E(version)}", ct);
 

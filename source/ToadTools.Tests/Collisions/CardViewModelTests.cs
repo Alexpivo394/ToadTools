@@ -203,14 +203,13 @@ public class CardViewModelTests
     [Test]
     public async Task Card_Parameters_FamilyTypeModelIdOnly()
     {
-        var (card, api, _, _, temp) = Create(User(Roles.Viewer));
+        var (card, _, _, _, temp) = Create(User(Roles.Viewer));
         using var _ = temp;
 
         await card.LoadAsync();
 
         card.OwnParameters.ShouldBe([Pair("Семейство", "Воздуховод"), Pair("Тип", "500x300"), Pair("Модель", "DON_OV.rvt"), Pair("ID", "100007")]);
         card.OtherParameters.ShouldBe([Pair("Семейство", "Стена"), Pair("Тип", "200"), Pair("Модель", "DON_KR.rvt"), Pair("ID", "7")]);
-        api.ElementRequests.ShouldBe(0);
     }
 
     private static KeyValuePair<string, string> Pair(string key, string value) => new(key, value);
@@ -294,5 +293,46 @@ public class CardViewModelTests
 
         card.ShowNavigation(new NavigateResult(true, OtherState.Selected, "DON_KR.rvt"));
         card.NavigateMessage.ShouldBeNull();
+    }
+
+    [Test]
+    public async Task Card_UnknownStatus_NoStatusButtons()
+    {
+        var (card, _, _, _, temp) = Create(User(Roles.Operator), CollisionStatus.Unknown);
+        using var _ = temp;
+        await card.LoadAsync();
+
+        card.Status.ShouldBe("статус неизвестен");
+        (card.CanFixed, card.CanFake, card.CanUnfake).ShouldBe((false, false, false));
+        (card.CanPass, card.CanNote).ShouldBe((true, true));
+    }
+
+    [Test]
+    public async Task Card_UnexpectedError_ShownNotThrown()
+    {
+        var (card, api, _, _, temp) = Create(User(Roles.Designer, "ОВ"));
+        using var _ = temp;
+        api.Fail = new InvalidOperationException("сломалось");
+
+        await card.LoadAsync();
+        card.Error.ShouldBe("Непредвиденная ошибка: сломалось");
+
+        card.Error = null;
+        await card.TakeCommand.ExecuteAsync(null);
+        card.Error.ShouldBe("Непредвиденная ошибка: сломалось");
+        card.IsBusy.ShouldBeFalse();
+    }
+
+    [Test]
+    public void Card_OpenIn3D_NoAddress_Message()
+    {
+        var (card, api, dialogs, _, temp) = Create(User(Roles.Viewer));
+        using var _ = temp;
+        api.Url = "";
+
+        card.OpenIn3DCommand.Execute(null);
+
+        dialogs.Opened.ShouldBeEmpty();
+        card.Error.ShouldBe("Адрес ToadFlow неизвестен — войдите в ToadFlow заново");
     }
 }

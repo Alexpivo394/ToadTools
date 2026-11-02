@@ -67,10 +67,13 @@ public sealed partial class CardViewModel : ObservableObject
     private bool CanChange => !ReadOnly && (_me.IsStaff || Mine);
     private bool IsOpen => Collision.Status is CollisionStatus.New or CollisionStatus.Active or CollisionStatus.Returned;
 
+    /// <summary>Статус сервера новее плагина: кнопок статуса нет, менять его — в вебе.</summary>
+    private bool KnownStatus => Collision.Status != CollisionStatus.Unknown;
+
     public bool CanTake => !ReadOnly && Mine;
     public bool CanPass => CanChange;
     public bool CanFixed => CanChange && IsOpen;
-    public bool CanFake => CanChange && Collision.Status != CollisionStatus.Fake;
+    public bool CanFake => CanChange && KnownStatus && Collision.Status != CollisionStatus.Fake;
     public bool CanUnfake => CanChange && Collision.Status == CollisionStatus.Fake;
     public bool CanNote => !ReadOnly;
 
@@ -99,9 +102,9 @@ public sealed partial class CardViewModel : ObservableObject
             await ReloadAsync();
             Image = await image;
         }
-        catch (Exception exception) when (exception is ToadFlowRequestException or ToadFlowUnavailableException or ToadFlowAuthRequiredException)
+        catch (Exception exception)
         {
-            Error = exception.Message;
+            Error = ToadFlowErrors.Describe(exception);
         }
         finally
         {
@@ -164,7 +167,12 @@ public sealed partial class CardViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void OpenIn3D() => _dialogs.OpenUrl(_api.ViewerUrl(_row.PartId, Collision.Id));
+    private void OpenIn3D()
+    {
+        var url = _api.ViewerUrl(_row.PartId, Collision.Id);
+        if (string.IsNullOrWhiteSpace(url)) Error = "Адрес ToadFlow неизвестен — войдите в ToadFlow заново";
+        else _dialogs.OpenUrl(url);
+    }
 
     private async Task ActAsync(Func<Task> action)
     {
@@ -176,9 +184,9 @@ public sealed partial class CardViewModel : ObservableObject
             await ReloadAsync();
             Changed?.Invoke(this, EventArgs.Empty);
         }
-        catch (Exception exception) when (exception is ToadFlowRequestException or ToadFlowUnavailableException or ToadFlowAuthRequiredException)
+        catch (Exception exception)
         {
-            Error = exception.Message;
+            Error = ToadFlowErrors.Describe(exception);
         }
         finally
         {

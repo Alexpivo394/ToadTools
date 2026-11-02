@@ -30,13 +30,22 @@ public sealed partial class CollisionsPaneView
         if (step == 0) return;
 
         e.Handled = true;
-        await _viewModel.MoveAsync(step);
-        if (_viewModel.SelectedItem is { } item)
+        // async void: исключение отсюда уронило бы Revit — показывается в панели
+        try
         {
-            List.ScrollIntoView(item);
-            (List.ItemContainerGenerator.ContainerFromItem(item) as System.Windows.UIElement)?.Focus();
+            await _viewModel.MoveAsync(step);
+            if (_viewModel.SelectedItem is { } item)
+            {
+                List.ScrollIntoView(item);
+                (List.ItemContainerGenerator.ContainerFromItem(item) as System.Windows.UIElement)?.Focus();
+            }
+        }
+        catch (Exception exception)
+        {
+            _viewModel.ReportUnexpected(exception);
         }
     }
+
     /// <summary>
     ///     Ctrl+V в панели — текст буфера в модель панели: номер или ссылка на коллизию открывает её. В поле ввода вставка
     ///     обычная.
@@ -58,6 +67,13 @@ public sealed partial class CollisionsPaneView
         }
 
         e.Handled = true;
-        await _viewModel.PasteAsync(text);
+        try
+        {
+            await _viewModel.PasteAsync(text);
+        }
+        catch (Exception exception)
+        {
+            _viewModel.ReportUnexpected(exception); // async void: исключение отсюда уронило бы Revit
+        }
     }
 }

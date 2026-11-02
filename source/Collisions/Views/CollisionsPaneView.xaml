@@ -52,6 +52,8 @@
         <StackPanel Grid.Row="1" VerticalAlignment="Top"
                     Visibility="{Binding Screen, Converter={views:ScreenVisibilityConverter}, ConverterParameter='NotConnected,NoDocument,NotFound,Error,Resolving'}">
             <TextBlock Text="{Binding Message}" TextWrapping="Wrap" FontSize="13" Margin="0,8,0,8" />
+            <TextBlock Text="{Binding Status}" FontSize="11" Foreground="{DynamicResource SystemFillColorCautionBrush}" TextWrapping="Wrap"
+                       Margin="0,0,0,8" Visibility="{Binding Status, Converter={views:TextVisibilityConverter}}" />
             <TextBlock Text="{Binding SearchedPath, StringFormat=Искали: {0}}" TextWrapping="Wrap" FontSize="11" Opacity="0.7"
                        Visibility="{Binding Screen, Converter={views:ScreenVisibilityConverter}, ConverterParameter=NotFound}" />
             <ui:Button Content="Подключение…" Appearance="Primary" Command="{Binding ConnectCommand}" Margin="0,8,0,0"
@@ -63,6 +65,8 @@
         <!-- Несколько моделей с таким именем — выбор -->
         <DockPanel Grid.Row="1" Visibility="{Binding Screen, Converter={views:ScreenVisibilityConverter}, ConverterParameter=Choose}">
             <TextBlock DockPanel.Dock="Top" Text="{Binding Message}" TextWrapping="Wrap" FontSize="13" Margin="0,8,0,8" />
+            <TextBlock DockPanel.Dock="Top" Text="{Binding Status}" FontSize="11" Foreground="{DynamicResource SystemFillColorCautionBrush}"
+                       TextWrapping="Wrap" Margin="0,0,0,8" Visibility="{Binding Status, Converter={views:TextVisibilityConverter}}" />
             <ItemsControl ItemsSource="{Binding Matches}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
@@ -172,13 +176,14 @@
                                 <Grid>
                                     <TextBlock Text="картинка рисуется…" FontSize="10" Opacity="0.6" TextWrapping="Wrap" TextAlignment="Center"
                                                HorizontalAlignment="Center" VerticalAlignment="Center" Margin="4" />
-                                    <Image Source="{Binding Image}" Stretch="UniformToFill" />
+                                    <Image Source="{Binding Image, Converter={views:ThumbnailConverter}}" Stretch="UniformToFill" />
                                 </Grid>
                             </Border>
                             <StackPanel Grid.Column="1" Margin="8,0,0,0">
                                 <TextBlock TextTrimming="CharacterEllipsis">
                                     <!-- точка — новая для меня: я её ещё не открывал -->
-                                    <Run Text="{Binding Dot, Mode=OneWay}" Foreground="{DynamicResource SystemAccentColorBrush}" />
+                                    <Run Text="{Binding Dot, Mode=OneWay}" Foreground="{DynamicResource SystemAccentColorBrush}"
+                                         ToolTip="Вы ещё не открывали эту коллизию — она появилась или вернулась после вашего последнего просмотра. Откройте карточку, и отметка снимется" />
                                     <Run Text="{Binding Number, StringFormat=№{0}, Mode=OneWay}" FontWeight="SemiBold" />
                                     <Run Text=" · " /><Run Text="{Binding Status, Mode=OneWay}" />
                                     <Run Text=" · " /><Run Text="{Binding Depth, Mode=OneWay}" />

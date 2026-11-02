@@ -62,8 +62,11 @@ public static class CollisionNavigator
     /// </summary>
     private static View3D PrepareView(Document document, Box3 cubeMm, Transform shared)
     {
+        // В модели только для чтения вид не создать и куб не поставить — человеку объясняется причина.
+        if (document.IsReadOnly) throw new InvalidOperationException("модель открыта только для чтения — вид «ToadClash» в ней не создать");
+
         using var transaction = new Transaction(document, TransactionName);
-        transaction.Start();
+        if (transaction.Start() != TransactionStatus.Started) throw new InvalidOperationException("Revit не дал изменить вид «ToadClash»");
 
         var view = new FilteredElementCollector(document).OfClass(typeof(View3D)).Cast<View3D>()
             .FirstOrDefault(v => !v.IsTemplate && v.Name == ViewName);
@@ -88,7 +91,8 @@ public static class CollisionNavigator
         });
         view.IsSectionBoxActive = true;
 
-        transaction.Commit();
+        // Не зафиксировалось (Revit отменил из-за ошибки) — вида может не быть: активным его не делаем.
+        if (transaction.Commit() != TransactionStatus.Committed) throw new InvalidOperationException("Revit отменил изменение вида «ToadClash»");
         return view;
     }
 

@@ -1,5 +1,6 @@
 using System.Windows.Threading;
 using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Events;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Events;
 using Collisions.Core;
@@ -22,6 +23,7 @@ public static class CollisionsPane
     private static PaneViewModel? _viewModel;
     private static Dispatcher? _dispatcher;
     private static Document? _document;
+    private static bool _reloadQueued;
 
     /// <summary>Регистрация панели и подписка на смену документа. Вызывается один раз из <c>OnStartup</c>.</summary>
     public static void Register(UIControlledApplication application)
@@ -47,6 +49,8 @@ public static class CollisionsPane
             });
 
         application.ViewActivated += OnViewActivated;
+        application.DockableFrameVisibilityChanged += OnFrameVisibilityChanged;
+        application.ControlledApplication.DocumentClosing += OnDocumentClosing;
         ConnectionStore.Shared.Changed += (_, _) => Reload(); // вход и выход — из окна подключения или переноса ParamChecker в фоне
         _ = Task.Run(() => thumbnails.Prune(TimeSpan.FromDays(30)));
     }
@@ -72,8 +76,7 @@ public static class CollisionsPane
     /// </summary>
     private static void OnViewActivated(object? sender, ViewActivatedEventArgs args)
     {
-        // Revit на каждый вызов отдаёт новую обёртку того же документа: сравнивать по ссылке нельзя, только Equals.
-        if (_document is not null && args.Document is not null && _document.Equals(args.Document)) return;
+        if (Same(_document, args.Document)) return;
         if (sender is UIApplication application && !IsShown(application))
         {
             _document = null;
@@ -82,6 +85,51 @@ public static class CollisionsPane
 
         _document = args.Document;
         Reload();
+    }
+
+    /// <summary>
+    ///     Панель показана не кнопкой ленты — из меню «Интерфейс пользователя» Revit или восстановлена при запуске: она
+    ///     обновляется так же.
+    /// </summary>
+    private static void OnFrameVisibilityChanged(object? sender, DockableFrameVisibilityChangedEventArgs args)
+    {
+        if (args.PaneId?.Guid != Id.Guid || !args.DockableFrameShown) return;
+        try
+        {
+            _document = (sender as UIApplication)?.ActiveUIDocument?.Document;
+        }
+        catch (Autodesk.Revit.Exceptions.ApplicationException)
+        {
+            _document = null;
+        }
+
+        Reload();
+    }
+
+    /// <summary>Закрывается документ, чьи коллизии показаны: список очищается, к закрытому документу панель больше не обращается.</summary>
+    private static void OnDocumentClosing(object? sender, DocumentClosingEventArgs args)
+    {
+        if (!Same(_document, args.Document)) return;
+        _document = null;
+        if (_viewModel is not { } viewModel || _dispatcher is not { } dispatcher) return;
+        dispatcher.BeginInvoke(new Action(viewModel.DocumentClosed));
+    }
+
+    /// <summary>
+    ///     Тот же документ. Revit на каждый вызов отдаёт новую обёртку того же документа: сравнивать по ссылке нельзя, только
+    ///     Equals; обёртка закрытого документа может бросить — тогда документы разные.
+    /// </summary>
+    private static bool Same(Document? known, Document? other)
+    {
+        if (known is null || other is null) return false;
+        try
+        {
+            return known.Equals(other);
+        }
+        catch (Autodesk.Revit.Exceptions.ApplicationException)
+        {
+            return false;
+        }
     }
 
     private static bool IsShown(UIApplication application)
@@ -96,10 +144,18 @@ public static class CollisionsPane
         }
     }
 
-    /// <summary>Модель панели живёт в UI-потоке панели: туда же отправляется и обновление.</summary>
+    /// <summary>
+    ///     Модель панели живёт в UI-потоке панели: туда же отправляется и обновление. Несколько поводов подряд (кнопка ленты и
+    ///     показ панели) дают одно обновление.
+    /// </summary>
     private static void Reload()
     {
-        if (_viewModel is not { } viewModel || _dispatcher is not { } dispatcher) return;
-        dispatcher.BeginInvoke(new Action(() => _ = viewModel.ActivateAsync()));
+        if (_viewModel is not { } viewModel || _dispatcher is not { } dispatcher || _reloadQueued) return;
+        _reloadQueued = true;
+        dispatcher.BeginInvoke(new Action(() =>
+        {
+            _reloadQueued = false;
+            _ = viewModel.ActivateAsync(); // не бросает: ошибки шага показываются в панели
+        }));
     }
 }

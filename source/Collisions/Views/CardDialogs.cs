@@ -23,6 +23,13 @@ public sealed class CardDialogs(IntPtr owner) : ICardDialogs
 
     public void OpenUrl(string url)
     {
+        // Пустой адрес Process.Start принял бы за «открыть ничего» и бросил бы непонятную ошибку.
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            MessageBox.Show("Адрес ToadFlow неизвестен — войдите в ToadFlow заново", "Коллизии ToadFlow");
+            return;
+        }
+
         try
         {
             Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });

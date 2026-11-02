@@ -2,7 +2,8 @@ namespace Collisions.Core;
 
 /// <summary>
 ///     Список коллизий открытой модели: страницы по <see cref="ClashApi.PageSize" />, «Показать ещё», обновление тех же
-///     страниц с сохранением выбранной строки и смена фильтров с первой страницы.
+///     страниц с сохранением выбранной строки и смена фильтров с первой страницы. Продолжения — в контексте вызова (UI-поток
+///     панели): <see cref="Selected" /> пишет и панель.
 /// </summary>
 public sealed class CollisionListState(IClashApi api, string modelKey)
 {
@@ -25,14 +26,14 @@ public sealed class CollisionListState(IClashApi api, string modelKey)
     /// <summary>Первая страница заново.</summary>
     public async Task LoadAsync(CancellationToken ct = default)
     {
-        var page = await api.CollisionsAsync(modelKey, Query, 1, ct).ConfigureAwait(false);
+        var page = await api.CollisionsAsync(modelKey, Query, 1, ct);
         Apply(page, page.Items.ToList(), 1);
     }
 
     public async Task MoreAsync(CancellationToken ct = default)
     {
         if (!HasMore) return;
-        var page = await api.CollisionsAsync(modelKey, Query, _pages + 1, ct).ConfigureAwait(false);
+        var page = await api.CollisionsAsync(modelKey, Query, _pages + 1, ct);
         var known = new HashSet<Guid>(Items.Select(i => i.Collision.Id));
         Apply(page, Items.Concat(page.Items.Where(i => known.Add(i.Collision.Id))).ToList(), _pages + 1);
     }
@@ -46,7 +47,7 @@ public sealed class CollisionListState(IClashApi api, string modelKey)
         ModelCollisionPage? last = null;
         for (var number = 1; number <= pages; number++)
         {
-            last = await api.CollisionsAsync(modelKey, Query, number, ct).ConfigureAwait(false);
+            last = await api.CollisionsAsync(modelKey, Query, number, ct);
             items.AddRange(last.Items.Where(i => known.Add(i.Collision.Id)));
             if (items.Count >= last.Total) break;
         }

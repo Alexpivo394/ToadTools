@@ -72,6 +72,7 @@ public sealed partial class CollisionItemViewModel(ModelCollisionRow row, Thumbn
         CollisionStatus.Fixed => "исправлена",
         CollisionStatus.GoneByRules => "ушла из-за правил",
         CollisionStatus.Unchecked => "не проверена",
+        CollisionStatus.Unknown => "статус неизвестен",
         _ => status.ToString()
     };
 }

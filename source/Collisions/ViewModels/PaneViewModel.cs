@@ -93,15 +93,17 @@ public sealed partial class PaneViewModel : ObservableObject
     public IReadOnlyList<FilterOption> GroupOptions { get; } =
         [new("all", "Все"), new("mine", CollisionItemViewModel.MineGroup), new("other", CollisionItemViewModel.OtherGroup)];
 
-    /// <summary>Выбрана строка (щелчком или ↑/↓): панель переходит к коллизии в Revit и открывает карточку.</summary>
-    public event EventHandler<ModelCollisionRow>? NavigateRequested;
-
     /// <summary>Модель ToadFlow открытого документа; null — не определена.</summary>
     public ModelMatch? Model { get; private set; }
 
-    /// <summary>Открытие панели или смена документа: определить модель и показать её коллизии.</summary>
+    /// <summary>
+    ///     Открытие панели, смена документа или подключения: определить модель и показать её коллизии. Кто вошёл, спрашивается
+    ///     заново — после выхода и входа другим пользователем кнопки карточки по его роли и разделам.
+    /// </summary>
     public Task ActivateAsync() => RunAsync(async version =>
     {
+        _me = null;
+        Status = "";
         if (_store.Load() is null)
         {
             Show(PaneScreen.NotConnected, "Войдите в ToadFlow, чтобы видеть коллизии");
@@ -160,7 +162,21 @@ public sealed partial class PaneViewModel : ObservableObject
         : ActivateAsync();
 
     [RelayCommand]
-    private Task Connect() => _connect() ? ActivateAsync() : Task.CompletedTask;
+    private Task Connect()
+    {
+        bool connected;
+        try
+        {
+            connected = _connect();
+        }
+        catch (Exception exception)
+        {
+            Show(PaneScreen.Error, ToadFlowErrors.Describe(exception));
+            return Task.CompletedTask;
+        }
+
+        return connected ? ActivateAsync() : Task.CompletedTask;
+    }
 
     [RelayCommand]
     private Task LoadMore() => _state is { HasMore: true } state
@@ -190,7 +206,6 @@ public sealed partial class PaneViewModel : ObservableObject
     {
         if (_state is { } state) state.Selected = value?.Row;
         if (_quiet || value is null) return;
-        NavigateRequested?.Invoke(this, value.Row);
         _ = OpenAsync(value);
     }
 
@@ -204,9 +219,21 @@ public sealed partial class PaneViewModel : ObservableObject
 
     /// <summary>
     ///     Коллизия в Revit (вид «ToadClash», куб, выбор) и её карточка. Ошибка Revit не мешает карточке, ошибка сети не
-    ///     мешает виду.
+    ///     мешает виду. Не бросает: вызывается и без ожидания — при выборе строки.
     /// </summary>
     public async Task OpenAsync(CollisionItemViewModel item)
+    {
+        try
+        {
+            await OpenCoreAsync(item);
+        }
+        catch (Exception exception)
+        {
+            ReportUnexpected(exception);
+        }
+    }
+
+    private async Task OpenCoreAsync(CollisionItemViewModel item)
     {
         if (!ReferenceEquals(SelectedItem, item))
         {
@@ -215,8 +242,7 @@ public sealed partial class PaneViewModel : ObservableObject
             _quiet = false;
         }
 
-        var row = item.Row;
-        var show = ShowInRevitAsync(row);
+        var show = NavigateAsync(item);
         try
         {
             _me ??= await _api.MeAsync(CancellationToken.None);
@@ -226,22 +252,75 @@ public sealed partial class PaneViewModel : ObservableObject
             Show(PaneScreen.NotConnected, exception.Message);
             return;
         }
-        catch (Exception exception) when (exception is ToadFlowUnavailableException or ToadFlowRequestException)
+        catch (Exception exception)
         {
-            Show(PaneScreen.Error, exception.Message);
+            Show(PaneScreen.Error, ToadFlowErrors.Describe(exception));
             return;
         }
 
         if (!ReferenceEquals(SelectedItem, item)) return;
-        var card = new CardViewModel(_api, row, _me, _dialogs, _thumbnails);
-        card.Changed += async (_, _) => await RefreshCommand.ExecuteAsync(null);
+        var card = new CardViewModel(_api, item.Row, _me, _dialogs, _thumbnails);
+        card.Changed += OnCardChanged;
         Card = card;
         SeenTask = MarkSeenAsync(item);
         var load = card.LoadAsync();
-        var result = await show;
-        if (result is not null) card.ShowNavigation(result);
-        else card.NavigateMessage = "Не получилось показать коллизию в Revit";
+        var outcome = await show;
+        // Пропущенный переход (строку уже сменили) и устаревшая карточка ничего не пишут.
+        if (!outcome.Skipped && ReferenceEquals(Card, card))
+        {
+            if (outcome.Result is { } result) card.ShowNavigation(result);
+            else card.NavigateMessage = $"Не получилось показать коллизию в Revit: {outcome.Error}";
+        }
+
         await load;
+    }
+
+    /// <summary>Действие в карточке прошло — список обновляется. async void: исключение отсюда уронило бы Revit.</summary>
+    private async void OnCardChanged(object? sender, EventArgs e)
+    {
+        try
+        {
+            await RefreshCommand.ExecuteAsync(null);
+        }
+        catch (Exception exception)
+        {
+            ReportUnexpected(exception);
+        }
+    }
+
+    /// <summary>
+    ///     Непредвиденная ошибка там, где её некому показать (обработчики клавиш, события): на списке — строкой состояния,
+    ///     на других экранах — экраном ошибки.
+    /// </summary>
+    public void ReportUnexpected(Exception exception)
+    {
+        var text = ToadFlowErrors.Describe(exception);
+        if (Screen == PaneScreen.Ready) Status = text;
+        else Show(PaneScreen.Error, text);
+    }
+
+    /// <summary>
+    ///     Показанный документ закрывается: список, карточка и выбор модели сбрасываются, начатые шаги отбрасываются. Модель
+    ///     определится заново, когда активным станет другой документ.
+    /// </summary>
+    public void DocumentClosed()
+    {
+        _version++;
+        IsBusy = false;
+        (_state, Model, _documentPath, Card) = (null, null, null, null);
+        _quiet = true;
+        try
+        {
+            SelectedItem = null;
+            Items.Clear();
+        }
+        finally
+        {
+            _quiet = false;
+        }
+
+        Status = "";
+        Show(PaneScreen.NoDocument, "Откройте модель проекта");
     }
 
 
@@ -266,7 +345,12 @@ public sealed partial class PaneViewModel : ObservableObject
             return;
         }
 
-        if (Screen != PaneScreen.Ready || Model is not { } model) return;
+        if (Screen != PaneScreen.Ready || Model is not { } model)
+        {
+            Status = "Коллизию из буфера можно открыть, когда в панели показан список коллизий открытой модели";
+            return;
+        }
+
         var number = link.Number;
         Guid? id = link.CollisionId;
         if (id is { } collisionId)
@@ -276,9 +360,14 @@ public sealed partial class PaneViewModel : ObservableObject
             {
                 collision = (await _api.CardAsync(collisionId, CancellationToken.None)).Collision;
             }
-            catch (Exception exception) when (exception is ToadFlowUnavailableException or ToadFlowRequestException)
+            catch (ToadFlowAuthRequiredException exception)
             {
-                Status = exception.Message;
+                Show(PaneScreen.NotConnected, exception.Message);
+                return;
+            }
+            catch (Exception exception)
+            {
+                Status = ToadFlowErrors.Describe(exception);
                 return;
             }
 
@@ -300,35 +389,58 @@ public sealed partial class PaneViewModel : ObservableObject
             return;
         }
 
-        NavigateRequested?.Invoke(this, item.Row);
         await OpenAsync(item);
     }
 
-    /// <summary>Отметка просмотра в фоне: ошибка сети не мешает карточке, точка у строки остаётся до следующего раза.</summary>
+    /// <summary>
+    ///     Отметка просмотра в фоне: точка у строки гаснет сразу, как открыта карточка. Сервер не отметил (нет сети) — точка
+    ///     возвращается: коллизия для него всё ещё «новая для меня».
+    /// </summary>
     private async Task MarkSeenAsync(CollisionItemViewModel item)
     {
+        var wasUnseen = item.Unseen;
+        item.Unseen = false;
         try
         {
             await _api.SeenAsync(item.Row.Collision.Id, CancellationToken.None);
-            item.Unseen = false;
         }
         catch (Exception)
         {
-            // не отметилось — коллизия останется «новой для меня»
+            if (wasUnseen) item.Unseen = true;
         }
     }
 
-    private async Task<NavigateResult?> ShowInRevitAsync(ModelCollisionRow row)
+    /// <summary>Итог перехода в Revit: результат, причина неудачи или пропуск (пока ждали, выбрали другую строку).</summary>
+    private sealed record NavigateOutcome(NavigateResult? Result, string? Error, bool Skipped = false);
+
+    private Task<NavigateOutcome>? _navigation;
+
+    /// <summary>
+    ///     Переход в Revit по одному: пока идёт переход (транзакция вида), новые ждут, а дождавшись, идёт только последняя
+    ///     выбранная строка. Зажатая ↑/↓ не гоняет Revit по каждой промежуточной строке.
+    /// </summary>
+    private async Task<NavigateOutcome> NavigateAsync(CollisionItemViewModel item)
+    {
+        while (_navigation is { IsCompleted: false } running) await running;
+        if (SelectedItem?.Row.Collision.Id != item.Row.Collision.Id) return new NavigateOutcome(null, null, Skipped: true);
+
+        var task = ShowInRevitAsync(item.Row);
+        _navigation = task;
+        return await task;
+    }
+
+    private async Task<NavigateOutcome> ShowInRevitAsync(ModelCollisionRow row)
     {
         var c = row.Collision;
         try
         {
             // Пути другой модели в строке нет: связь ищется по имени файла.
-            return await _revit.ShowAsync(new NavigateRequest(row.Own.UniqueId, row.Other.ModelName, "", row.Other.UniqueId, (c.X, c.Y, c.Z)));
+            return new NavigateOutcome(
+                await _revit.ShowAsync(new NavigateRequest(row.Own.UniqueId, row.Other.ModelName, "", row.Other.UniqueId, (c.X, c.Y, c.Z))), null);
         }
-        catch (Exception)
+        catch (Exception exception)
         {
-            return null;
+            return new NavigateOutcome(null, exception.Message);
         }
     }
 
@@ -361,7 +473,7 @@ public sealed partial class PaneViewModel : ObservableObject
             await _api.VisitAsync(CancellationToken.None);
             _session.Visited = true;
         }
-        catch (Exception exception) when (exception is ToadFlowUnavailableException or ToadFlowRequestException)
+        catch (Exception)
         {
             // заход отметится при следующем открытии списка
         }
@@ -418,7 +530,10 @@ public sealed partial class PaneViewModel : ObservableObject
 
     private void Show(PaneScreen screen, string message) => (Screen, Message) = (screen, message);
 
-    /// <summary>Шаг панели с общей обработкой ошибок; результаты устаревшего шага отбрасываются по номеру версии.</summary>
+    /// <summary>
+    ///     Шаг панели с общей обработкой ошибок; результаты устаревшего шага отбрасываются по номеру версии. Не бросает:
+    ///     шаги запускаются и без ожидания (смена документа, фильтры), и панель не должна застрять на «Ищем модель…».
+    /// </summary>
     private async Task RunAsync(Func<int, Task> step)
     {
         var version = ++_version;
@@ -431,9 +546,9 @@ public sealed partial class PaneViewModel : ObservableObject
         {
             if (version == _version) Show(PaneScreen.NotConnected, exception.Message);
         }
-        catch (Exception exception) when (exception is ToadFlowUnavailableException or ToadFlowRequestException)
+        catch (Exception exception)
         {
-            if (version == _version) Show(PaneScreen.Error, exception.Message);
+            if (version == _version) Show(PaneScreen.Error, ToadFlowErrors.Describe(exception));
         }
         finally
         {

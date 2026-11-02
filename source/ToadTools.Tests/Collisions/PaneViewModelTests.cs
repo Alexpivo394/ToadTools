@@ -14,10 +14,18 @@ public sealed class FakeRevit : IRevitBridge
 
     public Task<(string? CentralPath, string FileName)?> ActiveDocumentAsync() => Task.FromResult(Document);
 
-    public Task<NavigateResult> ShowAsync(NavigateRequest request)
+    /// <summary>Переход не удался: Revit бросил это исключение.</summary>
+    public Exception? Fail { get; set; }
+
+    /// <summary>Переход идёт, пока тест не завершит эту задачу; null — сразу.</summary>
+    public TaskCompletionSource? Gate { get; set; }
+
+    public async Task<NavigateResult> ShowAsync(NavigateRequest request)
     {
         Shown.Add(request);
-        return Task.FromResult(Result);
+        if (Gate is { } gate) await gate.Task;
+        if (Fail is { } fail) throw fail;
+        return Result;
     }
 }
 
@@ -253,18 +261,17 @@ public class PaneViewModelTests
     }
 
     [Test]
-    public async Task Pane_SelectItem_RaisesNavigate()
+    public async Task Pane_SelectItem_ShowsInRevit()
     {
         using var s = Create();
         s.Api.Resolve = (_, _) => new ModelResolve("path", [Match("k1")]);
         s.Api.Rows = [FakeClashApi.Row(1)];
         await s.Model.ActivateAsync();
-        ModelCollisionRow? requested = null;
-        s.Model.NavigateRequested += (_, row) => requested = row;
 
         s.Model.SelectedItem = s.Model.Items[0];
 
-        requested.ShouldNotBeNull().Collision.Number.ShouldBe(1);
+        s.Revit.Shown.ShouldHaveSingleItem().OwnUniqueId.ShouldBe("ub-1");
+        s.Model.Card.ShouldNotBeNull().Number.ShouldBe(1);
     }
 
     [Test]
@@ -288,6 +295,143 @@ public class PaneViewModelTests
 
         s.Model.Card.ShouldNotBeNull().Number.ShouldBe(2);
         s.Model.Screen.ShouldBe(PaneScreen.Ready);
+        s.Model.Items[1].Unseen.ShouldBeTrue(); // сервер не отметил — точка вернулась
+    }
+
+    [Test]
+    public async Task Pane_Open_DotOffBeforeServerAnswers()
+    {
+        using var s = Create();
+        s.Api.Resolve = (_, _) => new ModelResolve("path", [Match("k1")]);
+        s.Api.Rows = [FakeClashApi.Row(1, unseen: true)];
+        await s.Model.ActivateAsync();
+        s.Api.SeenGate = new TaskCompletionSource();
+
+        await s.Model.OpenAsync(s.Model.Items[0]);
+
+        s.Model.Items[0].Unseen.ShouldBeFalse();
+        s.Model.Items[0].Dot.ShouldBe("");
+        s.Api.SeenGate.SetResult();
+        await s.Model.SeenTask;
+        s.Model.Items[0].Unseen.ShouldBeFalse();
+    }
+
+    [Test]
+    public async Task Pane_Me_AskedAgainAfterReload()
+    {
+        using var s = Create();
+        s.Api.Resolve = (_, _) => new ModelResolve("path", [Match("k1")]);
+        s.Api.Rows = [FakeClashApi.Row(1)];
+        await s.Model.ActivateAsync();
+        await s.Model.OpenAsync(s.Model.Items[0]);
+        s.Model.Card!.CanTake.ShouldBeTrue();
+
+        // вышел и вошёл другим пользователем — подключение сменилось, панель перезагружается
+        s.Api.Me = new UserInfo(Guid.NewGuid(), "petrov", "Петров", Roles.Viewer, ["ОВ"]);
+        await s.Model.ActivateAsync();
+        await s.Model.OpenAsync(s.Model.Items[0]);
+
+        s.Api.MeRequests.ShouldBe(2);
+        s.Model.Card!.CanTake.ShouldBeFalse();
+    }
+
+    [Test]
+    public async Task Pane_UnexpectedError_ShowsError_NotStuck()
+    {
+        using var s = Create();
+        s.Api.Resolve = (_, _) => throw new InvalidOperationException("сломалось");
+
+        await s.Model.ActivateAsync();
+
+        (s.Model.Screen, s.Model.Message).ShouldBe((PaneScreen.Error, "Непредвиденная ошибка: сломалось"));
+        s.Model.IsBusy.ShouldBeFalse();
+    }
+
+    [Test]
+    public async Task Pane_NotJsonAnswer_ShowsError()
+    {
+        using var s = Create();
+        s.Api.Fail = new ToadFlowRequestException(200, "ToadFlow прислал непонятный ответ");
+
+        await s.Model.ActivateAsync();
+
+        (s.Model.Screen, s.Model.Message).ShouldBe((PaneScreen.Error, "ToadFlow прислал непонятный ответ"));
+    }
+
+    [Test]
+    public async Task Pane_PasteId_AuthRequired_NotConnected()
+    {
+        using var s = Create();
+        s.Api.Resolve = (_, _) => new ModelResolve("path", [Match("ov")]);
+        s.Api.Rows = [FakeClashApi.Row(1)];
+        await s.Model.ActivateAsync();
+        s.Api.Card = _ => throw new ToadFlowAuthRequiredException();
+
+        await s.Model.PasteAsync($"http://toadflow/clash/checks/1?collision={Guid.NewGuid()}");
+
+        (s.Model.Screen, s.Model.Message).ShouldBe((PaneScreen.NotConnected, "Подключение к ToadFlow устарело — войдите заново"));
+    }
+
+    [Test]
+    public async Task Pane_PasteNotReady_Hint()
+    {
+        using var s = Create();
+        s.Revit.Document = null;
+        await s.Model.ActivateAsync();
+
+        await s.Model.PasteAsync("17");
+
+        s.Model.Status.ShouldBe("Коллизию из буфера можно открыть, когда в панели показан список коллизий открытой модели");
+    }
+
+    [Test]
+    public async Task Pane_RevitFails_CardSaysWhy()
+    {
+        using var s = Create();
+        s.Api.Resolve = (_, _) => new ModelResolve("path", [Match("k1")]);
+        s.Api.Rows = [FakeClashApi.Row(1)];
+        s.Revit.Fail = new InvalidOperationException("Модель открыта только для чтения");
+        await s.Model.ActivateAsync();
+
+        await s.Model.OpenAsync(s.Model.Items[0]);
+
+        s.Model.Card.ShouldNotBeNull().NavigateMessage.ShouldBe("Не получилось показать коллизию в Revit: Модель открыта только для чтения");
+    }
+
+    [Test]
+    public async Task Pane_HoldArrow_RevitGoesOnlyToLatestRow()
+    {
+        using var s = Create();
+        s.Api.Resolve = (_, _) => new ModelResolve("path", [Match("k1")]);
+        s.Api.Rows = Enumerable.Range(1, 5).Select(i => FakeClashApi.Row(i)).ToList();
+        await s.Model.ActivateAsync();
+        s.Revit.Gate = new TaskCompletionSource();
+
+        var first = s.Model.OpenAsync(s.Model.Items[0]);
+        var second = s.Model.OpenAsync(s.Model.Items[1]);
+        var third = s.Model.OpenAsync(s.Model.Items[2]);
+        s.Revit.Gate.SetResult();
+        await Task.WhenAll(first, second, third);
+
+        s.Revit.Shown.Select(r => r.OwnUniqueId).ShouldBe(["ub-1", "ub-3"]);
+        s.Model.Card.ShouldNotBeNull().Number.ShouldBe(3);
+        s.Model.Card.NavigateMessage.ShouldBeNull();
+    }
+
+    [Test]
+    public async Task Pane_DocumentClosed_ClearsList()
+    {
+        using var s = Create();
+        s.Api.Resolve = (_, _) => new ModelResolve("path", [Match("k1")]);
+        s.Api.Rows = [FakeClashApi.Row(1)];
+        await s.Model.ActivateAsync();
+        await s.Model.OpenAsync(s.Model.Items[0]);
+
+        s.Model.DocumentClosed();
+
+        (s.Model.Screen, s.Model.Message).ShouldBe((PaneScreen.NoDocument, "Откройте модель проекта"));
+        s.Model.Items.ShouldBeEmpty();
+        s.Model.Card.ShouldBeNull();
     }
 
     [Test]

@@ -51,25 +51,25 @@ public sealed class FakeClashApi : IClashApi
         return Card?.Invoke(id) ?? new CollisionCardDto(Rows.Single(r => r.Collision.Id == id).Collision, []);
     });
 
-    public int ElementRequests { get; private set; }
-
-    public Task<IReadOnlyList<KeyValuePair<string, string>>> ElementAsync(Guid collisionId, string modelKey, string uniqueId, CancellationToken ct) =>
-        Run<IReadOnlyList<KeyValuePair<string, string>>>(() =>
-        {
-            ElementRequests++;
-            return [new("ID", uniqueId)];
-        });
-
     public Task<byte[]> ImageAsync(Guid id, string version, CancellationToken ct) => Run(() => new byte[] { 1 });
 
     public Task VisitAsync(CancellationToken ct) => Run(() => Visits++);
 
-    public Task SeenAsync(Guid id, CancellationToken ct) => SeenFail is { } fail ? Task.FromException(fail) : Run(() => Seen.Add(id));
+    /// <summary>Отметка просмотра ждёт, пока тест не завершит эту задачу; null — отвечает сразу.</summary>
+    public TaskCompletionSource? SeenGate { get; set; }
+
+    public async Task SeenAsync(Guid id, CancellationToken ct)
+    {
+        if (SeenGate is { } gate) await gate.Task;
+        if (SeenFail is { } fail) throw fail;
+        await Run(() => Seen.Add(id));
+    }
+
     public Task TakeAsync(Guid id, CancellationToken ct) => Act($"take {id}");
     public Task PassAsync(Guid id, string assignee, string note, CancellationToken ct) => Act($"assignee {id} {assignee} {note}");
     public Task SetStatusAsync(Guid id, string status, string? note, CancellationToken ct) => Act($"status {id} {status} {note}");
     public Task NoteAsync(Guid id, string text, CancellationToken ct) => Act($"note {id} {text}");
-    public string ViewerUrl(Guid partId, Guid collisionId) => $"{Url}/clash/checks/{partId}?collision={collisionId}";
+    public string ViewerUrl(Guid partId, Guid collisionId) => Url.Length == 0 ? "" : $"{Url}/clash/checks/{partId}?collision={collisionId}";
 
     private Task Act(string action) => Run(() => Actions.Add(action));
 
