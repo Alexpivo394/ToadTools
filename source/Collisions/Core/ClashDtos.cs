@@ -83,7 +83,8 @@ public sealed record ModelCollisionRow(
     string Side,
     bool MineToFix,
     string? TakenBy,
-    DateTimeOffset? TakenAt)
+    DateTimeOffset? TakenAt,
+    bool Unseen = false)
 {
     public CollisionSide A => new(Collision.ModelA, Collision.ModelNameA, Collision.UniqueIdA, Collision.ElementIdA, Collision.DisciplineA,
         Collision.CategoryA, Collision.FamilyA, Collision.TypeA, Collision.LevelA);
@@ -103,7 +104,9 @@ public sealed record Facet(string Value, string Label, int Count);
 public sealed record ModelFacets(IReadOnlyList<Facet> Pairs, IReadOnlyList<Facet> Levels, IReadOnlyList<Facet> Statuses);
 
 /// <param name="NewSinceVisit">Открытые коллизии модели, найденные или вернувшиеся после прошлого захода; без учёта фильтров.</param>
-public sealed record ModelCollisionPage(int Total, int Mine, int Other, IReadOnlyList<ModelCollisionRow> Items, ModelFacets Facets, int NewSinceVisit = 0);
+/// <param name="NewForMe">Открытые, которые пользователь не открывал с их появления или возврата; null — сервер до ToadClash 1.0.0 без этого поля.</param>
+public sealed record ModelCollisionPage(int Total, int Mine, int Other, IReadOnlyList<ModelCollisionRow> Items, ModelFacets Facets, int NewSinceVisit = 0,
+    int? NewForMe = null);
 
 /// <summary>Запись ленты коллизии.</summary>
 public sealed record FeedEntryDto(
@@ -138,4 +141,6 @@ public sealed record ElementParameterDto(string Name, string? Text, double? Numb
 /// <param name="Group"><c>mine</c>, <c>other</c>, <c>all</c>.</param>
 /// <param name="Level">Ключ уровня; <c>-</c> — без уровня.</param>
 /// <param name="Search">№, ID элемента или UniqueId.</param>
-public sealed record CollisionQuery(string Status = "open", string Group = "all", string? Pair = null, string? Level = null, string? Search = null);
+/// <param name="Since"><c>unseen</c> — только новые для меня.</param>
+public sealed record CollisionQuery(string Status = "open", string Group = "all", string? Pair = null, string? Level = null, string? Search = null,
+    string? Since = null);

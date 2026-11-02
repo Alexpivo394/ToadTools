@@ -10,6 +10,12 @@ public sealed class FakeClashApi : IClashApi
     public int Mine { get; set; }
     public int Other { get; set; }
     public int Fresh { get; set; }
+
+    /// <summary>«Новые для меня» в ответе; null — старый сервер без этого поля.</summary>
+    public int? NewForMe { get; set; }
+
+    public List<Guid> Seen { get; } = [];
+    public Exception? SeenFail { get; set; }
     public ModelFacets Facets { get; set; } = new([], [], []);
     public Func<string?, string?, ModelResolve> Resolve { get; set; } = (_, _) => new ModelResolve("none", []);
     public Exception? Fail { get; set; }
@@ -27,8 +33,10 @@ public sealed class FakeClashApi : IClashApi
     public Task<ModelCollisionPage> CollisionsAsync(string key, CollisionQuery query, int page, CancellationToken ct) => Run(() =>
     {
         PageRequests.Add((key, query, page));
-        var items = Rows.Skip((page - 1) * ClashApi.PageSize).Take(ClashApi.PageSize).ToList();
-        return new ModelCollisionPage(Rows.Count, Mine, Other, items, Facets, Fresh);
+        var rows = query.Since == "unseen" ? Rows.Where(r => r.Unseen).ToList() : Rows;
+        if (!string.IsNullOrWhiteSpace(query.Search)) rows = rows.Where(r => r.Collision.Number.ToString() == query.Search!.Trim()).ToList();
+        var items = rows.Skip((page - 1) * ClashApi.PageSize).Take(ClashApi.PageSize).ToList();
+        return new ModelCollisionPage(rows.Count, Mine, Other, items, Facets, Fresh, NewForMe);
     });
 
     public Task<UserInfo> MeAsync(CancellationToken ct) => Run(() =>
@@ -55,6 +63,8 @@ public sealed class FakeClashApi : IClashApi
     public Task<byte[]> ImageAsync(Guid id, string version, CancellationToken ct) => Run(() => new byte[] { 1 });
 
     public Task VisitAsync(CancellationToken ct) => Run(() => Visits++);
+
+    public Task SeenAsync(Guid id, CancellationToken ct) => SeenFail is { } fail ? Task.FromException(fail) : Run(() => Seen.Add(id));
     public Task TakeAsync(Guid id, CancellationToken ct) => Act($"take {id}");
     public Task PassAsync(Guid id, string assignee, string note, CancellationToken ct) => Act($"assignee {id} {assignee} {note}");
     public Task SetStatusAsync(Guid id, string status, string? note, CancellationToken ct) => Act($"status {id} {status} {note}");
@@ -72,10 +82,10 @@ public sealed class FakeClashApi : IClashApi
     });
 
     /// <summary>Строка коллизии: открытая модель — сторона B (ОВ), другая — КР.</summary>
-    public static ModelCollisionRow Row(int number, bool mine = true, string side = "B", Guid? partId = null) => new(
+    public static ModelCollisionRow Row(int number, bool mine = true, string side = "B", Guid? partId = null, bool unseen = false) => new(
         new CollisionRowDto(Guid.NewGuid(), number, CollisionStatus.Active, mine ? CollisionAssignee.Both : CollisionAssignee.SideA, true, 30, 1000, 2000, 3000,
             "kr", "DON_KR.rvt", $"ua-{number}", number, "КР", "Стены", "Стена", "200", "Этаж 1",
             "ov", "DON_OV.rvt", $"ub-{number}", 100_000 + number, "ОВ", "Воздуховоды", "Воздуховод", "500x300", "Этаж 1",
             [], 1, 1, null, null, $"img{number}"),
-        partId ?? Guid.Parse("aaaaaaaa-0000-0000-0000-000000000001"), "Часть 1", side, mine, mine ? null : "Петров", mine ? null : DateTimeOffset.Now);
+        partId ?? Guid.Parse("aaaaaaaa-0000-0000-0000-000000000001"), "Часть 1", side, mine, mine ? null : "Петров", mine ? null : DateTimeOffset.Now, unseen);
 }

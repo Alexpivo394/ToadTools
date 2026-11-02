@@ -15,6 +15,7 @@ public sealed partial class CollisionsPaneView
     {
         InitializeComponent();
         DataContext = _viewModel = viewModel;
+        PreviewKeyDown += OnPaneKeyDown;
     }
 
     /// <summary>↑/↓ ведёт модель панели: ниже последней строки она догружает следующую страницу.</summary>
@@ -35,5 +36,28 @@ public sealed partial class CollisionsPaneView
             List.ScrollIntoView(item);
             (List.ItemContainerGenerator.ContainerFromItem(item) as System.Windows.UIElement)?.Focus();
         }
+    }
+    /// <summary>
+    ///     Ctrl+V в панели — текст буфера в модель панели: номер или ссылка на коллизию открывает её. В поле ввода вставка
+    ///     обычная.
+    /// </summary>
+    private async void OnPaneKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.V || (Keyboard.Modifiers & ModifierKeys.Control) == 0) return;
+        if (Keyboard.FocusedElement is System.Windows.Controls.Primitives.TextBoxBase or System.Windows.Controls.PasswordBox) return;
+
+        string text;
+        try
+        {
+            if (!System.Windows.Clipboard.ContainsText()) return;
+            text = System.Windows.Clipboard.GetText();
+        }
+        catch (System.Runtime.InteropServices.ExternalException)
+        {
+            return; // буфер занят другим приложением
+        }
+
+        e.Handled = true;
+        await _viewModel.PasteAsync(text);
     }
 }

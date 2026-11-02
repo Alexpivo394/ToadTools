@@ -266,4 +266,112 @@ public class PaneViewModelTests
 
         requested.ShouldNotBeNull().Collision.Number.ShouldBe(1);
     }
+
+    [Test]
+    public async Task Pane_Open_MarksSeen()
+    {
+        using var s = Create();
+        s.Api.Resolve = (_, _) => new ModelResolve("path", [Match("k1")]);
+        s.Api.Rows = [FakeClashApi.Row(1, unseen: true), FakeClashApi.Row(2, unseen: true)];
+        await s.Model.ActivateAsync();
+        s.Model.Items[0].Unseen.ShouldBeTrue();
+
+        await s.Model.OpenAsync(s.Model.Items[0]);
+        await s.Model.SeenTask;
+
+        s.Api.Seen.ShouldBe([s.Api.Rows[0].Collision.Id]);
+        s.Model.Items[0].Unseen.ShouldBeFalse();
+
+        s.Api.SeenFail = new ToadFlowUnavailableException("нет сети");
+        await s.Model.OpenAsync(s.Model.Items[1]);
+        await s.Model.SeenTask;
+
+        s.Model.Card.ShouldNotBeNull().Number.ShouldBe(2);
+        s.Model.Screen.ShouldBe(PaneScreen.Ready);
+    }
+
+    [Test]
+    public async Task Pane_PasteNumber_SearchesAndSelects()
+    {
+        using var s = Create();
+        s.Api.Resolve = (_, _) => new ModelResolve("path", [Match("k1")]);
+        s.Api.Rows = [FakeClashApi.Row(1), FakeClashApi.Row(17)];
+        await s.Model.ActivateAsync();
+
+        await s.Model.PasteAsync("ToadClash №17 — Часть 1");
+
+        s.Api.PageRequests.Last().Query.Search.ShouldBe("17");
+        s.Model.SelectedItem.ShouldNotBeNull().Number.ShouldBe(17);
+        s.Model.Card.ShouldNotBeNull().Number.ShouldBe(17);
+    }
+
+    [Test]
+    public async Task Pane_PasteIdOtherModel_StatusText()
+    {
+        using var s = Create();
+        s.Api.Resolve = (_, _) => new ModelResolve("path", [Match("ov")]);
+        s.Api.Rows = [FakeClashApi.Row(1)];
+        var foreign = FakeClashApi.Row(7).Collision with { ModelB = "ar", ModelNameB = "DON_AR.rvt" };
+        s.Api.Card = _ => new CollisionCardDto(foreign, []);
+        await s.Model.ActivateAsync();
+        var before = s.Api.PageRequests.Count;
+
+        await s.Model.PasteAsync($"http://toadflow/clash/checks/{Guid.NewGuid()}?collision={foreign.Id}");
+
+        s.Model.Status.ShouldBe("Коллизия №7 в моделях «DON_KR.rvt» и «DON_AR.rvt» — откройте одну из них");
+        s.Api.PageRequests.Count.ShouldBe(before);
+        s.Model.Card.ShouldBeNull();
+    }
+
+    [Test]
+    public async Task Pane_PasteIdOpenModel_Selects()
+    {
+        using var s = Create();
+        s.Api.Resolve = (_, _) => new ModelResolve("path", [Match("ov")]);
+        s.Api.Rows = [FakeClashApi.Row(1), FakeClashApi.Row(9)];
+        await s.Model.ActivateAsync();
+
+        await s.Model.PasteAsync(s.Api.Rows[1].Collision.Id.ToString().Insert(0, "http://toadflow/clash/checks/1?collision="));
+
+        s.Model.SelectedItem.ShouldNotBeNull().Number.ShouldBe(9);
+        s.Model.Status.ShouldBe("");
+    }
+
+    [Test]
+    public async Task Pane_NewForMeFilter()
+    {
+        using var s = Create();
+        s.Api.Resolve = (_, _) => new ModelResolve("path", [Match("k1")]);
+        s.Api.Rows = [FakeClashApi.Row(1, unseen: true), FakeClashApi.Row(2)];
+        (s.Api.Mine, s.Api.Other, s.Api.NewForMe) = (2, 0, 1);
+        await s.Model.ActivateAsync();
+
+        s.Model.Counters.ShouldBe("мне править 2 · взяла другая сторона 0");
+        s.Model.NewForMe.ShouldBe("новые для меня 1");
+
+        await s.Model.NewForMeFilterCommand.ExecuteAsync(null);
+
+        s.Api.PageRequests.Last().Query.Since.ShouldBe("unseen");
+        s.Model.Items.Select(i => i.Number).ShouldBe([1]);
+        s.Model.NewForMeActive.ShouldBeTrue();
+
+        await s.Model.NewForMeFilterCommand.ExecuteAsync(null);
+
+        s.Api.PageRequests.Last().Query.Since.ShouldBeNull();
+        s.Model.Items.Count.ShouldBe(2);
+    }
+
+    [Test]
+    public async Task Pane_OldServer_NoNewForMe_FallsBack()
+    {
+        using var s = Create();
+        s.Api.Resolve = (_, _) => new ModelResolve("path", [Match("k1")]);
+        s.Api.Rows = [FakeClashApi.Row(1)];
+        (s.Api.Mine, s.Api.Other, s.Api.Fresh, s.Api.NewForMe) = (1, 0, 3, null);
+
+        await s.Model.ActivateAsync();
+
+        s.Model.Counters.ShouldBe("мне править 1, взяла другая сторона 0, новых с прошлого захода 3");
+        s.Model.NewForMe.ShouldBeNull();
+    }
 }

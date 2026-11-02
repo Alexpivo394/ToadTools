@@ -132,7 +132,16 @@
                 </ui:TextBox>
             </Grid>
 
-            <TextBlock DockPanel.Dock="Top" Text="{Binding Counters}" FontSize="11" Opacity="0.8" TextWrapping="Wrap" Margin="0,0,0,6" />
+            <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,6">
+                <TextBlock Text="{Binding Counters}" FontSize="11" Opacity="0.8" TextWrapping="Wrap" VerticalAlignment="Center" />
+                <!-- «новые для меня N» — фильтр since=unseen; у старого сервера счётчика нет -->
+                <ToggleButton Margin="6,0,0,0" Padding="6,1" FontSize="11" Content="{Binding NewForMe}" IsChecked="{Binding NewForMeActive, Mode=OneWay}"
+                              Command="{Binding NewForMeFilterCommand}" ToolTip="Показать только коллизии, которые я ещё не открывал"
+                              Visibility="{Binding NewForMe, Converter={views:TextVisibilityConverter}}" />
+            </WrapPanel>
+
+            <TextBlock DockPanel.Dock="Top" Text="{Binding Status}" FontSize="11" Foreground="{DynamicResource SystemFillColorCautionBrush}"
+                       TextWrapping="Wrap" Margin="0,0,0,6" Visibility="{Binding Status, Converter={views:TextVisibilityConverter}}" />
 
             <ui:Button DockPanel.Dock="Bottom" Content="Показать ещё" HorizontalAlignment="Stretch" Margin="0,6,0,0"
                        Command="{Binding LoadMoreCommand}" Visibility="{Binding HasMore, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
@@ -168,6 +177,8 @@
                             </Border>
                             <StackPanel Grid.Column="1" Margin="8,0,0,0">
                                 <TextBlock TextTrimming="CharacterEllipsis">
+                                    <!-- точка — новая для меня: я её ещё не открывал -->
+                                    <Run Text="{Binding Dot, Mode=OneWay}" Foreground="{DynamicResource SystemAccentColorBrush}" />
                                     <Run Text="{Binding Number, StringFormat=№{0}, Mode=OneWay}" FontWeight="SemiBold" />
                                     <Run Text=" · " /><Run Text="{Binding Status, Mode=OneWay}" />
                                     <Run Text=" · " /><Run Text="{Binding Depth, Mode=OneWay}" />

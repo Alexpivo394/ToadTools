@@ -14,6 +14,11 @@ public sealed partial class CollisionItemViewModel(ModelCollisionRow row, Thumbn
     [ObservableProperty] private byte[]? _thumbnail;
     [ObservableProperty] private bool _thumbnailFailed;
 
+    /// <summary>Новая для меня: я её ещё не открывал — точка у строки; гаснет, когда карточка открыта.</summary>
+    [ObservableProperty] private bool _unseen = row.Unseen;
+
+    public string Dot => Unseen ? "● " : "";
+
     public ModelCollisionRow Row => row;
     public int Number => row.Collision.Number;
     public string Group => row.MineToFix ? MineGroup : OtherGroup;
@@ -41,6 +46,8 @@ public sealed partial class CollisionItemViewModel(ModelCollisionRow row, Thumbn
     }
 
     partial void OnThumbnailChanged(byte[]? value) => OnPropertyChanged(nameof(Image));
+
+    partial void OnUnseenChanged(bool value) => OnPropertyChanged(nameof(Dot));
 
     private async Task LoadThumbnailAsync()
     {

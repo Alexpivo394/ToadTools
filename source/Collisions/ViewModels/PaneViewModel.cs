@@ -70,6 +70,14 @@ public sealed partial class PaneViewModel : ObservableObject
     [ObservableProperty] private string? _levelFilter;
     [ObservableProperty] private string _search = "";
 
+    /// <summary>Строка состояния под счётчиками: что случилось со вставленной ссылкой.</summary>
+    [ObservableProperty] private string _status = "";
+
+    /// <summary>Кнопка «новые для меня N»; null — сервер без этого счётчика.</summary>
+    [ObservableProperty] private string? _newForMe;
+
+    [ObservableProperty] private bool _newForMeActive;
+
     public PaneViewModel(IClashApi api, IRevitBridge revit, ConnectionStore store, ModelChoices choices, ThumbnailCache thumbnails, PaneSession session,
         Func<bool> connect, ICardDialogs dialogs)
     {
@@ -78,6 +86,9 @@ public sealed partial class PaneViewModel : ObservableObject
     }
 
     public ObservableCollection<CollisionItemViewModel> Items { get; } = [];
+
+    /// <summary>Последняя отметка просмотра (идёт в фоне) — для тестов.</summary>
+    public Task SeenTask { get; private set; } = Task.CompletedTask;
 
     public IReadOnlyList<FilterOption> GroupOptions { get; } =
         [new("all", "Все"), new("mine", CollisionItemViewModel.MineGroup), new("other", CollisionItemViewModel.OtherGroup)];
@@ -163,7 +174,8 @@ public sealed partial class PaneViewModel : ObservableObject
     [RelayCommand]
     private Task ApplyFilters()
     {
-        var query = new CollisionQuery(StatusFilter ?? "open", GroupFilter ?? "all", PairFilter, LevelFilter, string.IsNullOrWhiteSpace(Search) ? null : Search.Trim());
+        var query = new CollisionQuery(StatusFilter ?? "open", GroupFilter ?? "all", PairFilter, LevelFilter, string.IsNullOrWhiteSpace(Search) ? null : Search.Trim(),
+            NewForMeActive ? "unseen" : null);
         _session.Query = query;
         return _state is { } state && Screen == PaneScreen.Ready
             ? RunAsync(async version =>
@@ -224,11 +236,86 @@ public sealed partial class PaneViewModel : ObservableObject
         var card = new CardViewModel(_api, row, _me, _dialogs, _thumbnails);
         card.Changed += async (_, _) => await RefreshCommand.ExecuteAsync(null);
         Card = card;
+        SeenTask = MarkSeenAsync(item);
         var load = card.LoadAsync();
         var result = await show;
         if (result is not null) card.ShowNavigation(result);
         else card.NavigateMessage = "Не получилось показать коллизию в Revit";
         await load;
+    }
+
+
+    /// <summary>«Новые для меня»: включить или снять фильтр <c>since=unseen</c>.</summary>
+    [RelayCommand]
+    private Task NewForMeFilter()
+    {
+        NewForMeActive = !NewForMeActive;
+        return ApplyFilters();
+    }
+
+    /// <summary>
+    ///     Ctrl+V в панели: номер — поиск по номеру в открытой модели и переход к коллизии; ссылка — карточка по Id, и если
+    ///     коллизия этой модели — переход как по щелчку, иначе подсказка, какую модель открыть.
+    /// </summary>
+    public async Task PasteAsync(string? text)
+    {
+        Status = "";
+        if (ClashLink.Parse(text) is not { } link)
+        {
+            Status = "В буфере нет номера коллизии или ссылки на неё";
+            return;
+        }
+
+        if (Screen != PaneScreen.Ready || Model is not { } model) return;
+        var number = link.Number;
+        Guid? id = link.CollisionId;
+        if (id is { } collisionId)
+        {
+            CollisionRowDto collision;
+            try
+            {
+                collision = (await _api.CardAsync(collisionId, CancellationToken.None)).Collision;
+            }
+            catch (Exception exception) when (exception is ToadFlowUnavailableException or ToadFlowRequestException)
+            {
+                Status = exception.Message;
+                return;
+            }
+
+            if (collision.ModelA != model.Key && collision.ModelB != model.Key)
+            {
+                Status = $"Коллизия №{collision.Number} в моделях «{collision.ModelNameA}» и «{collision.ModelNameB}» — откройте одну из них";
+                return;
+            }
+
+            number = collision.Number;
+        }
+
+        Search = number!.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        await ApplyFilters();
+        var item = Items.FirstOrDefault(i => id is { } wanted ? i.Row.Collision.Id == wanted : i.Number == number);
+        if (item is null)
+        {
+            Status = $"Коллизии №{number} нет в списке этой модели с выбранными фильтрами";
+            return;
+        }
+
+        NavigateRequested?.Invoke(this, item.Row);
+        await OpenAsync(item);
+    }
+
+    /// <summary>Отметка просмотра в фоне: ошибка сети не мешает карточке, точка у строки остаётся до следующего раза.</summary>
+    private async Task MarkSeenAsync(CollisionItemViewModel item)
+    {
+        try
+        {
+            await _api.SeenAsync(item.Row.Collision.Id, CancellationToken.None);
+            item.Unseen = false;
+        }
+        catch (Exception)
+        {
+            // не отметилось — коллизия останется «новой для меня»
+        }
     }
 
     private async Task<NavigateResult?> ShowInRevitAsync(ModelCollisionRow row)
@@ -297,7 +384,17 @@ public sealed partial class PaneViewModel : ObservableObject
 
             SelectedItem = state.Selected is { } selected ? Items.FirstOrDefault(i => i.Row.Collision.Id == selected.Collision.Id) : null;
             HasMore = state.HasMore;
-            Counters = $"мне править {state.Mine}, взяла другая сторона {state.Other}, новых с прошлого захода {state.NewSinceVisit}";
+            // Новый сервер считает «новые для меня» по отметкам просмотра; старый — только «новых с прошлого захода».
+            if (state.NewForMe is { } fresh)
+            {
+                Counters = $"мне править {state.Mine} · взяла другая сторона {state.Other}";
+                NewForMe = $"новые для меня {fresh}";
+            }
+            else
+            {
+                Counters = $"мне править {state.Mine}, взяла другая сторона {state.Other}, новых с прошлого захода {state.NewSinceVisit}";
+                NewForMe = null;
+            }
 
             StatusOptions = state.Facets.Statuses.Select(f => new FilterOption(f.Value, $"{f.Label} ({f.Count})")).ToList();
             PairOptions = [new FilterOption(null, "Все пары"), ..state.Facets.Pairs.Select(f => new FilterOption(f.Value, $"{f.Label} ({f.Count})"))];
@@ -315,6 +412,7 @@ public sealed partial class PaneViewModel : ObservableObject
         var quiet = _quiet;
         _quiet = true;
         (StatusFilter, GroupFilter, PairFilter, LevelFilter, Search) = (query.Status, query.Group, query.Pair, query.Level, query.Search ?? "");
+        NewForMeActive = query.Since == "unseen";
         _quiet = quiet;
     }
 
