@@ -7,6 +7,9 @@ public class ThumbnailCacheTests
 {
     private static readonly Guid Id = Guid.Parse("11111111-2222-3333-4444-555555555555");
 
+    /// <summary>Подпись PNG и несколько байт: на диск кладутся и с диска читаются только такие.</summary>
+    private static byte[] Png(params byte[] tail) => [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, ..tail];
+
     [Test]
     public async Task Thumbnails_SecondRequest_FromMemory()
     {
@@ -29,18 +32,18 @@ public class ThumbnailCacheTests
     public async Task Thumbnails_FromDisk_AfterRestart()
     {
         using var temp = new TempFolder();
-        await new ThumbnailCache(temp.Path, (_, _, _) => Task.FromResult(new byte[] { 1, 2 })).GetAsync(Id, "v1", CancellationToken.None);
+        await new ThumbnailCache(temp.Path, (_, _, _) => Task.FromResult(Png(1, 2))).GetAsync(Id, "v1", CancellationToken.None);
         File.Exists(Path.Combine(temp.Path, $"{Id:N}_v1.png")).ShouldBeTrue();
 
         var loads = 0;
         var restarted = new ThumbnailCache(temp.Path, (_, _, _) =>
         {
             loads++;
-            return Task.FromResult(new byte[] { 9 });
+            return Task.FromResult(Png(9));
         });
 
-        (await restarted.GetAsync(Id, "v1", CancellationToken.None)).ShouldBe([1, 2]);
-        (await restarted.GetAsync(Id, "v2", CancellationToken.None)).ShouldBe([9]); // новая версия картинки — заново
+        (await restarted.GetAsync(Id, "v1", CancellationToken.None)).ShouldBe(Png(1, 2));
+        (await restarted.GetAsync(Id, "v2", CancellationToken.None)).ShouldBe(Png(9)); // новая версия картинки — заново
         loads.ShouldBe(1);
     }
 
@@ -110,5 +113,41 @@ public class ThumbnailCacheTests
 
         File.Exists(old).ShouldBeFalse();
         File.Exists(fresh).ShouldBeTrue();
+    }
+
+    [Test]
+    public async Task Thumbnails_Memory_KeepsOnlyRecent()
+    {
+        using var temp = new TempFolder();
+        var loads = new List<Guid>();
+        var cache = new ThumbnailCache(temp.Path, (id, _, _) =>
+        {
+            loads.Add(id);
+            return Task.FromResult(new byte[] { 1 }); // не PNG — на диск не ляжет, повтор только из памяти или с сервера
+        }, capacity: 2);
+        var (a, b, c) = (Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
+
+        await cache.GetAsync(a, "v", CancellationToken.None);
+        await cache.GetAsync(b, "v", CancellationToken.None);
+        await cache.GetAsync(a, "v", CancellationToken.None); // a — свежая
+        await cache.GetAsync(c, "v", CancellationToken.None); // вытесняет b
+        await cache.GetAsync(a, "v", CancellationToken.None);
+        await cache.GetAsync(b, "v", CancellationToken.None);
+
+        loads.ShouldBe([a, b, c, b]);
+    }
+
+    [Test]
+    public async Task Thumbnails_BrokenFileOnDisk_Reloaded()
+    {
+        using var temp = new TempFolder();
+        var file = Path.Combine(temp.Path, $"{Id:N}_v1.png");
+        await File.WriteAllBytesAsync(file, [1, 2, 3]); // недописанный файл после сбоя
+        var cache = new ThumbnailCache(temp.Path, (_, _, _) => Task.FromResult(Png(5)));
+
+        (await cache.GetAsync(Id, "v1", CancellationToken.None)).ShouldBe(Png(5));
+
+        (await File.ReadAllBytesAsync(file)).ShouldBe(Png(5));
+        Directory.GetFiles(temp.Path).ShouldBe([file]); // временного файла не осталось
     }
 }

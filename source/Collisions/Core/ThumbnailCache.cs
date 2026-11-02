@@ -1,44 +1,74 @@
-using System.Collections.Concurrent;
 using System.IO;
 
 namespace Collisions.Core;
 
 /// <summary>
 ///     Картинки коллизий: память, потом диск (<c>{id:N}_{версия}.png</c>), потом сервер. Одновременно грузится не больше
-///     <c>parallel</c> картинок, а одна и та же картинка — один раз, сколько бы строк её ни ждали.
+///     <c>parallel</c> картинок, а одна и та же картинка — один раз, сколько бы строк её ни ждали. В памяти — только
+///     <c>capacity</c> последних картинок: остальные при следующем показе читаются с диска.
 /// </summary>
 public sealed class ThumbnailCache
 {
+    private static readonly byte[] PngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+
     public static string DefaultFolder { get; } =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ToadTools", "Clash", "images");
 
     private readonly string _folder;
     private readonly Func<Guid, string, CancellationToken, Task<byte[]>> _load;
     private readonly SemaphoreSlim _slots;
-    private readonly ConcurrentDictionary<string, Lazy<Task<byte[]>>> _items = new();
+    private readonly int _capacity;
+    private readonly object _gate = new();
 
-    public ThumbnailCache(string folder, Func<Guid, string, CancellationToken, Task<byte[]>> load, int parallel = 4)
+    // Последние запрошенные — в начале списка; при переполнении уходит хвост.
+    private readonly Dictionary<string, LinkedListNode<Entry>> _items = new();
+    private readonly LinkedList<Entry> _recent = new();
+
+    public ThumbnailCache(string folder, Func<Guid, string, CancellationToken, Task<byte[]>> load, int parallel = 4, int capacity = 200)
     {
         _folder = folder;
         _load = load;
         _slots = new SemaphoreSlim(parallel, parallel);
+        _capacity = Math.Max(1, capacity);
     }
 
     /// <remarks>Загрузку не отменяет отмена одного ждущего: картинка нужна и другим строкам; <paramref name="ct" /> прерывает только ожидание.</remarks>
     public Task<byte[]> GetAsync(Guid id, string version, CancellationToken ct)
     {
         var key = $"{id:N}_{Safe(version)}";
-        var item = _items.GetOrAdd(key, k => new Lazy<Task<byte[]>>(() => LoadAsync(id, version, k)));
-        var task = item.Value;
+        Entry entry;
+        lock (_gate)
+        {
+            if (_items.TryGetValue(key, out var node))
+            {
+                _recent.Remove(node);
+                _recent.AddFirst(node);
+                entry = node.Value;
+            }
+            else
+            {
+                entry = new Entry(key);
+                _items[key] = _recent.AddFirst(entry);
+                if (_items.Count > _capacity)
+                {
+                    // Вытесненная, если ещё грузится, догрузится для тех, кто её ждёт; новый запрос прочтёт её с диска.
+                    var oldest = _recent.Last!;
+                    _recent.RemoveLast();
+                    _items.Remove(oldest.Value.Key);
+                }
+            }
+        }
+
+        var task = entry.Start(() => LoadAsync(id, version, entry));
         return ct.CanBeCanceled ? WaitAsync(task, ct) : task;
     }
 
-    /// <summary>Удаляет файлы кеша старше <paramref name="olderThan" />.</summary>
+    /// <summary>Удаляет файлы кеша старше <paramref name="olderThan" /> и брошенные недописанные файлы.</summary>
     public void Prune(TimeSpan olderThan)
     {
         if (!Directory.Exists(_folder)) return;
         var before = DateTime.UtcNow - olderThan;
-        foreach (var file in Directory.EnumerateFiles(_folder, "*.png"))
+        foreach (var file in Directory.EnumerateFiles(_folder, "*.png").Concat(Directory.EnumerateFiles(_folder, "*.tmp")))
         {
             try
             {
@@ -50,21 +80,12 @@ public sealed class ThumbnailCache
         }
     }
 
-    private async Task<byte[]> LoadAsync(Guid id, string version, string key)
+    private async Task<byte[]> LoadAsync(Guid id, string version, Entry entry)
     {
         try
         {
-            var file = Path.Combine(_folder, key + ".png");
-            if (File.Exists(file))
-            {
-                try
-                {
-                    return File.ReadAllBytes(file);
-                }
-                catch (IOException)
-                {
-                }
-            }
+            var file = Path.Combine(_folder, entry.Key + ".png");
+            if (ReadFile(file) is { } cached) return cached;
 
             await _slots.WaitAsync().ConfigureAwait(false);
             byte[] bytes;
@@ -77,23 +98,69 @@ public sealed class ThumbnailCache
                 _slots.Release();
             }
 
-            try
-            {
-                Directory.CreateDirectory(_folder);
-                File.WriteAllBytes(file, bytes);
-            }
-            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
-            {
-            }
-
+            if (IsPng(bytes)) WriteFile(file, bytes);
             return bytes;
         }
         catch
         {
-            _items.TryRemove(key, out _); // не получилось — в следующий раз попробуем снова
+            Forget(entry); // не получилось — в следующий раз попробуем снова
             throw;
         }
     }
+
+    /// <summary>Файл с диска; повреждённый (не PNG — например, недописанный при сбое) удаляется, и картинка грузится заново.</summary>
+    private static byte[]? ReadFile(string file)
+    {
+        try
+        {
+            if (!File.Exists(file)) return null;
+            var bytes = File.ReadAllBytes(file);
+            if (IsPng(bytes)) return bytes;
+            File.Delete(file);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+        }
+
+        return null;
+    }
+
+    /// <summary>Сначала во временный файл, потом под своё имя: другой Revit или сбой не оставят недописанный PNG.</summary>
+    private void WriteFile(string file, byte[] bytes)
+    {
+        var temp = $"{file}.{Guid.NewGuid():N}.tmp";
+        try
+        {
+            Directory.CreateDirectory(_folder);
+            File.WriteAllBytes(temp, bytes);
+            if (File.Exists(file)) File.Delete(file);
+            File.Move(temp, file);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            try
+            {
+                File.Delete(temp);
+            }
+            catch (Exception cleanup) when (cleanup is IOException or UnauthorizedAccessException)
+            {
+            }
+        }
+    }
+
+    private void Forget(Entry entry)
+    {
+        lock (_gate)
+        {
+            if (_items.TryGetValue(entry.Key, out var node) && ReferenceEquals(node.Value, entry))
+            {
+                _recent.Remove(node);
+                _items.Remove(entry.Key);
+            }
+        }
+    }
+
+    private static bool IsPng(byte[] bytes) => bytes.Length > PngSignature.Length && PngSignature.SequenceEqual(bytes.Take(PngSignature.Length));
 
     private static async Task<byte[]> WaitAsync(Task<byte[]> task, CancellationToken ct)
     {
@@ -103,4 +170,18 @@ public sealed class ThumbnailCache
     }
 
     private static string Safe(string version) => string.Concat(version.Where(c => char.IsLetterOrDigit(c) || c is '-' or '_'));
+
+    /// <summary>Одна картинка: загрузка начинается при первом запросе и одна на всех ждущих.</summary>
+    private sealed class Entry(string key)
+    {
+        private Lazy<Task<byte[]>>? _task;
+
+        public string Key => key;
+
+        public Task<byte[]> Start(Func<Task<byte[]>> load)
+        {
+            Interlocked.CompareExchange(ref _task, new Lazy<Task<byte[]>>(load), null);
+            return _task!.Value;
+        }
+    }
 }
