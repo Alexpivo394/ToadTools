@@ -88,9 +88,10 @@ public sealed class ToadFlowSender(CheckerSettings settings)
                 error = SignInAgain;
                 break;
             }
-            catch (ToadFlowRequestException exception) when (exception.Status == 403)
+            catch (ToadFlowRequestException exception) when (exception.Status == 403 && exception.Message == ToadFlowClient.NotEnoughRights)
             {
-                // Роли не положено: очередь не уйдёт и позже, поэтому сбрасывается, а не копится.
+                // Отказ без текста — роли не положено: очередь не уйдёт и позже, поэтому сбрасывается, а не копится. Отказ с
+                // текстом сервера (другая причина) очередь не трогает — его покажет ветка ниже.
                 foreach (var pending in Directory.GetFiles(Outbox, "*.json")) File.Delete(pending);
                 error = NotEnoughRights;
                 break;
