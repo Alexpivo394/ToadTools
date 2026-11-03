@@ -125,21 +125,30 @@ public sealed class ToadFlowClient
         return connection;
     }
 
-    /// <summary>Отзывает токен этого компьютера на сервере и стирает его у себя в любом случае.</summary>
-    /// <returns>true — сервер отозвал токен (или он уже не действовал); false — сервер недоступен, токен остался в его списке.</returns>
-    public async Task<bool> SignOutAsync(CancellationToken ct)
+    /// <summary>
+    ///     Отзывает токен этого компьютера на сервере и стирает его у себя в любом случае. Токен, перенесённый из настроек ParamChecker
+    ///     (<see cref="ToadFlowConnection.TokenId" /> пуст), человек создал сам в веб-интерфейсе и мог использовать ещё где-то: он только
+    ///     стирается здесь, на сервере остаётся.
+    /// </summary>
+    public async Task<SignOutResult> SignOutAsync(CancellationToken ct)
     {
         var connection = _store.Load();
-        if (connection is null) return true;
+        if (connection is null) return SignOutResult.Revoked;
+        if (connection.TokenId == Guid.Empty)
+        {
+            _store.Clear();
+            return SignOutResult.KeptOnServer;
+        }
+
         try
         {
             using var request = Request(connection, HttpMethod.Delete, "/api/auth/tokens/current");
             using var response = await SendRawAsync(request, ct).ConfigureAwait(false);
-            return response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.Unauthorized;
+            return response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.Unauthorized ? SignOutResult.Revoked : SignOutResult.ServerDown;
         }
         catch (Exception exception) when (exception is ToadFlowUnavailableException or UriFormatException)
         {
-            return false;
+            return SignOutResult.ServerDown;
         }
         finally
         {

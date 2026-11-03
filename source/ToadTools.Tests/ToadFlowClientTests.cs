@@ -258,7 +258,7 @@ public class ToadFlowClientTests
         var (client, store, http, temp) = Create((_, _) => new HttpResponseMessage(HttpStatusCode.NoContent), Connected());
         using var _ = temp;
 
-        (await client.SignOutAsync(CancellationToken.None)).ShouldBeTrue();
+        (await client.SignOutAsync(CancellationToken.None)).ShouldBe(SignOutResult.Revoked);
 
         var request = http.Requests.ShouldHaveSingleItem().Request;
         (request.Method, request.RequestUri!.ToString()).ShouldBe((HttpMethod.Delete, "http://toadflow:8080/api/auth/tokens/current"));
@@ -272,7 +272,7 @@ public class ToadFlowClientTests
         var (client, store, _, temp) = Create((_, _) => throw new HttpRequestException("Сервер не отвечает"), Connected());
         using var _ = temp;
 
-        (await client.SignOutAsync(CancellationToken.None)).ShouldBeFalse();
+        (await client.SignOutAsync(CancellationToken.None)).ShouldBe(SignOutResult.ServerDown);
 
         store.Load().ShouldBeNull();
     }

@@ -28,3 +28,16 @@ public static class ToadFlowErrors
         _ => $"Непредвиденная ошибка: {exception.Message}"
     };
 }
+
+/// <summary>Чем кончился выход.</summary>
+public enum SignOutResult
+{
+    /// <summary>Сервер отозвал токен (или он уже не действовал).</summary>
+    Revoked,
+
+    /// <summary>Сервер недоступен: токен остался в его списке.</summary>
+    ServerDown,
+
+    /// <summary>Токен перенесён из ParamChecker — его создал человек, он остался на сервере.</summary>
+    KeptOnServer
+}

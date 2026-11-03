@@ -10,13 +10,17 @@ namespace ToadTools.Connection;
 public static class ConnectionDialog
 {
     /// <param name="owner">Окно-владелец: главное окно Revit или окно плагина.</param>
-    /// <returns>true — после закрытия окна подключение есть.</returns>
+    /// <returns>
+    ///     true — в этом окне выполнен вход: тот, кто открыл окно, перечитывает данные. Просто закрытое окно (в том числе с устаревшим
+    ///     подключением) — false, иначе панель снова получила бы отказ сервера.
+    /// </returns>
     public static bool Show(IntPtr owner)
     {
-        var window = new ConnectionWindow(new ConnectionViewModel(ToadFlowClient.Shared, ConnectionStore.Shared));
+        var model = new ConnectionViewModel(ToadFlowClient.Shared, ConnectionStore.Shared);
+        var window = new ConnectionWindow(model);
         if (owner != IntPtr.Zero) _ = new WindowInteropHelper(window) { Owner = owner };
         window.ShowDialog();
-        return ConnectionStore.Shared.Load() is not null;
+        return model.SignedIn && ConnectionStore.Shared.Load() is not null;
     }
 
     /// <summary>Подключение есть — сразу true; нет — спрашивает «{reason} — войти?» и открывает окно.</summary>

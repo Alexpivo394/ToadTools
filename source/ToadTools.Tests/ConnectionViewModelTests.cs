@@ -110,6 +110,58 @@ public class ConnectionViewModelTests
         store.Load().ShouldNotBeNull(); // стирает только «Выйти»
     }
 
+    /// <summary>Токен протух: окно сразу в режиме входа — адрес и логин заполнены, нужен только пароль.</summary>
+    [Test]
+    public async Task Check_401_SwitchesToSignInFormWithAddressAndLogin()
+    {
+        var (model, _, temp) = Create(_ => new HttpResponseMessage(HttpStatusCode.Unauthorized),
+            new ToadFlowConnection("http://toadflow", "ivanov", "Иванов И. И.", "Designer", Guid.NewGuid(), "tf_x"));
+        using var _ = temp;
+        model.IsConnected.ShouldBeTrue();
+
+        await model.CheckAsync();
+
+        model.IsConnected.ShouldBeFalse();
+        model.Status.ShouldBeNull();
+        (model.Url, model.Login).ShouldBe(("http://toadflow", "ivanov"));
+        model.SignedIn.ShouldBeFalse();
+    }
+
+    [Test]
+    public async Task Dialog_ReturnsTrueOnlyWhenSignedInThisWindow()
+    {
+        var (connected, _, temp) = Create(_ => FakeHttp.Ok("{}"),
+            new ToadFlowConnection("http://toadflow", "ivanov", "Иванов И. И.", "Designer", Guid.NewGuid(), "tf_x"));
+        using var _ = temp;
+        connected.SignedIn.ShouldBeFalse(); // окно открыли и закрыли — данные перечитывать незачем
+
+        var (model, _, temp2) = Create(request => FakeHttp.Ok(request.RequestUri!.AbsolutePath == "/api/auth/login" ? LoginJson : TokenJson));
+        using var __ = temp2;
+        (model.Url, model.Login, model.Password) = ("toadflow:8080", "ivanov", "secret");
+        await model.SignInCommand.ExecuteAsync(null);
+
+        model.SignedIn.ShouldBeTrue();
+    }
+
+    /// <summary>Токен перенесён из ParamChecker (создан человеком в вебе): «Выйти» стирает его только здесь.</summary>
+    [Test]
+    public async Task SignOut_MigratedToken_LocalOnly_ServerTokenKept()
+    {
+        var calls = 0;
+        var (model, store, temp) = Create(_ =>
+        {
+            calls++;
+            return new HttpResponseMessage(HttpStatusCode.NoContent);
+        }, new ToadFlowConnection("http://toadflow", "ivanov", "Иванов И. И.", "Designer", Guid.Empty, "tf_personal"));
+        using var _ = temp;
+
+        await model.SignOutCommand.ExecuteAsync(null);
+
+        calls.ShouldBe(0);
+        store.Load().ShouldBeNull();
+        model.Status.ShouldBe("Вы вышли. Токен остался на сервере — удалите его в «Настройки → Токены доступа», если он больше не нужен");
+    }
+
     [Test]
     public async Task ViewModel_Check_CannotSave_ShowsError()
     {

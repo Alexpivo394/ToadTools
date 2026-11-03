@@ -19,6 +19,9 @@ public sealed partial class ConnectionViewModel : ObservableObject
     private string _password = "";
 
     [ObservableProperty] private bool _isConnected;
+
+    /// <summary>Вход выполнен в этом окне — тот, кто открыл окно, может перечитать данные.</summary>
+    public bool SignedIn { get; private set; }
     [ObservableProperty] private string? _status;
     [ObservableProperty] private string? _error;
 
@@ -43,6 +46,7 @@ public sealed partial class ConnectionViewModel : ObservableObject
         {
             var connection = await _client.SignInAsync(Url, Login, Password, CancellationToken.None);
             Password = "";
+            SignedIn = true;
             Show(connection);
         }
         catch (Exception exception)
@@ -64,9 +68,15 @@ public sealed partial class ConnectionViewModel : ObservableObject
         Error = null;
         try
         {
-            var revoked = await _client.SignOutAsync(CancellationToken.None);
+            var result = await _client.SignOutAsync(CancellationToken.None);
             IsConnected = false;
-            Status = revoked ? "Вы вышли" : "Вы вышли. Сервер недоступен — токен останется в списке токенов на сервере";
+            Status = result switch
+            {
+                SignOutResult.KeptOnServer =>
+                    "Вы вышли. Токен остался на сервере — удалите его в «Настройки → Токены доступа», если он больше не нужен",
+                SignOutResult.ServerDown => "Вы вышли. Сервер недоступен — токен останется в списке токенов на сервере",
+                _ => "Вы вышли"
+            };
         }
         catch (Exception exception)
         {
@@ -92,6 +102,13 @@ public sealed partial class ConnectionViewModel : ObservableObject
                 _store.Save(connection);
                 Show(connection);
             }
+        }
+        catch (ToadFlowAuthRequiredException exception)
+        {
+            // Токен отозван или пользователь отключён: окно сразу показывает форму входа с адресом и логином, а не «Вы вошли как …».
+            IsConnected = false;
+            Status = null;
+            Error = exception.Message;
         }
         catch (Exception exception)
         {
