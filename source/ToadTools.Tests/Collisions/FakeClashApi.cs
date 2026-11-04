@@ -4,7 +4,7 @@ using ToadTools.Connection;
 namespace ToadTools.Tests.Collisions;
 
 /// <summary>Подставной сервер коллизий: строки списка, запросы и действия запоминаются.</summary>
-public sealed class FakeClashApi : IClashApi
+internal sealed class FakeClashApi : IClashApi
 {
     public List<ModelCollisionRow> Rows { get; set; } = [];
     public int Mine { get; set; }

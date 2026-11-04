@@ -6,7 +6,7 @@ using ToadTools.Connection;
 namespace ToadTools.Tests.Collisions;
 
 /// <summary>Подставной Revit: открытый документ и переходы к коллизиям.</summary>
-public sealed class FakeRevit : IRevitBridge
+internal sealed class FakeRevit : IRevitBridge
 {
     public (string? CentralPath, string FileName)? Document { get; set; } = ("RSN://srv/DON/DON_OV.rvt", "DON_OV.rvt");
     public List<NavigateRequest> Shown { get; } = [];

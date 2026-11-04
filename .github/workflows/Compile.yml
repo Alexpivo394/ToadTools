@@ -24,6 +24,13 @@ jobs:
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Build.props', 'Directory.Packages.props') }}
           restore-keys: ${{ runner.os }}-nuget-
 
+      # Тесты подключения и плагина «Коллизии» без Revit: под .NET 10 (Revit 2025+) и .NET Framework 4.8 (Revit 2020–2024)
+      - name: Test ToadTools (net10.0)
+        run: dotnet run --project source/ToadTools.Tests -c Release -f net10.0-windows
+
+      - name: Test ToadTools (net48)
+        run: dotnet run --project source/ToadTools.Tests -c Release -f net48
+
       - name: Compile solution
         run: dotnet run -c Release
         working-directory: "build"
