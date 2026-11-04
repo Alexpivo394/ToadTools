@@ -1,6 +1,13 @@
 using System.IO;
+using ToadTools.Connection;
 
 namespace Collisions.Core;
+
+/// <summary>Картинка коллизии или почему её нет: текст сервера («выгрузка модели удалена», «элемента нет в выгрузке») или «нет картинки».</summary>
+public sealed record ThumbnailResult(byte[]? Image, string? Reason)
+{
+    public const string NoImage = "нет картинки";
+}
 
 /// <summary>
 ///     Картинки коллизий: память, потом диск (<c>{id:N}_{версия}.png</c>), потом сервер. Одновременно грузится не больше
@@ -62,6 +69,32 @@ public sealed class ThumbnailCache
         var task = entry.Start(() => LoadAsync(id, version, entry));
         return ct.CanBeCanceled ? WaitAsync(task, ct) : task;
     }
+
+    /// <summary>
+    ///     Картинка или причина отказа — без исключений: строка списка и карточка показывают причину вместо вечного
+    ///     «рисуется…». Отказ не запоминается: следующий запрос (кнопка «Обновить») попробует снова.
+    /// </summary>
+    public async Task<ThumbnailResult> TryGetAsync(Guid id, string version, CancellationToken ct)
+    {
+        try
+        {
+            return new ThumbnailResult(await GetAsync(id, version, ct).ConfigureAwait(false), null);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            return new ThumbnailResult(null, Reason(exception));
+        }
+    }
+
+    /// <summary>Причина для человека: текст сервера, иначе «нет картинки».</summary>
+    public static string Reason(Exception exception) =>
+        exception is ToadFlowRequestException { FromServer: true } refused && !string.IsNullOrWhiteSpace(refused.Message)
+            ? refused.Message
+            : ThumbnailResult.NoImage;
 
     /// <summary>Удаляет файлы кеша старше <paramref name="olderThan" /> и брошенные недописанные файлы.</summary>
     public void Prune(TimeSpan olderThan)

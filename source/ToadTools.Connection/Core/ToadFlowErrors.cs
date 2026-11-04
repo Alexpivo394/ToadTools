@@ -10,6 +10,9 @@ public sealed class ToadFlowUnavailableException(string message, Exception? inne
 public sealed class ToadFlowRequestException(int status, string message, Exception? inner = null) : Exception(message, inner)
 {
     public int Status { get; } = status;
+
+    /// <summary>Текст — из ответа сервера; false — сервер ответил без текста, сообщение составлено клиентом.</summary>
+    public bool FromServer { get; set; } = true;
 }
 
 /// <summary>Вход не удался; текст — для человека.</summary>

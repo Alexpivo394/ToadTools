@@ -14,6 +14,11 @@ public sealed partial class CollisionItemViewModel(ModelCollisionRow row, Thumbn
     [ObservableProperty] private byte[]? _thumbnail;
     [ObservableProperty] private bool _thumbnailFailed;
 
+    /// <summary>Подпись на месте картинки: пока грузится — «картинка рисуется…», не получилась — причина.</summary>
+    [ObservableProperty] private string _thumbnailText = Drawing;
+
+    public const string Drawing = "картинка рисуется…";
+
     /// <summary>Новая для меня: я её ещё не открывал — точка у строки; гаснет, когда карточка открыта.</summary>
     [ObservableProperty] private bool _unseen = row.Unseen;
 
@@ -51,14 +56,11 @@ public sealed partial class CollisionItemViewModel(ModelCollisionRow row, Thumbn
 
     private async Task LoadThumbnailAsync()
     {
-        try
-        {
-            Thumbnail = await thumbnails.GetAsync(row.Collision.Id, row.Collision.ImageVersion, CancellationToken.None);
-        }
-        catch (Exception)
-        {
-            ThumbnailFailed = true; // заглушка остаётся; при «Обновить» строка создаётся заново и попробует ещё раз
-        }
+        // Не получилась — причина вместо «рисуется…»; при «Обновить» строка создаётся заново и попробует ещё раз.
+        var result = await thumbnails.TryGetAsync(row.Collision.Id, row.Collision.ImageVersion, CancellationToken.None);
+        Thumbnail = result.Image;
+        ThumbnailFailed = result.Image is null;
+        ThumbnailText = result.Image is null ? result.Reason ?? ThumbnailResult.NoImage : "";
     }
 
     /// <summary>Подписи статусов — как в веб-отчёте.</summary>

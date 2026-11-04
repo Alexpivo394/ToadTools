@@ -51,7 +51,11 @@ public sealed class FakeClashApi : IClashApi
         return Card?.Invoke(id) ?? new CollisionCardDto(Rows.Single(r => r.Collision.Id == id).Collision, []);
     });
 
-    public Task<byte[]> ImageAsync(Guid id, string version, CancellationToken ct) => Run(() => new byte[] { 1 });
+    /// <summary>Картинку сервер не отдал: это исключение; null — отдаёт.</summary>
+    public Exception? ImageFail { get; set; }
+
+    public Task<byte[]> ImageAsync(Guid id, string version, CancellationToken ct) =>
+        ImageFail is { } fail ? Task.FromException<byte[]>(fail) : Run(() => new byte[] { 1 });
 
     public Task VisitAsync(CancellationToken ct) => Run(() => Visits++);
 

@@ -171,7 +171,7 @@ public class PaneViewModelTests
         await s.Model.ActivateAsync();
 
         s.Model.Items.Select(i => (i.Number, i.Group)).ShouldBe([(2, "Мои и общие"), (5, "Мои и общие"), (1, "Взяла другая сторона")]);
-        s.Model.Counters.ShouldBe("мне править 2, взяла другая сторона 1, новых с прошлого захода 3");
+        (s.Model.MineCounter, s.Model.OtherCounter, s.Model.Counters).ShouldBe(("Мне править 2", "Другая сторона 1", "новых с прошлого захода 3"));
         var other = s.Model.Items[2];
         other.Own.ShouldBe("Воздуховоды · Воздуховод · 500x300 · 100001");
         other.Other.ShouldBe("DON_KR.rvt: Стены · Стена · 200 · 1");
@@ -490,8 +490,8 @@ public class PaneViewModelTests
         (s.Api.Mine, s.Api.Other, s.Api.NewForMe) = (2, 0, 1);
         await s.Model.ActivateAsync();
 
-        s.Model.Counters.ShouldBe("мне править 2 · взяла другая сторона 0");
-        s.Model.NewForMe.ShouldBe("новые для меня 1");
+        (s.Model.MineCounter, s.Model.OtherCounter, s.Model.Counters).ShouldBe(("Мне править 2", "Другая сторона 0", ""));
+        s.Model.NewForMe.ShouldBe("Новые для меня 1");
 
         await s.Model.NewForMeFilterCommand.ExecuteAsync(null);
 
@@ -515,7 +515,7 @@ public class PaneViewModelTests
 
         await s.Model.ActivateAsync();
 
-        s.Model.Counters.ShouldBe("мне править 1, взяла другая сторона 0, новых с прошлого захода 3");
+        s.Model.Counters.ShouldBe("новых с прошлого захода 3");
         s.Model.NewForMe.ShouldBeNull();
     }
 
@@ -614,5 +614,68 @@ public class PaneViewModelTests
         await s.Model.OpenAsync(s.Model.Items[0]);
 
         (s.Model.Card!.CanFixed, s.Model.Card.CanTake, s.Model.Card.CanNote).ShouldBe((false, false, true));
+    }
+
+    [Test]
+    public async Task Counters_AreToggles_MineOtherNew()
+    {
+        using var s = Create();
+        s.Api.Resolve = (_, _) => new ModelResolve("path", [Match("k1")]);
+        s.Api.Rows = [FakeClashApi.Row(1, unseen: true), FakeClashApi.Row(2, mine: false)];
+        (s.Api.Mine, s.Api.Other, s.Api.NewForMe) = (1, 1, 1);
+        await s.Model.ActivateAsync();
+        (s.Model.MineCounter, s.Model.OtherCounter, s.Model.NewForMe).ShouldBe(("Мне править 1", "Другая сторона 1", "Новые для меня 1"));
+
+        await s.Model.MineFilterCommand.ExecuteAsync(null);
+        (s.Api.PageRequests.Last().Query.Group, s.Model.MineActive, s.Model.OtherActive).ShouldBe(("mine", true, false));
+
+        await s.Model.OtherFilterCommand.ExecuteAsync(null);
+        (s.Api.PageRequests.Last().Query.Group, s.Model.MineActive, s.Model.OtherActive).ShouldBe(("other", false, true));
+
+        await s.Model.OtherFilterCommand.ExecuteAsync(null);
+        (s.Api.PageRequests.Last().Query.Group, s.Model.OtherActive).ShouldBe(("all", false));
+
+        await s.Model.NewForMeFilterCommand.ExecuteAsync(null);
+        s.Api.PageRequests.Last().Query.Since.ShouldBe("unseen");
+        s.Model.NewForMeActive.ShouldBeTrue();
+    }
+
+    [Test]
+    public async Task Thumbnail_410_ShowsServerReason_NotDrawing()
+    {
+        using var s = Create();
+        s.Api.Resolve = (_, _) => new ModelResolve("path", [Match("k1")]);
+        s.Api.Rows = [FakeClashApi.Row(1)];
+        s.Api.ImageFail = new ToadFlowRequestException(410, "Выгрузка модели удалена — картинку не нарисовать");
+        await s.Model.ActivateAsync();
+        var item = s.Model.Items[0];
+        item.ThumbnailText.ShouldBe(CollisionItemViewModel.Drawing);
+
+        _ = item.Image; // строка показалась на экране — картинка запрошена
+        await WaitUntil(() => item.ThumbnailFailed);
+
+        item.ThumbnailText.ShouldBe("Выгрузка модели удалена — картинку не нарисовать");
+    }
+
+    [Test]
+    public async Task Thumbnail_NoServerText_SaysNoImage()
+    {
+        using var s = Create();
+        s.Api.Resolve = (_, _) => new ModelResolve("path", [Match("k1")]);
+        s.Api.Rows = [FakeClashApi.Row(1)];
+        s.Api.ImageFail = new ToadFlowRequestException(500, "ToadFlow ответил 500") { FromServer = false };
+        await s.Model.ActivateAsync();
+        var item = s.Model.Items[0];
+
+        _ = item.Image;
+        await WaitUntil(() => item.ThumbnailFailed);
+
+        item.ThumbnailText.ShouldBe(ThumbnailResult.NoImage);
+    }
+
+    private static async Task WaitUntil(Func<bool> done)
+    {
+        for (var i = 0; i < 200 && !done(); i++) await Task.Delay(10);
+        done().ShouldBeTrue();
     }
 }

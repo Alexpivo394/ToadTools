@@ -96,8 +96,14 @@ public sealed partial class PaneViewModel : ObservableObject
     /// <summary>Строка состояния под счётчиками: что случилось со вставленной ссылкой.</summary>
     [ObservableProperty] private string _status = "";
 
-    /// <summary>Кнопка «новые для меня N»; null — сервер без этого счётчика.</summary>
+    /// <summary>Кнопка «Новые для меня N»; null — сервер без этого счётчика.</summary>
     [ObservableProperty] private string? _newForMe;
+
+    /// <summary>Кнопка-счётчик «Мне править N»: включает группу «мои и общие».</summary>
+    [ObservableProperty] private string _mineCounter = "";
+
+    /// <summary>Кнопка-счётчик «Другая сторона N»: включает группу «взяла другая сторона».</summary>
+    [ObservableProperty] private string _otherCounter = "";
 
     [ObservableProperty] private bool _newForMeActive;
 
@@ -470,8 +476,44 @@ public sealed partial class PaneViewModel : ObservableObject
         }
     }
 
+    /// <summary>Счётчик «Мне править» нажат: список — только мои и общие.</summary>
+    public bool MineActive => GroupFilter == "mine";
+
+    /// <summary>Счётчик «Другая сторона» нажат.</summary>
+    public bool OtherActive => GroupFilter == "other";
+
+    /// <summary>«Мне править N»: включить группу «мои и общие» или снять её (все).</summary>
+    [RelayCommand]
+    private Task MineFilter() => ToggleGroup("mine");
+
+    /// <summary>«Другая сторона N»: включить группу «взяла другая сторона» или снять её.</summary>
+    [RelayCommand]
+    private Task OtherFilter() => ToggleGroup("other");
+
+    private Task ToggleGroup(string group)
+    {
+        _quiet = true;
+        try
+        {
+            GroupFilter = GroupFilter == group ? "all" : group;
+        }
+        finally
+        {
+            _quiet = false;
+        }
+
+        return ApplyFilters();
+    }
+
     partial void OnStatusFilterChanged(string? value) => FilterChanged();
-    partial void OnGroupFilterChanged(string? value) => FilterChanged();
+
+    partial void OnGroupFilterChanged(string? value)
+    {
+        OnPropertyChanged(nameof(MineActive));
+        OnPropertyChanged(nameof(OtherActive));
+        FilterChanged();
+    }
+
     partial void OnPairFilterChanged(string? value) => FilterChanged();
     partial void OnLevelFilterChanged(string? value) => FilterChanged();
 
@@ -522,15 +564,18 @@ public sealed partial class PaneViewModel : ObservableObject
 
             SelectedItem = state.Selected is { } selected ? Items.FirstOrDefault(i => i.Row.Collision.Id == selected.Collision.Id) : null;
             HasMore = state.HasMore;
-            // Новый сервер считает «новые для меня» по отметкам просмотра; старый — только «новых с прошлого захода».
+            // Счётчики — кнопки, как в вебе: нажатие включает фильтр. Новый сервер считает «новые для меня» по отметкам
+            // просмотра; у старого — только текст «новых с прошлого захода».
+            MineCounter = $"Мне править {state.Mine}";
+            OtherCounter = $"Другая сторона {state.Other}";
             if (state.NewForMe is { } fresh)
             {
-                Counters = $"мне править {state.Mine} · взяла другая сторона {state.Other}";
-                NewForMe = $"новые для меня {fresh}";
+                Counters = "";
+                NewForMe = $"Новые для меня {fresh}";
             }
             else
             {
-                Counters = $"мне править {state.Mine}, взяла другая сторона {state.Other}, новых с прошлого захода {state.NewSinceVisit}";
+                Counters = $"новых с прошлого захода {state.NewSinceVisit}";
                 NewForMe = null;
             }
 

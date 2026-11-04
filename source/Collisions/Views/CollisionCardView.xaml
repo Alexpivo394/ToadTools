@@ -61,7 +61,11 @@
 
             <Border CornerRadius="4" Margin="0,8,0,0" MinHeight="120" Background="{DynamicResource ControlFillColorSecondaryBrush}">
                 <Grid>
-                    <TextBlock Text="картинка рисуется…" FontSize="11" Opacity="0.6" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="8">
+                        <TextBlock Text="{Binding ImageText}" FontSize="11" Opacity="0.7" TextWrapping="Wrap" TextAlignment="Center" />
+                        <ui:Button Content="Обновить" Command="{Binding RefreshImageCommand}" HorizontalAlignment="Center" Margin="0,6,0,0"
+                                   Visibility="{Binding CanRefreshImage, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
+                    </StackPanel>
                     <Image Source="{Binding Image}" Stretch="Uniform" MaxHeight="320" />
                 </Grid>
             </Border>

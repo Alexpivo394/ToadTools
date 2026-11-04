@@ -220,7 +220,7 @@ public sealed class ToadFlowClient
         var error = ErrorOf(text);
         if (response.StatusCode == HttpStatusCode.Unauthorized) throw new ToadFlowAuthRequiredException();
         if (response.StatusCode == HttpStatusCode.Forbidden && error is null) throw new ToadFlowRequestException(status, NotEnoughRights);
-        throw new ToadFlowRequestException(status, error ?? $"ToadFlow ответил {status}");
+        throw new ToadFlowRequestException(status, error ?? $"ToadFlow ответил {status}") { FromServer = error is not null };
     }
 
     private async Task<HttpResponseMessage> SendRawAsync(HttpRequestMessage request, CancellationToken ct)

@@ -368,4 +368,22 @@ public class CardViewModelTests
         CardViewModel.FixedLabel.ShouldBe("Исправлена (ожидает подтверждения)");
         CollisionItemViewModel.StatusLabel(CollisionStatus.FixedPending).ShouldBe("исправлена (ждёт)");
     }
+
+    [Test]
+    public async Task Card_ImageFailed_ShowsReasonAndRefresh()
+    {
+        var (card, api, _, _, temp) = Create(User(Roles.Designer, "ОВ"));
+        using var _ = temp;
+        api.ImageFail = new ToadFlowRequestException(404, "Элемента нет в выгрузке модели DON_KR.rvt");
+
+        await card.LoadAsync();
+
+        (card.Image, card.ImageText, card.CanRefreshImage).ShouldBe((null, "Элемента нет в выгрузке модели DON_KR.rvt", true));
+
+        api.ImageFail = null;
+        await card.RefreshImageCommand.ExecuteAsync(null);
+
+        card.Image.ShouldBe(new byte[] { 1 });
+        (card.ImageText, card.CanRefreshImage).ShouldBe(("", false));
+    }
 }

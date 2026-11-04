@@ -41,6 +41,12 @@ public sealed partial class CardViewModel : ObservableObject
 
     [ObservableProperty] private CollisionRowDto _collision;
     [ObservableProperty] private byte[]? _image;
+
+    /// <summary>Подпись на месте картинки: «картинка рисуется…», причина отказа или пусто, когда картинка есть.</summary>
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanRefreshImage))] private string _imageText = CollisionItemViewModel.Drawing;
+
+    /// <summary>Картинка не получилась — можно попробовать ещё раз.</summary>
+    public bool CanRefreshImage => Image is null && ImageText != CollisionItemViewModel.Drawing;
     [ObservableProperty] private IReadOnlyList<KeyValuePair<string, string>> _ownParameters = [];
     [ObservableProperty] private IReadOnlyList<KeyValuePair<string, string>> _otherParameters = [];
     [ObservableProperty] private IReadOnlyList<string> _feed = [];
@@ -103,7 +109,7 @@ public sealed partial class CardViewModel : ObservableObject
             OtherParameters = Parameters(_row.Other);
             var image = LoadImageAsync();
             await ReloadAsync();
-            Image = await image;
+            await image;
         }
         catch (Exception exception)
         {
@@ -226,17 +232,20 @@ public sealed partial class CardViewModel : ObservableObject
         new("ID", side.ElementId.ToString())
     ];
 
-    private async Task<byte[]?> LoadImageAsync()
+    /// <summary>Картинка или причина, почему её нет (как в вебе); карточка работает и без картинки.</summary>
+    private async Task LoadImageAsync()
     {
-        try
-        {
-            return await _images.GetAsync(Collision.Id, Collision.ImageVersion, CancellationToken.None);
-        }
-        catch (Exception)
-        {
-            return null; // картинки нет — карточка без неё
-        }
+        ImageText = CollisionItemViewModel.Drawing;
+        var result = await _images.TryGetAsync(Collision.Id, Collision.ImageVersion, CancellationToken.None);
+        Image = result.Image;
+        ImageText = result.Image is null ? $"{result.Reason ?? ThumbnailResult.NoImage}" : "";
     }
+
+    /// <summary>«Обновить» картинку: ещё одна попытка — отказ не запоминается.</summary>
+    [RelayCommand]
+    private Task RefreshImage() => LoadImageAsync();
+
+    partial void OnImageChanged(byte[]? value) => OnPropertyChanged(nameof(CanRefreshImage));
 }
 
 /// <summary>
