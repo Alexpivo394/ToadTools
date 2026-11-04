@@ -6,6 +6,7 @@ using Alexpivo394.Revit.ParamCheck.Reports;
 using Alexpivo394.Revit.ParamCheck.Services;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
+using ToadTools.Connection;
 using ToadTools.UI.Progress;
 using Wpf.Ui.Controls;
 
@@ -165,7 +166,7 @@ public sealed class CheckRunner(UIApplication uiApplication, CheckerSettings set
                 history.Flush(final: true);
             }
 
-            if (_toadFlow.Enabled)
+            if (settings.ToadFlowEnabled)
             {
                 progress.Stage("Отправка итогов в ToadFlow");
                 sent = _toadFlow.Flush();

@@ -1,5 +1,4 @@
 using System.IO;
-using System.Text;
 using Alexpivo394.Revit.ParamCheck.Core;
 using Alexpivo394.Revit.ParamCheck.Profiles;
 using Newtonsoft.Json;
@@ -9,29 +8,29 @@ using ToadTools.Connection;
 
 namespace ParamChecker.Services;
 
-/// <summary>Чем закончилась отправка очереди: сколько ушло, сколько осталось и почему.</summary>
-public sealed record SendResult(int Sent, int Pending, string? Error);
-
 /// <summary>
 ///     Итоги проверенных моделей — в аналитику ToadFlow через общее подключение ToadTools. Каждый итог сначала ложится файлом
-///     в очередь (%AppData%\ToadTools\ParamChecker\outbox), потом очередь отправляется: если сети нет или Revit упадёт, итоги
-///     уйдут при следующей проверке. У каждого итога свой id, поэтому повторная отправка не задвоит проверку на сервере.
+///     в очередь (%AppData%\ToadTools\ParamChecker\outbox), потом очередь отправляется: если сети нет, подключения ещё нет или
+///     Revit упадёт, итоги уйдут при следующей проверке. У каждого итога свой id, поэтому повторная отправка не задвоит проверку
+///     на сервере. Правила очереди — <see cref="LoiOutbox" />.
 /// </summary>
-public sealed class ToadFlowSender(CheckerSettings settings)
+public sealed class ToadFlowSender
 {
-    public const string SignInAgain = "Подключение к ToadFlow устарело — войдите заново (ToadTools → Подключение к ToadFlow)";
-
-    public const string NotEnoughRights = "Недостаточно прав: статистику LOI в ToadFlow отправляют только координаторы и администраторы";
-
-    private static readonly string Outbox =
+    private static readonly string Folder =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ToadTools", "ParamChecker", "outbox");
 
     private static readonly JsonSerializerSettings Json = new() { ContractResolver = new CamelCasePropertyNamesContractResolver() };
 
-    public bool Enabled => settings.ToadFlowEnabled && ConnectionStore.Shared.Load() is not null;
+    private readonly LoiOutbox _outbox;
+
+    public ToadFlowSender(CheckerSettings settings)
+    {
+        _outbox = new LoiOutbox(Folder, () => settings.ToadFlowEnabled, () => ConnectionStore.Shared.Load() is not null,
+            (body, ct) => ToadFlowClient.Shared.PostAsync<JToken>("/api/loi/checks", body, ct));
+    }
 
     /// <summary>Сколько итогов ждут отправки.</summary>
-    public static int PendingCount() => Directory.Exists(Outbox) ? Directory.GetFiles(Outbox, "*.json").Length : 0;
+    public static int PendingCount() => Directory.Exists(Folder) ? Directory.GetFiles(Folder, "*.json").Length : 0;
 
     /// <summary>
     ///     Адрес и токен из настроек прежних версий — один раз в общее подключение. Сервер не ответил — старые поля остаются до
@@ -52,73 +51,17 @@ public sealed class ToadFlowSender(CheckerSettings settings)
         return true;
     }
 
-    /// <summary>Кладёт итог проверенной модели в очередь; непроверенные модели в аналитику не идут.</summary>
+    /// <summary>
+    ///     Кладёт итог проверенной модели в очередь, если отправка включена, — подключение не нужно; непроверенные модели в
+    ///     аналитику не идут.
+    /// </summary>
     public void Enqueue(ModelOutcome outcome, CheckProfile profile)
     {
-        if (!Enabled || outcome.Status != ModelStatus.Checked) return;
-
-        Directory.CreateDirectory(Outbox);
+        if (outcome.Status != ModelStatus.Checked) return;
         var id = Guid.NewGuid();
-        var body = JsonConvert.SerializeObject(new { id, summary = CheckSummaries.From(outcome, ProfileSerializer.Fingerprint(profile)) }, Json);
-        File.WriteAllText(Path.Combine(Outbox, $"{DateTime.UtcNow:yyyyMMddHHmmssfff}_{id:N}.json"), body, new UTF8Encoding(false));
+        _outbox.Enqueue(id, JsonConvert.SerializeObject(new { id, summary = CheckSummaries.From(outcome, ProfileSerializer.Fingerprint(profile)) }, Json));
     }
 
-    /// <summary>
-    ///     Отправляет очередь по порядку. Сеть пропала или сервер недоступен — останавливается, остальное уйдёт в следующий раз;
-    ///     итог, который сервер отверг как неверный, откладывается в outbox\rejected, чтобы не мешать остальным. Отказ по правам
-    ///     (проектировщик, наблюдатель) сбрасывает очередь: отправлять статистику им не положено.
-    /// </summary>
-    public SendResult Flush()
-    {
-        if (!Enabled || !Directory.Exists(Outbox)) return new SendResult(0, PendingCount(), null);
-
-        var sent = 0;
-        string? error = null;
-        foreach (var file in Directory.GetFiles(Outbox, "*.json").OrderBy(f => f, StringComparer.Ordinal))
-        {
-            try
-            {
-                var body = JObject.Parse(File.ReadAllText(file));
-                ToadFlowClient.Shared.PostAsync<JToken>("/api/loi/checks", body, CancellationToken.None).GetAwaiter().GetResult();
-                File.Delete(file);
-                sent++;
-            }
-            catch (ToadFlowAuthRequiredException)
-            {
-                error = SignInAgain;
-                break;
-            }
-            catch (ToadFlowRequestException exception) when (exception.Status == 403 && exception.Message == ToadFlowClient.NotEnoughRights)
-            {
-                // Отказ без текста — роли не положено: очередь не уйдёт и позже, поэтому сбрасывается, а не копится. Отказ с
-                // текстом сервера (другая причина) очередь не трогает — его покажет ветка ниже.
-                foreach (var pending in Directory.GetFiles(Outbox, "*.json")) File.Delete(pending);
-                error = NotEnoughRights;
-                break;
-            }
-            catch (ToadFlowRequestException exception) when (exception.Status == 400)
-            {
-                var rejected = Directory.CreateDirectory(Path.Combine(Outbox, "rejected")).FullName;
-                File.Move(file, Path.Combine(rejected, Path.GetFileName(file)));
-                error = $"ToadFlow отверг итог: {exception.Message}";
-            }
-            catch (ToadFlowRequestException exception)
-            {
-                error = exception.Message;
-                break;
-            }
-            catch (ToadFlowUnavailableException exception)
-            {
-                error = exception.Message;
-                break;
-            }
-            catch (Exception exception) when (exception is IOException or JsonException)
-            {
-                error = $"итог из очереди не прочитан: {exception.Message}";
-                break;
-            }
-        }
-
-        return new SendResult(sent, PendingCount(), error);
-    }
+    /// <summary>Отправляет очередь, если есть подключение; без него говорит, что итоги ждут.</summary>
+    public SendResult Flush() => _outbox.Flush();
 }
