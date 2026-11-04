@@ -12,8 +12,9 @@ ToadTools — набор инструментов для Revit, который �
 
 | Панель | Инструменты |
 |---|---|
-| **BIM** | [ParamChecker](https://github.com/Alexpivo394/ToadTools/wiki/ParamChecker), [Подключение к ToadFlow](https://github.com/Alexpivo394/ToadTools/wiki/ToadFlow), [Коллизии](https://github.com/Alexpivo394/ToadTools/wiki/Collisions), [ToadExporter](https://github.com/Alexpivo394/ToadTools/wiki/ToadExporter), рабочие наборы (создание и проверка), копирование элементов, общие → необщие семейства |
-| **Общие** | Умные выноски, запись количества, запись прочерков, код классификатора, длина элементов, создание пространств |
+| **Вход** | [Подключение к ToadFlow](https://github.com/Alexpivo394/ToadTools/wiki/ToadFlow) |
+| **BIM** | [ParamChecker](https://github.com/Alexpivo394/ToadTools/wiki/ParamChecker), [ToadExporter](https://github.com/Alexpivo394/ToadTools/wiki/ToadExporter), рабочие наборы (создание и проверка), копирование элементов, общие → необщие семейства |
+| **Общие** | [Коллизии](https://github.com/Alexpivo394/ToadTools/wiki/Collisions), умные выноски, запись количества, запись прочерков, код классификатора, длина элементов, создание пространств |
 | **Лотки** | Артикулы и покраска кабельных лотков, размещение крышек |
 | **Сети связи** | Структурная схема |
 | **ОВ** | Синхронизация теплопотерь с Excel |
@@ -27,7 +28,7 @@ ToadTools — набор инструментов для Revit, который �
 Скачайте установщик `.msi` из [релизов](https://github.com/Alexpivo394/ToadTools/releases), закройте Revit и запустите установщик.
 Изменения по версиям — в [Changelog.md](Changelog.md).
 
-Панель «Коллизии» и отправка итогов ParamChecker в ToadFlow требуют сервера ToadFlow 2.0.0 и подключения: **ToadTools → Подключение к ToadFlow**.
+Панель «Коллизии» и отправка итогов ParamChecker в ToadFlow требуют сервера ToadFlow 2.0.0 и подключения: **ToadTools → Вход → Подключение к ToadFlow**.
 
 > [!NOTE]
 > Часть инструментов берёт семейства, шаблоны и таблицы Excel с сетевого диска компании. Вне корпоративной сети эти файлы нужно получить отдельно.

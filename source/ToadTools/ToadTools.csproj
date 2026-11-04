@@ -14,30 +14,9 @@
   <Import Project="ToadTools.Repack.targets"/>
 
     <ItemGroup>
-      <None Remove="Resources\Icons\1Tray16.png" />
-      <None Remove="Resources\Icons\1Tray32.png" />
-      <None Remove="Resources\Icons\cable1_16.png" />
-      <None Remove="Resources\Icons\cable1_32.png" />
-      <None Remove="Resources\Icons\cable2_16.png" />
-      <None Remove="Resources\Icons\cable2_32.png" />
-      <None Remove="Resources\Icons\cable3_16.png" />
-      <None Remove="Resources\Icons\cable3_32.png" />
-      <None Remove="Resources\Icons\cable4_16.png" />
-      <None Remove="Resources\Icons\cable4_32.png" />
-      <None Remove="Resources\Icons\Create16.png" />
-      <None Remove="Resources\Icons\Create32.png" />
-      <None Remove="Resources\Icons\create_16.png" />
-      <None Remove="Resources\Icons\create_32.png" />
-      <None Remove="Resources\Icons\Export16.png" />
-      <None Remove="Resources\Icons\Export32.png" />
-      <None Remove="Resources\Icons\export_16.png" />
-      <None Remove="Resources\Icons\export_32.png" />
-      <None Remove="Resources\Icons\Ruler16.png" />
-      <None Remove="Resources\Icons\Ruler32.png" />
-      <None Remove="Resources\Icons\ruler_16.png" />
-      <None Remove="Resources\Icons\ruler_32.png" />
-      <None Remove="Resources\Icons\Transplanter16.png" />
-      <None Remove="Resources\Icons\Transplanter32.png" />
+      <!-- Иконки ленты: {Плагин}16.png и {Плагин}32.png, берутся по имени в Application.WithIcon -->
+      <None Remove="Resources\Icons\*.png" />
+      <Resource Include="Resources\Icons\*.png" />
     </ItemGroup>
 
     <ItemGroup>
@@ -67,99 +46,6 @@
       <ProjectReference Include="..\WorkingSet\WorkingSet.csproj" />
       <ProjectReference Include="..\WorksetCheck\WorksetCheck.csproj" />
       <ProjectReference Include="..\WriteDash\WriteDash.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Resource Include="Resources\Icons\1Tray16.png">
-        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-      </Resource>
-      <Resource Include="Resources\Icons\1Tray32.png">
-        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-      </Resource>
-      <Resource Include="Resources\Icons\Create16.png">
-        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-      </Resource>
-      <Resource Include="Resources\Icons\Create32.png">
-        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-      </Resource>
-      <Resource Include="Resources\Icons\Export16.png">
-        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-      </Resource>
-      <Resource Include="Resources\Icons\Export32.png">
-        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-      </Resource>
-      <Resource Include="Resources\Icons\Ruler16.png">
-        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-      </Resource>
-      <Resource Include="Resources\Icons\Ruler32.png">
-        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-      </Resource>
-      <Resource Include="Resources\Icons\Transplanter16.png">
-        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-      </Resource>
-      <Resource Include="Resources\Icons\Transplanter32.png">
-        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-      </Resource>
-      <None Remove="Resources\Icons\QuantityCheck16.png" />
-      <Resource Include="Resources\Icons\QuantityCheck16.png" />
-      <None Remove="Resources\Icons\QuantityCheck32.png" />
-      <Resource Include="Resources\Icons\QuantityCheck32.png" />
-      <None Remove="Resources\Icons\SSPlan16.png" />
-      <Resource Include="Resources\Icons\SSPlan16.png" />
-      <None Remove="Resources\Icons\SSPlan32.png" />
-      <Resource Include="Resources\Icons\SSPlan32.png" />
-      <None Remove="Resources\Icons\WorksetsCheck16.png" />
-      <Resource Include="Resources\Icons\WorksetsCheck16.png" />
-      <None Remove="Resources\Icons\WorksetsCheck32.png" />
-      <Resource Include="Resources\Icons\WorksetsCheck32.png" />
-      <None Remove="Resources\Icons\WarmSync16.png" />
-      <Resource Include="Resources\Icons\WarmSync16.png" />
-      <None Remove="Resources\Icons\WarmSync32.png" />
-      <Resource Include="Resources\Icons\WarmSync32.png" />
-      <None Remove="Resources\Icons\DoorSide32.png" />
-      <Resource Include="Resources\Icons\DoorSide32.png" />
-      <None Remove="Resources\Icons\DoorSide16.png" />
-      <Resource Include="Resources\Icons\DoorSide16.png" />
-      <None Remove="Resources\Icons\CreateCover16.png" />
-      <Resource Include="Resources\Icons\CreateCover16.png" />
-      <None Remove="Resources\Icons\CreateCover32.png" />
-      <Resource Include="Resources\Icons\CreateCover32.png" />
-      <None Remove="Resources\Icons\Spaces16.png" />
-      <Resource Include="Resources\Icons\Spaces16.png" />
-      <None Remove="Resources\Icons\Spaces32.png" />
-      <Resource Include="Resources\Icons\Spaces32.png" />
-      <None Remove="Resources\Icons\Rei16.png" />
-      <Resource Include="Resources\Icons\Rei16.png" />
-      <None Remove="Resources\Icons\Rei32.png" />
-      <Resource Include="Resources\Icons\Rei32.png" />
-      <None Remove="Resources\Icons\WriteDash16.png" />
-      <Resource Include="Resources\Icons\WriteDash16.png" />
-      <None Remove="Resources\Icons\WriteDash32.png" />
-      <Resource Include="Resources\Icons\WriteDash32.png" />
-      <None Remove="Resources\Icons\ParamToFinish16.png" />
-      <Resource Include="Resources\Icons\ParamToFinish16.png" />
-      <None Remove="Resources\Icons\ParamToFinish32.png" />
-      <Resource Include="Resources\Icons\ParamToFinish32.png" />
-      <None Remove="Resources\Icons\ChangeSharedFamilies16.png" />
-      <Resource Include="Resources\Icons\ChangeSharedFamilies16.png" />
-      <None Remove="Resources\Icons\ChangeSharedFamilies32.png" />
-      <Resource Include="Resources\Icons\ChangeSharedFamilies32.png" />
-      <None Remove="Resources\Icons\ClassifierCode16.png" />
-      <Resource Include="Resources\Icons\ClassifierCode16.png" />
-      <None Remove="Resources\Icons\ClassifierCode32.png" />
-      <Resource Include="Resources\Icons\ClassifierCode32.png" />
-      <None Remove="Resources\Icons\SmartTags16.png" />
-      <Resource Include="Resources\Icons\SmartTags16.png" />
-      <None Remove="Resources\Icons\SmartTags32.png" />
-      <Resource Include="Resources\Icons\SmartTags32.png" />
-      <None Remove="Resources\Icons\ToadExporter16.png" />
-      <Resource Include="Resources\Icons\ToadExporter16.png" />
-      <None Remove="Resources\Icons\ToadExporter32.png" />
-      <Resource Include="Resources\Icons\ToadExporter32.png" />
-      <Resource Include="Resources\Icons\ToadFlow16.png" />
-      <Resource Include="Resources\Icons\ToadFlow32.png" />
-      <Resource Include="Resources\Icons\Collisions16.png" />
-      <Resource Include="Resources\Icons\Collisions32.png" />
     </ItemGroup>
 
 </Project>

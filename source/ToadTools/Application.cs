@@ -33,15 +33,25 @@ namespace ToadTools
         }
 
         /// <summary>
+        ///     Вход — подключение к ToadFlow, всегда первая панель вкладки.
         ///     BIM — основные команды крупными кнопками, остальные стопкой маленьких с подписью.
-        ///     Общие — маленькие кнопки с короткой подписью, по три в столбик.
+        ///     Общие — «Коллизии» крупной кнопкой, остальное — маленькие кнопки с короткой подписью, по три в столбик.
         ///     Панели разделов (Лотки, Сети связи, ОВ, АР, КР) — полноразмерные кнопки.
         /// </summary>
         private void CreateRibbon()
         {
+            CreateSignInPanel();
             CreateBimPanel();
             CreateGeneralPanel();
             CreateDisciplinePanels();
+        }
+
+        private void CreateSignInPanel()
+        {
+            var panel = CreatePanel("Вход", MediaColor.FromRgb(173, 216, 230));
+            panel.AddPushButton<Commands.ConnectionCommand>("Подключение\nк ToadFlow")
+                .WithIcon("ToadFlow")
+                .WithInfo("Вход в ToadFlow для ParamChecker,\nплагина «Коллизии» и других.", "ToadFlow");
         }
 
         private void CreateBimPanel()
@@ -50,24 +60,16 @@ namespace ToadTools
 
             var worksets = panel.AddSplitButton("Worksets", "Рабочие\nнаборы");
             worksets.AddPushButton<Commands.WorkingSetCommand>("Создание\nнаборов")
-                .WithIcon("Create")
+                .WithIcon("WorkingSet")
                 .WithInfo("Создает в модели рабочие наборы\nдля выбранного раздела.", "WorkingSet");
             worksets.AddPushButton<Commands.WorksetCheckCommand>("Проверка\nнаборов")
-                .WithIcon("WorksetsCheck")
+                .WithIcon("WorksetCheck")
                 .WithInfo("Проверяет распределение элементов\nоткрытой модели по рабочим наборам\nи исправляет найденное.",
                     "WorksetCheck");
 
             panel.AddPushButton<Commands.ParamCheckerCommand>("Param\nChecker")
-                .WithIcon("Export")
+                .WithIcon("ParamChecker")
                 .WithInfo("Выгружает из моделей на сервере\nотчет по заполнению параметров.", "ParamChecker");
-
-            panel.AddPushButton<Commands.ConnectionCommand>("Подключение\nк ToadFlow")
-                .WithIcon("ToadFlow")
-                .WithInfo("Вход в ToadFlow для ParamChecker,\nплагина «Коллизии» и других.", "ToadFlow");
-
-            panel.AddPushButton<Commands.CollisionsCommand>("Коллизии")
-                .WithIcon("Collisions")
-                .WithInfo("Панель с коллизиями открытой модели\nиз ToadFlow: список, миниатюры, фильтры.\nПовторное нажатие скрывает панель.", "Collisions");
 
             panel.AddPushButton<Commands.ToadExporterCommand>("Toad\nExporter")
                 .WithIcon("ToadExporter")
@@ -75,7 +77,7 @@ namespace ToadTools
 
             var stack = panel.AddStackPanel();
             stack.AddPushButton<Commands.ModelTransplanterCommand>("Копирование элементов")
-                .WithIcon("Transplanter")
+                .WithIcon("ModelTransplanter")
                 .WithInfo("Позволяет копировать элементы\nиз модели в модель.", "ModelTransplanter");
             stack.AddPushButton<Commands.ChangeSharedFamiliesCommand>("Общие → необщие")
                 .WithIcon("ChangeSharedFamilies")
@@ -86,6 +88,10 @@ namespace ToadTools
         private void CreateGeneralPanel()
         {
             var panel = CreatePanel("Общие", MediaColor.FromRgb(204, 153, 102));
+
+            panel.AddPushButton<Commands.CollisionsCommand>("Коллизии")
+                .WithIcon("Collisions")
+                .WithInfo("Панель с коллизиями открытой модели\nиз ToadFlow: список, миниатюры, фильтры.\nПовторное нажатие скрывает панель.", "Collisions");
 
             // Маленькие кнопки с короткой подписью; после трёх стопка сама переносится в новый столбец
             var stack = panel.AddStackPanel();
@@ -104,10 +110,10 @@ namespace ToadTools
                 .WithInfo("Заполняет ADSK_Код по классификатору\nи ADSK_Описание по классификатору\nу элементов ИОС.",
                     "ClassifierCode");
             stack.AddPushButton<Commands.LengthCommand>("Длина элементов")
-                .WithIcon("Ruler")
+                .WithIcon("Length")
                 .WithInfo("Посчитать суммарную длину выбранных элементов.", "Length");
             stack.AddPushButton<Commands.CreateSpacesCommand>("Создание пространств")
-                .WithIcon("Spaces")
+                .WithIcon("CreateSpaces")
                 .WithInfo("Создает в проекте пространства на основе помещений из раздела АР.", "CreateSpaces");
         }
 
@@ -117,14 +123,14 @@ namespace ToadTools
             var panelTray = CreatePanel("Лотки", MediaColor.FromRgb(152, 168, 124));
 
             var trays = panelTray.AddPullDownButton("Кабельные лотки", "Кабельные лотки");
-            trays.WithIcon("1Tray").WithInfo("Артикулы и наименования лотков,\nраскраска лотков на виде.", "CableTrays");
-            trays.AddPushButton<Commands.CableTrayArticulCommand>("Артикулы и наименования").WithIcon("1Tray")
+            trays.WithIcon("CableTrays").WithInfo("Артикулы и наименования лотков,\nраскраска лотков на виде.", "CableTrays");
+            trays.AddPushButton<Commands.CableTrayArticulCommand>("Артикулы и наименования").WithIcon("CableTrays")
                 .WithInfo("Заполняет код изделия, наименование\nи количество у лотков.", "CableTrays");
-            trays.AddPushButton<Commands.CableTrayColorPerforationCommand>("Покрасить по перфорации").WithIcon("1Tray")
+            trays.AddPushButton<Commands.CableTrayColorPerforationCommand>("Покрасить по перфорации").WithIcon("CableTrays")
                 .WithInfo("Раскрашивает лотки на виде по типу:\nперфорированный, неперфорированный,\nпроволочный.", "CableTrays");
-            trays.AddPushButton<Commands.CableTrayColorVariantCommand>("Покрасить по исполнению").WithIcon("1Tray")
+            trays.AddPushButton<Commands.CableTrayColorVariantCommand>("Покрасить по исполнению").WithIcon("CableTrays")
                 .WithInfo("Раскрашивает лотки и детали на виде\nпо ADSK_Исполнение.", "CableTrays");
-            trays.AddPushButton<Commands.CableTrayColorCoverCommand>("Покрасить крышки").WithIcon("1Tray")
+            trays.AddPushButton<Commands.CableTrayColorCoverCommand>("Покрасить крышки").WithIcon("CableTrays")
                 .WithInfo("Выделяет на виде красным лотки\nи детали с крышкой.", "CableTrays");
 
             panelTray.AddPushButton<Commands.CreateCoverCommand>("Разместить\nкрышки")
@@ -167,14 +173,14 @@ namespace ToadTools
 
             const string reinforcementPage = "ReinforcementByColor";
             var reinforcement = panelKr.AddPullDownButton("Армирование", "Армирование");
-            reinforcement.WithIcon("Rei").WithInfo("Размещает семейства армирования взамен цветовых областей", reinforcementPage);
-            reinforcement.AddPushButton<Commands.RSHPLeftRightCommand>("R-SHP-Армирование по Y").WithIcon("Rei")
+            reinforcement.WithIcon("ReinforcementByColor").WithInfo("Размещает семейства армирования взамен цветовых областей", reinforcementPage);
+            reinforcement.AddPushButton<Commands.RSHPLeftRightCommand>("R-SHP-Армирование по Y").WithIcon("ReinforcementByColor")
                 .WithInfo("Заменяет выбранные области семейством\nR-SHP, стержни вдоль Y.", reinforcementPage);
-            reinforcement.AddPushButton<Commands.RSHPUpDownCommand>("R-SHP-Армирование по X").WithIcon("Rei")
+            reinforcement.AddPushButton<Commands.RSHPUpDownCommand>("R-SHP-Армирование по X").WithIcon("ReinforcementByColor")
                 .WithInfo("Заменяет выбранные области семейством\nR-SHP, стержни вдоль X.", reinforcementPage);
-            reinforcement.AddPushButton<Commands.RSUMLeftRightCommand>("R-SUM-Армирование по Y").WithIcon("Rei")
+            reinforcement.AddPushButton<Commands.RSUMLeftRightCommand>("R-SUM-Армирование по Y").WithIcon("ReinforcementByColor")
                 .WithInfo("Заменяет выбранные области семейством\nR-SUM, стержни вдоль Y.", reinforcementPage);
-            reinforcement.AddPushButton<Commands.RSUMUpDownCommand>("R-SUM-Армирование по X").WithIcon("Rei")
+            reinforcement.AddPushButton<Commands.RSUMUpDownCommand>("R-SUM-Армирование по X").WithIcon("ReinforcementByColor")
                 .WithInfo("Заменяет выбранные области семейством\nR-SUM, стержни вдоль X.", reinforcementPage);
         }
 
@@ -195,7 +201,7 @@ namespace ToadTools
     internal static class RibbonButtonExtensions
     {
         /// <summary>
-        ///     Ставит иконки 16 и 32 px из Resources/Icons по общему имени (например "Ruler" → Ruler16.png, Ruler32.png).
+        ///     Ставит иконки 16 и 32 px из Resources/Icons по общему имени (например "Length" → Length16.png, Length32.png).
         /// </summary>
         public static T WithIcon<T>(this T button, string icon) where T : RibbonButton
         {

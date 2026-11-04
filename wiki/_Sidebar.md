@@ -1,9 +1,10 @@
 ### [🏠 Главная](Home)
 
+**Вход**
+- [Подключение к ToadFlow](ToadFlow)
+
 **BIM**
 - [ParamChecker](ParamChecker)
-- [Подключение к ToadFlow](ToadFlow)
-- [Коллизии](Collisions)
 - [ToadExporter](ToadExporter)
 - [Создание рабочих наборов](WorkingSet)
 - [Проверка рабочих наборов](WorksetCheck)
@@ -11,6 +12,7 @@
 - [Общие → необщие](ChangeSharedFamilies)
 
 **Общие**
+- [Коллизии](Collisions)
 - [Умные выноски](SmartTags)
 - [Запись количества](QuantityCheck)
 - [Запись прочерков](WriteDash)
