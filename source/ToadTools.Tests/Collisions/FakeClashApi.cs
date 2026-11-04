@@ -66,7 +66,7 @@ public sealed class FakeClashApi : IClashApi
     }
 
     public Task TakeAsync(Guid id, CancellationToken ct) => Act($"take {id}");
-    public Task PassAsync(Guid id, string assignee, string note, CancellationToken ct) => Act($"assignee {id} {assignee} {note}");
+    public Task PassAsync(Guid id, string assignee, string? note, CancellationToken ct) => Act($"assignee {id} {assignee} {note}");
     public Task SetStatusAsync(Guid id, string status, string? note, CancellationToken ct) => Act($"status {id} {status} {note}");
     public Task NoteAsync(Guid id, string text, CancellationToken ct) => Act($"note {id} {text}");
     public string ViewerUrl(Guid partId, Guid collisionId) => Url.Length == 0 ? "" : $"{Url}/clash/checks/{partId}?collision={collisionId}";

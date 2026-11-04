@@ -191,7 +191,7 @@ public class PaneViewModelTests
         await s.Model.ApplyFiltersCommand.ExecuteAsync(null);
 
         s.Api.PageRequests.Last().Query.Search.ShouldBe("ub-3");
-        session.Query.Search.ShouldBe("ub-3");
+        session.QueryFor("k1").Search.ShouldBe("ub-3");
     }
 
     [Test]
@@ -517,5 +517,102 @@ public class PaneViewModelTests
 
         s.Model.Counters.ShouldBe("мне править 1, взяла другая сторона 0, новых с прошлого захода 3");
         s.Model.NewForMe.ShouldBeNull();
+    }
+
+    [Test]
+    public async Task Pane_ModelSwitched_CardCleared()
+    {
+        using var s = Create();
+        var (ov, vk) = (Match("k-ov"), Match("k-vk", "RSN://srv/DON/DON_VK.rvt"));
+        s.Api.Resolve = (path, _) => new ModelResolve("path", [path!.Contains("VK") ? vk : ov]);
+        s.Api.Rows = [FakeClashApi.Row(1)];
+        await s.Model.ActivateAsync();
+        await s.Model.OpenAsync(s.Model.Items[0]);
+        s.Model.Card.ShouldNotBeNull();
+
+        s.Revit.Document = ("RSN://srv/DON/DON_VK.rvt", "DON_VK.rvt");
+        await s.Model.ActivateAsync();
+
+        s.Model.Model!.Key.ShouldBe("k-vk");
+        s.Model.Card.ShouldBeNull();
+        s.Model.SelectedItem.ShouldBeNull();
+    }
+
+    [Test]
+    public async Task Pane_ChooseModel_CardCleared()
+    {
+        using var s = Create();
+        var (first, second) = (Match("k1"), Match("k2", @"\fsDONDON_OV.rvt"));
+        s.Api.Resolve = (_, _) => new ModelResolve("name", [first]);
+        s.Api.Rows = [FakeClashApi.Row(1)];
+        await s.Model.ActivateAsync();
+        await s.Model.OpenAsync(s.Model.Items[0]);
+
+        await s.Model.ChooseModelCommand.ExecuteAsync(second);
+
+        s.Model.Card.ShouldBeNull();
+    }
+
+    [Test]
+    public async Task Pane_SignedOut_CardCleared()
+    {
+        using var s = Create();
+        s.Api.Resolve = (_, _) => new ModelResolve("path", [Match("k1")]);
+        s.Api.Rows = [FakeClashApi.Row(1)];
+        await s.Model.ActivateAsync();
+        await s.Model.OpenAsync(s.Model.Items[0]);
+
+        s.Store.Clear();
+        await s.Model.ActivateAsync();
+
+        s.Model.Screen.ShouldBe(PaneScreen.NotConnected);
+        s.Model.Card.ShouldBeNull();
+    }
+
+    [Test]
+    public async Task Pane_ModelSwitched_PairLevelNotCarried()
+    {
+        var session = new PaneSession();
+        using var s = Create(session: session);
+        var (ov, vk) = (Match("k-ov"), Match("k-vk", "RSN://srv/DON/DON_VK.rvt"));
+        s.Api.Resolve = (path, _) => new ModelResolve("path", [path!.Contains("VK") ? vk : ov]);
+        await s.Model.ActivateAsync();
+        (s.Model.StatusFilter, s.Model.PairFilter, s.Model.LevelFilter, s.Model.Search) = ("all", "АР × ОВ", "Этаж 3", "12");
+        await s.Model.ApplyFiltersCommand.ExecuteAsync(null);
+
+        s.Revit.Document = ("RSN://srv/DON/DON_VK.rvt", "DON_VK.rvt");
+        await s.Model.ActivateAsync();
+
+        var asked = s.Api.PageRequests.Last();
+        (asked.Key, asked.Query.Status, asked.Query.Pair, asked.Query.Level, asked.Query.Search).ShouldBe(("k-vk", "all", null, null, null));
+        (s.Model.PairFilter, s.Model.LevelFilter, s.Model.Search).ShouldBe((null, null, ""));
+
+        s.Revit.Document = ("RSN://srv/DON/DON_OV.rvt", "DON_OV.rvt");
+        await s.Model.ActivateAsync();
+
+        asked = s.Api.PageRequests.Last();
+        (asked.Key, asked.Query.Pair, asked.Query.Level, asked.Query.Search).ShouldBe(("k-ov", "АР × ОВ", "Этаж 3", "12"));
+    }
+
+    [Test]
+    public async Task Pane_SignInAsOther_RightsOfNewUser()
+    {
+        using var s = Create();
+        s.Api.Resolve = (_, _) => new ModelResolve("path", [Match("k1")]);
+        s.Api.Rows = [FakeClashApi.Row(1)];
+        await s.Model.ActivateAsync();
+        await s.Model.OpenAsync(s.Model.Items[0]);
+        (s.Model.Card!.CanFixed, s.Model.Card.CanTake).ShouldBe((true, true));
+
+        // на общем компьютере вышел проектировщик ОВ, вошёл проектировщик ВК
+        s.Store.Clear();
+        await s.Model.ActivateAsync();
+        s.Store.Save(new ToadFlowConnection("http://toadflow", "sidorov", "Сидоров", "Designer", Guid.NewGuid(), "tf_y"));
+        s.Api.Me = new UserInfo(Guid.NewGuid(), "sidorov", "Сидоров", Roles.Designer, ["ВК"]);
+        await s.Model.ActivateAsync();
+        s.Model.Card.ShouldBeNull();
+        await s.Model.OpenAsync(s.Model.Items[0]);
+
+        (s.Model.Card!.CanFixed, s.Model.Card.CanTake, s.Model.Card.CanNote).ShouldBe((false, false, true));
     }
 }

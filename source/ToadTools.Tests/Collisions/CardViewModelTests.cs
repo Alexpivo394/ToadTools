@@ -335,4 +335,37 @@ public class CardViewModelTests
         dialogs.Opened.ShouldBeEmpty();
         card.Error.ShouldBe("Адрес ToadFlow неизвестен — войдите в ToadFlow заново");
     }
+
+    [Test]
+    public async Task Card_PassEmptyNote_Allowed()
+    {
+        var (card, api, dialogs, row, temp) = Create(User(Roles.Designer, "ОВ"));
+        using var _ = temp;
+        await card.LoadAsync();
+        dialogs.Pass = new PassChoice(CollisionAssignee.SideA, "   ");
+
+        await card.PassCommand.ExecuteAsync(null);
+
+        api.Actions.ShouldBe([$"assignee {row.Collision.Id} SideA "]);
+    }
+
+    [Test]
+    public void PassDialog_SideChosen_SavesWithoutNote()
+    {
+        var pass = new NoteViewModel("Передать", [new SideOption(CollisionAssignee.SideA, "КР")]);
+        pass.SaveCommand.CanExecute(null).ShouldBeFalse();
+        pass.Side = CollisionAssignee.SideA;
+        pass.SaveCommand.CanExecute(null).ShouldBeTrue();
+
+        var note = new NoteViewModel(CardViewModel.NoteTitle);
+        note.SaveCommand.CanExecute(null).ShouldBeFalse(); // примечание без текста — нечего сохранять
+    }
+
+    [Test]
+    public void Card_FixedLabelSameAsWeb()
+    {
+        // Как кнопка в карточке веба (CollisionCard.tsx); статус в строке — «исправлена (ждёт)», как StatusBadge веба.
+        CardViewModel.FixedLabel.ShouldBe("Исправлена (ожидает подтверждения)");
+        CollisionItemViewModel.StatusLabel(CollisionStatus.FixedPending).ShouldBe("исправлена (ждёт)");
+    }
 }

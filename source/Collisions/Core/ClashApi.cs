@@ -15,7 +15,7 @@ public interface IClashApi
     /// <summary>Отметка «я открыл коллизию»: она перестаёт быть новой для меня.</summary>
     Task SeenAsync(Guid id, CancellationToken ct);
     Task TakeAsync(Guid id, CancellationToken ct);
-    Task PassAsync(Guid id, string assignee, string note, CancellationToken ct);
+    Task PassAsync(Guid id, string assignee, string? note, CancellationToken ct);
     Task SetStatusAsync(Guid id, string status, string? note, CancellationToken ct);
     Task NoteAsync(Guid id, string text, CancellationToken ct);
     string ViewerUrl(Guid partId, Guid collisionId);
@@ -55,7 +55,7 @@ public sealed class ClashApi(ToadFlowClient client) : IClashApi
 
     public Task TakeAsync(Guid id, CancellationToken ct) => client.PostAsync<object>($"/api/clash/collisions/{id}/take", null, ct);
 
-    public Task PassAsync(Guid id, string assignee, string note, CancellationToken ct) =>
+    public Task PassAsync(Guid id, string assignee, string? note, CancellationToken ct) =>
         client.PostAsync<object>($"/api/clash/collisions/{id}/assignee", new { assignee, note }, ct);
 
     public Task SetStatusAsync(Guid id, string status, string? note, CancellationToken ct) =>

@@ -30,6 +30,9 @@ public sealed partial class CardViewModel : ObservableObject
     public const string FakeTitle = "Почему фиктивная";
     public const string NoteTitle = "Примечание";
 
+    /// <summary>Кнопка «исправлена» — как в карточке веба: статус ждёт подтверждения следующим прогоном.</summary>
+    public const string FixedLabel = "Исправлена (ожидает подтверждения)";
+
     private readonly IClashApi _api;
     private readonly ModelCollisionRow _row;
     private readonly UserInfo _me;
@@ -142,8 +145,10 @@ public sealed partial class CardViewModel : ObservableObject
     {
         var options = new[] { CollisionAssignee.Both, CollisionAssignee.SideA, CollisionAssignee.SideB }
             .Where(a => a != Collision.Assignee).Select(a => new SideOption(a, SideNames.Label(Collision, a))).ToList();
-        if (_dialogs.AskPass(options) is not { } choice || string.IsNullOrWhiteSpace(choice.Note)) return Task.CompletedTask;
-        return ActAsync(() => _api.PassAsync(Collision.Id, choice.Assignee.ToString(), choice.Note.Trim(), CancellationToken.None));
+        // Примечание необязательно, как в вебе: передать можно и без слов.
+        if (_dialogs.AskPass(options) is not { } choice) return Task.CompletedTask;
+        var note = string.IsNullOrWhiteSpace(choice.Note) ? null : choice.Note.Trim();
+        return ActAsync(() => _api.PassAsync(Collision.Id, choice.Assignee.ToString(), note, CancellationToken.None));
     }
 
     [RelayCommand]
@@ -234,13 +239,19 @@ public sealed partial class CardViewModel : ObservableObject
     }
 }
 
-/// <summary>Окно примечания: «Сохранить» недоступна, пока поле пустое. Для «Передать…» ещё выбор, кто правит.</summary>
+/// <summary>
+///     Окно примечания: «Сохранить» недоступна, пока поле пустое. Окно «Передать…» — выбор, кто правит; примечание в нём
+///     необязательно, как в вебе.
+/// </summary>
 public sealed partial class NoteViewModel(string title, IReadOnlyList<SideOption>? sides = null) : ObservableObject
 {
     public string Title => title;
 
     /// <summary>Окно передачи: показывается выбор, кто правит.</summary>
     public bool ChoosesSide => sides is not null;
+
+    /// <summary>Подпись поля: при передаче примечание необязательно.</summary>
+    public string NoteLabel => ChoosesSide ? "Примечание (необязательно)" : "Примечание";
 
     public IReadOnlyList<SideOption> Sides { get; } = sides ?? [];
 
@@ -250,7 +261,7 @@ public sealed partial class NoteViewModel(string title, IReadOnlyList<SideOption
     /// <summary>Окно закрывается с результатом.</summary>
     public event EventHandler? Saved;
 
-    private bool CanSave() => !string.IsNullOrWhiteSpace(Text) && (!ChoosesSide || Side is not null);
+    private bool CanSave() => ChoosesSide ? Side is not null : !string.IsNullOrWhiteSpace(Text);
 
     [RelayCommand(CanExecute = nameof(CanSave))]
     private void Save() => Saved?.Invoke(this, EventArgs.Empty);

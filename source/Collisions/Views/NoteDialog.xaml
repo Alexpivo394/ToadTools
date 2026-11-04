@@ -40,7 +40,7 @@
                 <TextBlock Text="Кто правит" Margin="0,0,0,4" />
                 <ComboBox ItemsSource="{Binding Sides}" DisplayMemberPath="Label" SelectedValuePath="Assignee" SelectedValue="{Binding Side}" Margin="0,0,0,8" />
             </StackPanel>
-            <TextBlock Text="Примечание" Margin="0,0,0,4" />
+            <TextBlock Text="{Binding NoteLabel}" Margin="0,0,0,4" />
             <ui:TextBox x:Name="NoteBox" Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap"
                         MinLines="3" MaxLines="8" />
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">

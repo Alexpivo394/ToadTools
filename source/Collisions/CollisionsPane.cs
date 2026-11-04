@@ -25,8 +25,16 @@ public static class CollisionsPane
     private static Document? _document;
     private static bool _reloadQueued;
 
-    /// <summary>Регистрация панели и подписка на смену документа. Вызывается один раз из <c>OnStartup</c>.</summary>
-    public static void Register(UIControlledApplication application)
+    /// <summary>Как прошла регистрация: при сбое кнопка ленты говорит причину, а не падает.</summary>
+    public static PaneStartup Startup { get; } = new(PaneStartup.DefaultLogPath);
+
+    /// <summary>
+    ///     Регистрация панели и подписка на смену документа. Вызывается один раз из <c>OnStartup</c>. Не бросает: сбой пишется в
+    ///     журнал, а ToadTools запускается дальше без панели.
+    /// </summary>
+    public static void Register(UIControlledApplication application) => Startup.TryRegister(() => RegisterCore(application));
+
+    private static void RegisterCore(UIControlledApplication application)
     {
         var api = new ClashApi(ToadFlowClient.Shared);
         var thumbnails = new ThumbnailCache(ThumbnailCache.DefaultFolder, api.ImageAsync);
@@ -58,6 +66,12 @@ public static class CollisionsPane
     /// <summary>Кнопка ленты: показать панель (и обновить её) или скрыть.</summary>
     public static void Toggle(UIApplication application)
     {
+        if (Startup.ToggleMessage is { } failure)
+        {
+            TaskDialog.Show(Title, failure);
+            return;
+        }
+
         var pane = application.GetDockablePane(Id);
         if (pane.IsShown())
         {

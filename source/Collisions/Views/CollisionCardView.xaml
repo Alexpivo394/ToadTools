@@ -46,7 +46,7 @@
                            Visibility="{Binding CanTake, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
                 <ui:Button Content="Передать…" Command="{Binding PassCommand}" Margin="0,0,6,6"
                            Visibility="{Binding CanPass, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
-                <ui:Button Content="Исправлена" ToolTip="Исправлена (ожидает подтверждения следующим прогоном)" Command="{Binding FixedCommand}"
+                <ui:Button Content="{x:Static vm:CardViewModel.FixedLabel}" ToolTip="Подтвердит следующий прогон: коллизии не будет — статус «исправлена»" Command="{Binding FixedCommand}"
                            Margin="0,0,6,6" Visibility="{Binding CanFixed, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
                 <ui:Button Content="Фиктивная…" Command="{Binding FakeCommand}" Margin="0,0,6,6"
                            Visibility="{Binding CanFake, Converter={conv:BooleanCollapsedVisibilityConverter}}" />

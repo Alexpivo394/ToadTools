@@ -18,11 +18,34 @@ public enum PaneScreen
     Error
 }
 
-/// <summary>Что панель помнит до закрытия Revit: отмечен ли заход и выбранные фильтры.</summary>
+/// <summary>Фильтры одной модели: пара и уровень — из её фасетов, в другой модели их может не быть.</summary>
+public sealed record ListQuery(string? Pair = null, string? Level = null, string? Search = null);
+
+/// <summary>
+///     Что панель помнит до закрытия Revit: отмечен ли заход; статус, группа и «новые для меня» — на сеанс, пара, уровень и
+///     поиск — по ключу модели. Иначе фильтр пары одной модели молча пустит список другой.
+/// </summary>
 public sealed class PaneSession
 {
     public bool Visited { get; set; }
-    public CollisionQuery Query { get; set; } = new();
+    public string Status { get; set; } = "open";
+    public string Group { get; set; } = "all";
+    public string? Since { get; set; }
+    public Dictionary<string, ListQuery> ByModel { get; } = [];
+
+    /// <summary>Запрос списка модели: общие фильтры сеанса и её собственные.</summary>
+    public CollisionQuery QueryFor(string? modelKey)
+    {
+        var own = modelKey is not null && ByModel.TryGetValue(modelKey, out var saved) ? saved : new ListQuery();
+        return new CollisionQuery(Status, Group, own.Pair, own.Level, own.Search, Since);
+    }
+
+    /// <summary>Запомнить фильтры: общие — на сеанс, пару, уровень и поиск — для модели (если она известна).</summary>
+    public void Remember(string? modelKey, CollisionQuery query)
+    {
+        (Status, Group, Since) = (query.Status, query.Group, query.Since);
+        if (modelKey is not null) ByModel[modelKey] = new ListQuery(query.Pair, query.Level, query.Search);
+    }
 }
 
 /// <summary>Вариант фильтра: значение для сервера и подпись с числом.</summary>
@@ -82,7 +105,7 @@ public sealed partial class PaneViewModel : ObservableObject
         Func<bool> connect, ICardDialogs dialogs)
     {
         (_api, _revit, _store, _choices, _thumbnails, _session, _connect, _dialogs) = (api, revit, store, choices, thumbnails, session, connect, dialogs);
-        ShowQuery(session.Query);
+        ShowQuery(session.QueryFor(null));
     }
 
     public ObservableCollection<CollisionItemViewModel> Items { get; } = [];
@@ -102,7 +125,9 @@ public sealed partial class PaneViewModel : ObservableObject
     /// </summary>
     public Task ActivateAsync() => RunAsync(async version =>
     {
+        // Карточка открытой коллизии — прежнего документа, модели или пользователя: её кнопки уже не про то, что на экране.
         _me = null;
+        Card = null;
         Status = "";
         if (_store.Load() is null)
         {
@@ -149,6 +174,7 @@ public sealed partial class PaneViewModel : ObservableObject
         : RunAsync(version =>
         {
             if (_documentPath is not null) _choices.Set(_documentPath, match.Key);
+            Card = null;
             return LoadModelAsync(match, version);
         });
 
@@ -192,7 +218,7 @@ public sealed partial class PaneViewModel : ObservableObject
     {
         var query = new CollisionQuery(StatusFilter ?? "open", GroupFilter ?? "all", PairFilter, LevelFilter, string.IsNullOrWhiteSpace(Search) ? null : Search.Trim(),
             NewForMeActive ? "unseen" : null);
-        _session.Query = query;
+        _session.Remember(Model?.Key, query);
         return _state is { } state && Screen == PaneScreen.Ready
             ? RunAsync(async version =>
             {
@@ -461,7 +487,7 @@ public sealed partial class PaneViewModel : ObservableObject
         Parts = string.Join("; ", match.Parts.Select(p => p.LastApprovedRunAt is { } at ? $"{p.Name} — прогон {at.ToLocalTime():dd.MM.yyyy HH:mm}" : p.Name));
 
         var state = new CollisionListState(_api, match.Key);
-        await state.SetQueryAsync(_session.Query);
+        await state.SetQueryAsync(_session.QueryFor(match.Key));
         if (version != _version) return;
         _state = state;
         ShowList(state, rebuild: true);
@@ -528,7 +554,12 @@ public sealed partial class PaneViewModel : ObservableObject
         _quiet = quiet;
     }
 
-    private void Show(PaneScreen screen, string message) => (Screen, Message) = (screen, message);
+    /// <summary>Экран панели; не список — карточка закрывается: вернувшись к списку, человек не увидит чужую карточку.</summary>
+    private void Show(PaneScreen screen, string message)
+    {
+        if (screen != PaneScreen.Ready) Card = null;
+        (Screen, Message) = (screen, message);
+    }
 
     /// <summary>
     ///     Шаг панели с общей обработкой ошибок; результаты устаревшего шага отбрасываются по номеру версии. Не бросает:
