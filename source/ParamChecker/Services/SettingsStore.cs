@@ -21,7 +21,8 @@ public sealed class SettingsStore
 
     /// <summary>Имя BuiltInCategory по числу — для профилей старого формата.</summary>
     public static string? CategoryName(int id) =>
-        Enum.IsDefined(typeof(BuiltInCategory), id) ? ((BuiltInCategory)id).ToString() : null;
+        // Значение — само перечисление: с Revit 2024 его базовый тип long, до того — int, а IsDefined требует точный тип.
+        Enum.IsDefined(typeof(BuiltInCategory), (BuiltInCategory)id) ? ((BuiltInCategory)id).ToString() : null;
 
     /// <summary>Настройки — удобство, а не данные: при ошибке берём умолчания.</summary>
     public CheckerSettings LoadSettings()
