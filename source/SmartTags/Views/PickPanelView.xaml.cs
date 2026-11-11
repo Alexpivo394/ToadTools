@@ -19,7 +19,6 @@ public sealed partial class PickPanelView
         InitializeComponent();
 
         // Тему не сбрасываем: панель открывается в той же теме, что выбрана в окне плагина.
-        ThemeWatcherService.Watch(this);
 
         _owner = owner;
         new WindowInteropHelper(this).Owner = owner;

@@ -1,8 +1,8 @@
+using ToadDesign;
 using System.Diagnostics;
 using Autodesk.Revit.DB.Electrical;
 using Autodesk.Revit.DB.Structure;
 using Autodesk.Revit.UI;
-using Wpf.Ui.Controls;
 using CreateCover.Models;
 using ToadTools.UI.Models;
 using ToadTools.UI.Progress;
@@ -47,7 +47,7 @@ public class CreateCoverService
 
         // Удаление старых крышек и создание новых — одна группа: «Прервать» откатывает и то и другое.
         using (var progress = ToadProgress.Show("Разместить крышки",
-                   new ProgressOptions { Icon = SymbolRegular.LayerDiagonal24 }))
+                   new ProgressOptions { Icon = Symbol.Stack2 }))
         using (var trGr = new TransactionGroup(_doc, "Добавление крышек"))
         {
             trGr.Start();

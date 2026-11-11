@@ -1,25 +1,25 @@
-<ui:FluentWindow
+<toad:ToadWindow
     x:Class="Collisions.Views.NoteDialog"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:toad="urn:toaddesign"
     xmlns:vm="clr-namespace:Collisions.ViewModels"
     xmlns:conv="clr-namespace:ToadTools.UI.Converters;assembly=ToadTools.UI"
     d:DataContext="{d:DesignInstance Type=vm:NoteViewModel}"
     mc:Ignorable="d"
     Title="{Binding Title}"
     WindowStartupLocation="CenterOwner"
-    WindowBackdropType="Mica"
-    WindowCornerPreference="Round"
-    ExtendsContentIntoTitleBar="True"
     ShowInTaskbar="False"
     ResizeMode="NoResize"
     SizeToContent="Height"
     Width="420"
     MinWidth="0"
-    MinHeight="0">
+    MinHeight="0"
+    ShowMaximizeButton="False"
+    ShowMinimizeButton="False"
+    TitleIcon="Pencil">
     <!-- Стиль FluentWindow задаёт минимум 460 × 320: окно было шире и выше содержимого, с пустой полосой внизу -->
 
     <Grid>
@@ -29,11 +29,6 @@
         </Grid.RowDefinitions>
 
         <!-- Значок выравнивает заголовок по левому краю полей: без него полоса заголовка оставляет пустое место -->
-        <ui:TitleBar Grid.Row="0" Title="{Binding Title}" ShowMinimize="False" ShowMaximize="False">
-            <ui:TitleBar.Icon>
-                <ui:SymbolIcon Symbol="Edit24" />
-            </ui:TitleBar.Icon>
-        </ui:TitleBar>
 
         <StackPanel Grid.Row="1" Margin="16,4,16,16">
             <StackPanel Visibility="{Binding ChoosesSide, Converter={conv:BooleanCollapsedVisibilityConverter}}">
@@ -41,12 +36,12 @@
                 <ComboBox ItemsSource="{Binding Sides}" DisplayMemberPath="Label" SelectedValuePath="Assignee" SelectedValue="{Binding Side}" Margin="0,0,0,8" />
             </StackPanel>
             <TextBlock Text="{Binding NoteLabel}" Margin="0,0,0,4" />
-            <ui:TextBox x:Name="NoteBox" Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap"
+            <toad:TextBox x:Name="NoteBox" Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap"
                         MinLines="3" MaxLines="8" />
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
-                <ui:Button Content="Сохранить" Appearance="Primary" Command="{Binding SaveCommand}" IsDefault="True" Margin="0,0,8,0" />
-                <ui:Button Content="Отмена" IsCancel="True" />
+                <toad:Button Content="Сохранить" Variant="Filled" Command="{Binding SaveCommand}" IsDefault="True" Margin="0,0,8,0" />
+                <toad:Button Content="Отмена" IsCancel="True" />
             </StackPanel>
         </StackPanel>
     </Grid>
-</ui:FluentWindow>
+</toad:ToadWindow>

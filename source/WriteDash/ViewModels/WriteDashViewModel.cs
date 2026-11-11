@@ -1,9 +1,9 @@
 ﻿using System.Collections.ObjectModel;
+using ToadDesign;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Nice3point.Revit.Toolkit;
 using ToadTools.UI.Services;
-using Wpf.Ui.Appearance;
 using WriteDash.Models;
 using WriteDash.Services;
 
@@ -42,10 +42,10 @@ public sealed partial class WriteDashViewModel : ObservableObject
     partial void OnDarkThemeChanged(bool value)
     {
         var newTheme = value
-            ? ApplicationTheme.Dark
-            : ApplicationTheme.Light;
+            ? ToadThemeMode.Dark
+            : ToadThemeMode.Light;
 
-        ThemeWatcherService.ApplyTheme(newTheme);
+        ToadTheme.Mode = newTheme;
     }
 
     partial void OnParametersFilterChanged(string? value)

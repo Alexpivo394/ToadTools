@@ -1,43 +1,38 @@
-<ui:FluentWindow
+<toad:ToadWindow
     x:Class="SmartTags.Views.PickPanelView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:toad="urn:toaddesign"
     Title="Умные выноски"
     WindowStartupLocation="Manual"
-    WindowBackdropType="Mica"
-    WindowCornerPreference="Round"
     ResizeMode="NoResize"
     ShowInTaskbar="False"
     ShowActivated="False"
     Width="380"
     Height="150"
     MinHeight="0"
-    ExtendsContentIntoTitleBar="True">
+    ShowMaximizeButton="False"
+    ShowMinimizeButton="False"
+    TitleIcon="Tags">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <ui:TitleBar Grid.Row="0"
-                     Title="Умные выноски — выбор элементов"
-                     Icon="TagMultiple24"
-                     ShowMinimize="False"
-                     ShowMaximize="False" />
 
         <StackPanel Grid.Row="1" Margin="16,0,16,14">
             <TextBlock TextWrapping="Wrap"
                        Text="Выберите элементы на виде как обычно в Revit: щелчком или рамкой. Ctrl — добавить к выбранным, Shift — убрать." />
             <StackPanel Margin="0,12,0,0" HorizontalAlignment="Right" Orientation="Horizontal">
-                <ui:Button Content="Готово"
-                           Appearance="Primary"
-                           Icon="{ui:SymbolIcon Checkmark24}"
+                <toad:Button Content="Готово"
+                           Variant="Filled"
+                           Icon="Check"
                            Click="OnDone" />
-                <ui:Button Margin="8,0,0,0"
+                <toad:Button Margin="8,0,0,0"
                            Content="Отмена"
-                           Icon="{ui:SymbolIcon Dismiss24}"
+                           Icon="X"
                            Click="OnCancel" />
             </StackPanel>
         </StackPanel>
     </Grid>
-</ui:FluentWindow>
+</toad:ToadWindow>

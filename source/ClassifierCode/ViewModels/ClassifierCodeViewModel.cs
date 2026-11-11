@@ -1,8 +1,8 @@
+using ToadDesign;
 using ClassifierCode.Models;
 using ClassifierCode.Services;
 using ToadTools.UI.Models;
 using ToadTools.UI.Services;
-using Wpf.Ui.Appearance;
 
 namespace ClassifierCode.ViewModels;
 
@@ -44,7 +44,7 @@ public sealed partial class ClassifierCodeViewModel : ObservableObject
 
     partial void OnDarkThemeChanged(bool value)
     {
-        ThemeWatcherService.ApplyTheme(value ? ApplicationTheme.Dark : ApplicationTheme.Light);
+        ToadTheme.Mode = value ? ToadThemeMode.Dark : ToadThemeMode.Light;
     }
 
     [RelayCommand]

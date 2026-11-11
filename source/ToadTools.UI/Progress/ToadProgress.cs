@@ -1,4 +1,5 @@
 #nullable enable
+using ToadDesign;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -9,7 +10,6 @@ using System.Windows.Threading;
 using ToadTools.UI.Services;
 using ToadTools.UI.ViewModels;
 using ToadTools.UI.Views;
-using Wpf.Ui.Appearance;
 
 namespace ToadTools.UI.Progress;
 
@@ -237,13 +237,12 @@ public sealed class ToadProgress : IDisposable
     {
         // Тему берём ту, что сейчас выбрана в окнах плагинов: окно прогресса живёт в своём потоке
         // и не может пользоваться ресурсами потока Revit.
-        var theme = ThemeWatcherService.CurrentTheme;
         var anchor = _activeWindow != IntPtr.Zero ? _activeWindow : Process.GetCurrentProcess().MainWindowHandle;
         var started = new ManualResetEventSlim();
 
         try
         {
-            _thread = new Thread(() => RunWindowThread(theme, anchor, started))
+            _thread = new Thread(() => RunWindowThread(anchor, started))
             {
                 IsBackground = true,
                 Name = "ToadTools progress"
@@ -261,7 +260,7 @@ public sealed class ToadProgress : IDisposable
         DisableThreadWindows();
     }
 
-    private void RunWindowThread(ApplicationTheme theme, IntPtr anchor, ManualResetEventSlim started)
+    private void RunWindowThread(IntPtr anchor, ManualResetEventSlim started)
     {
         // Исключение в фоновом потоке убило бы весь Revit — здесь не должно вылететь ничего.
         try
@@ -270,7 +269,7 @@ public sealed class ToadProgress : IDisposable
             _dispatcher.UnhandledException += (_, args) => args.Handled = true;
 
             var viewModel = new ToadProgressViewModel(this, _options);
-            _window = new ToadProgressWindow(viewModel, theme, anchor, _options.ShowDelay);
+            _window = new ToadProgressWindow(viewModel, anchor, _options.ShowDelay);
 
             started.Set();
             Dispatcher.Run();
@@ -281,9 +280,6 @@ public sealed class ToadProgress : IDisposable
         }
         finally
         {
-            // Контролы окна остались подписаны на смену темы — иначе следующая смена темы в потоке Revit
-            // дёрнет объекты этого (уже завершённого) потока и упадёт.
-            ThemeWatcherService.DetachThread(Dispatcher.CurrentDispatcher);
             started.Set();
         }
     }

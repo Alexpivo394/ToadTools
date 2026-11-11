@@ -1,10 +1,10 @@
+using ToadDesign;
 using System.IO;
 using Alexpivo394.Revit.Export.Core;
 using Alexpivo394.Revit.Export.Services;
 using Autodesk.Revit.UI;
 using ToadExporter.Core;
 using ToadTools.UI.Progress;
-using Wpf.Ui.Controls;
 
 namespace ToadExporter.Services;
 
@@ -34,7 +34,7 @@ public sealed class ExportRunner(UIApplication uiApplication)
 
         using (var progress = ToadProgress.Show("ToadExporter", new ProgressOptions
                {
-                   Icon = SymbolRegular.ArrowExportUp24,
+                   Icon = Symbol.FileExport,
                    SkipText = "Пропустить модель",
                    CancelHint = "Прерываем — текущая модель будет закрыта без сохранения"
                }))

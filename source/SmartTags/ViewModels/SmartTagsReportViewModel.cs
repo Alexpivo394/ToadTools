@@ -1,7 +1,7 @@
+using ToadDesign;
 using System.Diagnostics;
 using System.Globalization;
 using SmartTags.Models;
-using Wpf.Ui.Controls;
 
 namespace SmartTags.ViewModels;
 
@@ -52,7 +52,7 @@ public sealed partial class SmartTagsReportViewModel : ObservableObject
 
     public string Headline { get; }
     public string Message { get; }
-    public InfoBarSeverity Severity { get; }
+    public AlertSeverity Severity { get; }
     public IReadOnlyList<ReportCounter> Counters { get; }
     public IReadOnlyList<string> Reasons { get; }
     public IReadOnlyList<ItemReport> Items { get; }
@@ -94,37 +94,37 @@ public sealed partial class SmartTagsReportViewModel : ObservableObject
     [RelayCommand]
     private void Close() => CloseRequested?.Invoke(this, EventArgs.Empty);
 
-    private static (string, string, InfoBarSeverity) Describe(RunResult result, SmartTagsSettings settings, int problems)
+    private static (string, string, AlertSeverity) Describe(RunResult result, SmartTagsSettings settings, int problems)
     {
         if (result.Cancelled)
-            return ("Запуск отменён", "Изменения в модели откачены, марки не созданы.", InfoBarSeverity.Warning);
+            return ("Запуск отменён", "Изменения в модели откачены, марки не созданы.", AlertSeverity.Warning);
 
         if (!result.Completed)
             return ("Запуск завершился с ошибкой", (result.Error ?? "Неизвестная ошибка.") +
-                                                   "\nИзменения в модели откачены.", InfoBarSeverity.Error);
+                                                   "\nИзменения в модели откачены.", AlertSeverity.Error);
 
         var headline = "Марки расставлены: " + settings.CategoriesText;
         if (settings.OnlyElements is not null) headline += " (только выбранные)";
 
         string message;
-        InfoBarSeverity severity;
+        AlertSeverity severity;
         if (result.Items.Count == 0)
         {
             message = settings.OnlyElements is null
                 ? "На виде не найдено подходящих элементов выбранных категорий."
                 : "Среди выбранных элементов не найдено подходящих для маркировки.";
-            severity = InfoBarSeverity.Warning;
+            severity = AlertSeverity.Warning;
         }
         else if (problems > 0)
         {
             message = "Для части элементов не нашлось положения без пересечений — марки поставлены с конфликтом. " +
                       "«Выделить проблемные» — чтобы поправить их вручную.";
-            severity = InfoBarSeverity.Warning;
+            severity = AlertSeverity.Warning;
         }
         else
         {
             message = "Марки размещены без пересечений текста и выносок. Весь запуск отменяется одним Ctrl+Z.";
-            severity = InfoBarSeverity.Success;
+            severity = AlertSeverity.Success;
         }
 
         if (result.LockedCopyId is not null)

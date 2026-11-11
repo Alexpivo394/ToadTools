@@ -1,23 +1,21 @@
-<ui:FluentWindow
+<toad:ToadWindow
     x:Class="ClassifierCode.Views.ClassifierReportView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:toad="urn:toaddesign"
     xmlns:viewModels="clr-namespace:ClassifierCode.ViewModels"
     xmlns:uiConverters="clr-namespace:ToadTools.UI.Converters;assembly=ToadTools.UI"
     d:DataContext="{d:DesignInstance Type=viewModels:ClassifierReportViewModel}"
     mc:Ignorable="d"
     Title="Код по классификатору — отчёт"
     WindowStartupLocation="CenterScreen"
-    WindowBackdropType="Mica"
-    WindowCornerPreference="Round"
     Height="640"
     Width="640"
     MinHeight="420"
     MinWidth="520"
-    ExtendsContentIntoTitleBar="True">
+    TitleIcon="Tag">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -25,7 +23,6 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <!-- Title Bar -->
-        <ui:TitleBar Grid.Row="0" Title="Код по классификатору" Icon="Tag24" />
 
         <!-- Content -->
         <Grid Grid.Row="1" Margin="10,0,10,10">
@@ -38,12 +35,12 @@
             </Grid.RowDefinitions>
 
             <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10,0,0,10">
-                <ui:SymbolIcon Symbol="CheckmarkCircle24" FontSize="24" Margin="0,0,10,0" VerticalAlignment="Center" />
+                <toad:Icon Symbol="CircleCheck" Width="24" Height="24" Margin="0,0,10,0" VerticalAlignment="Center" />
                 <TextBlock Text="Готово" FontSize="18" FontWeight="Bold" VerticalAlignment="Center" />
             </StackPanel>
 
             <!-- Summary -->
-            <ui:Card Grid.Row="1" Padding="12,8">
+            <toad:Card Grid.Row="1" Padding="12,8">
                 <ItemsControl ItemsSource="{Binding Summary}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="{x:Type viewModels:ReportRow}">
@@ -58,7 +55,7 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-            </ui:Card>
+            </toad:Card>
 
             <TextBlock Grid.Row="2"
                        Text="{Binding Mode}"
@@ -69,28 +66,27 @@
             <TextBlock Grid.Row="3" Text="Подробности" FontWeight="Bold" Margin="10,0,0,5" />
 
             <!-- Details: read-only, но текст можно выделить и скопировать -->
-            <ui:TextBox Grid.Row="4"
+            <toad:TextBox Grid.Row="4"
                         Text="{Binding Details, Mode=OneWay}"
                         IsReadOnly="True"
                         TextWrapping="Wrap"
                         AcceptsReturn="True"
                         VerticalContentAlignment="Top"
                         VerticalScrollBarVisibility="Auto"
-                        HorizontalScrollBarVisibility="Disabled"
-                        ClearButtonEnabled="False" />
+                        HorizontalScrollBarVisibility="Disabled" />
         </Grid>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="10,0,10,10">
-            <ui:Button Content="{Binding SelectProblemsLabel}"
-                       Icon="{ui:SymbolIcon CursorClick24}"
+            <toad:Button Content="{Binding SelectProblemsLabel}"
+                       Icon="Click"
                        Command="{Binding SelectProblemsCommand}"
                        Visibility="{Binding HasProblems, Converter={uiConverters:BooleanCollapsedVisibilityConverter}}"
                        Margin="10,0,0,0" />
-            <ui:Button Content="Закрыть"
-                       Icon="{ui:SymbolIcon Dismiss24}"
+            <toad:Button Content="Закрыть"
+                       Icon="X"
                        Command="{Binding CloseCommand}"
-                       Appearance="Primary"
+                       Variant="Filled"
                        Margin="10,0,0,0" />
         </StackPanel>
     </Grid>
-</ui:FluentWindow>
+</toad:ToadWindow>

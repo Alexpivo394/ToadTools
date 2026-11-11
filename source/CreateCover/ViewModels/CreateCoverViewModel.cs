@@ -1,7 +1,7 @@
 ﻿using System.Collections.ObjectModel;
+using ToadDesign;
 using ToadTools.UI.Models;
 using ToadTools.UI.Services;
-using Wpf.Ui.Appearance;
 using CreateCover.Models;
 using CreateCover.Services;
 
@@ -21,8 +21,8 @@ public sealed partial class CreateCoverViewModel : ObservableObject
     }
     partial void OnDarkThemeChanged(bool value)
     {
-        var newTheme = value ? ApplicationTheme.Dark : ApplicationTheme.Light;
-        ThemeWatcherService.ApplyTheme(newTheme);
+        var newTheme = value ? ToadThemeMode.Dark : ToadThemeMode.Light;
+        ToadTheme.Mode = newTheme;
     }
     
     [RelayCommand]

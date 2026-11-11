@@ -5,8 +5,6 @@
         <PackageReference Include="CommunityToolkit.Mvvm"/>
         <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf"/>
         <PackageReference Include="Newtonsoft.Json"/>
-        <PackageReference Include="WPF-UI"/>
-        <PackageReference Include="WPF-UI.Abstractions"/>
     </ItemGroup>
 
     <!-- DPAPI для токена ToadFlow; с .NET 10 (Revit 2027) входит в Windows Desktop -->

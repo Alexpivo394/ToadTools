@@ -1,11 +1,11 @@
 ﻿using System.Collections.ObjectModel;
+using ToadDesign;
 using Autodesk.Revit.DB.Electrical;
 using Autodesk.Revit.UI;
 using ToadTools.UI.Models;
 using ToadTools.UI.Services;
 using SSPlan.Models;
 using SSPlan.Services;
-using Wpf.Ui.Appearance;
 using Settings = SSPlan.Configuration.Settings;
 
 namespace SSPlan.ViewModels;
@@ -122,8 +122,8 @@ public partial class SSPlanViewModel(Document doc, UIDocument uidoc, View view) 
     
     partial void OnDarkThemeChanged(bool value)
     {
-        var newTheme = value ? ApplicationTheme.Dark : ApplicationTheme.Light;
-        ThemeWatcherService.ApplyTheme(newTheme);
+        var newTheme = value ? ToadThemeMode.Dark : ToadThemeMode.Light;
+        ToadTheme.Mode = newTheme;
     }
     
     public void LoadFromSettings(Settings settings)

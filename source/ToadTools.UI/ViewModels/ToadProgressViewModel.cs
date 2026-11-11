@@ -1,10 +1,10 @@
 #nullable enable
+using ToadDesign;
 using System;
 using System.Windows.Shell;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ToadTools.UI.Progress;
-using Wpf.Ui.Controls;
 
 namespace ToadTools.UI.ViewModels;
 
@@ -60,7 +60,7 @@ public sealed partial class ToadProgressViewModel : ObservableObject
     }
 
     public string Title { get; }
-    public SymbolRegular Icon { get; }
+    public Symbol Icon { get; }
     public bool CanCancel { get; }
     public string CancelHint { get; }
     public string SkipText { get; }

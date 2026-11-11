@@ -1,4 +1,5 @@
 #nullable enable
+using ToadDesign;
 using System.Globalization;
 using System.IO;
 using Microsoft.Win32;
@@ -7,7 +8,6 @@ using OfficeOpenXml;
 using ToadTools.UI.Models;
 using ToadTools.UI.Progress;
 using ToadTools.UI.Services;
-using Wpf.Ui.Controls;
 
 namespace WarmSync;
 
@@ -49,7 +49,7 @@ public class WriteFromExcel
         try
         {
             using (var progress = ToadProgress.Show("Теплопотери из Excel",
-                       new ProgressOptions { Icon = SymbolRegular.TableArrowUp24 }))
+                       new ProgressOptions { Icon = Symbol.TableExport }))
             using (var package = new ExcelPackage(new FileInfo(excelPath)))
             {
                 progress.Stage("Чтение Excel");

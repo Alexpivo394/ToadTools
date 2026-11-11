@@ -1,6 +1,6 @@
 ﻿using ToadTools.UI.Services;
+using ToadDesign;
 using WorkingSet.ViewModels;
-using Wpf.Ui.Appearance;
 
 namespace WorkingSet.Views
 {
@@ -12,9 +12,7 @@ namespace WorkingSet.Views
         {
             InitializeComponent();
             
-            ThemeWatcherService.Initialize();
-            ThemeWatcherService.Watch(this);
-            ThemeWatcherService.ApplyTheme(ApplicationTheme.Dark);
+            ToadTheme.Mode = ToadThemeMode.Dark;
             
             _viewModel = viewModel;
             var settings = Config.LoadSettings();

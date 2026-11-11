@@ -1,11 +1,11 @@
 ﻿#nullable enable
+using ToadDesign;
 using System.Windows;
 using Autodesk.Revit.UI;
 using Nice3point.Revit.Toolkit;
 using Microsoft.Win32;
 using ToadTools.UI.Models;
 using WorkingSet.Models;
-using Wpf.Ui.Appearance;
 using ToadTools.UI.Services;
 using Settings = WorkingSet.Configuration.Settings;
 
@@ -22,8 +22,8 @@ public partial class WorkingSetViewModel : ObservableObject
     
     partial void OnDarkThemeChanged(bool value)
     {
-        var newTheme = value ? ApplicationTheme.Dark : ApplicationTheme.Light;
-        ThemeWatcherService.ApplyTheme(newTheme);
+        var newTheme = value ? ToadThemeMode.Dark : ToadThemeMode.Light;
+        ToadTheme.Mode = newTheme;
     }
 
     partial void OnExcelFilePathChanged(string? value)

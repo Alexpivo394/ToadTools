@@ -4,7 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:toad="urn:toaddesign"
     xmlns:vm="clr-namespace:Collisions.ViewModels"
     xmlns:views="clr-namespace:Collisions.Views"
     xmlns:conv="clr-namespace:ToadTools.UI.Converters;assembly=ToadTools.UI"
@@ -34,36 +34,36 @@
             <TextBlock Text="{Binding Assignee, StringFormat=Кто правит: {0}}" FontSize="11" Opacity="0.75" />
 
             <TextBlock Text="{Binding NavigateMessage}" TextWrapping="Wrap" FontSize="12" Margin="0,6,0,0"
-                       Foreground="{DynamicResource SystemFillColorCautionBrush}"
+                       Foreground="{DynamicResource Toad.Brush.Warning}"
                        Visibility="{Binding NavigateMessage, Converter={views:TextVisibilityConverter}}" />
             <TextBlock Text="{Binding Error}" TextWrapping="Wrap" FontSize="12" Margin="0,6,0,0"
-                       Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                       Foreground="{DynamicResource Toad.Brush.Danger}"
                        Visibility="{Binding Error, Converter={views:TextVisibilityConverter}}" />
 
             <!-- Действия: те же, что в веб-карточке -->
             <WrapPanel Margin="0,8,0,0">
-                <ui:Button Content="Беру" Command="{Binding TakeCommand}" Margin="0,0,6,6"
+                <toad:Button Content="Беру" Command="{Binding TakeCommand}" Margin="0,0,6,6"
                            Visibility="{Binding CanTake, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
-                <ui:Button Content="Передать…" Command="{Binding PassCommand}" Margin="0,0,6,6"
+                <toad:Button Content="Передать…" Command="{Binding PassCommand}" Margin="0,0,6,6"
                            Visibility="{Binding CanPass, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
-                <ui:Button Content="{x:Static vm:CardViewModel.FixedLabel}" ToolTip="Подтвердит следующий прогон: коллизии не будет — статус «исправлена»" Command="{Binding FixedCommand}"
+                <toad:Button Content="{x:Static vm:CardViewModel.FixedLabel}" ToolTip="Подтвердит следующий прогон: коллизии не будет — статус «исправлена»" Command="{Binding FixedCommand}"
                            Margin="0,0,6,6" Visibility="{Binding CanFixed, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
-                <ui:Button Content="Фиктивная…" Command="{Binding FakeCommand}" Margin="0,0,6,6"
+                <toad:Button Content="Фиктивная…" Command="{Binding FakeCommand}" Margin="0,0,6,6"
                            Visibility="{Binding CanFake, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
-                <ui:Button Content="Снять «фиктивная»" Command="{Binding UnfakeCommand}" Margin="0,0,6,6"
+                <toad:Button Content="Снять «фиктивная»" Command="{Binding UnfakeCommand}" Margin="0,0,6,6"
                            Visibility="{Binding CanUnfake, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
-                <ui:Button Content="Примечание…" Command="{Binding NoteCommand}" Margin="0,0,6,6"
+                <toad:Button Content="Примечание…" Command="{Binding NoteCommand}" Margin="0,0,6,6"
                            Visibility="{Binding CanNote, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
-                <ui:Button Content="Открыть в 3D" ToolTip="Просмотрщик коллизии в браузере" Command="{Binding OpenIn3DCommand}" Margin="0,0,6,6" />
+                <toad:Button Content="Открыть в 3D" ToolTip="Просмотрщик коллизии в браузере" Command="{Binding OpenIn3DCommand}" Margin="0,0,6,6" />
             </WrapPanel>
             <TextBlock Text="{Binding Hint}" FontSize="11" Opacity="0.7" TextWrapping="Wrap"
                        Visibility="{Binding Hint, Converter={views:TextVisibilityConverter}}" />
 
-            <Border CornerRadius="4" Margin="0,8,0,0" MinHeight="120" Background="{DynamicResource ControlFillColorSecondaryBrush}">
+            <Border CornerRadius="4" Margin="0,8,0,0" MinHeight="120" Background="{DynamicResource Toad.Brush.Hover}">
                 <Grid>
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="8">
                         <TextBlock Text="{Binding ImageText}" FontSize="11" Opacity="0.7" TextWrapping="Wrap" TextAlignment="Center" />
-                        <ui:Button Content="Обновить" Command="{Binding RefreshImageCommand}" HorizontalAlignment="Center" Margin="0,6,0,0"
+                        <toad:Button Content="Обновить" Command="{Binding RefreshImageCommand}" HorizontalAlignment="Center" Margin="0,6,0,0"
                                    Visibility="{Binding CanRefreshImage, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
                     </StackPanel>
                     <Image Source="{Binding Image}" Stretch="Uniform" MaxHeight="320" />

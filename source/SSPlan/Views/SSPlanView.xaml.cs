@@ -1,6 +1,6 @@
 ﻿using SSPlan.ViewModels;
+using ToadDesign;
 using ToadTools.UI.Services;
-using Wpf.Ui.Appearance;
 using Settings = SSPlan.Configuration.Settings;
 
 namespace SSPlan.Views;
@@ -14,9 +14,7 @@ public sealed partial class SSPlanView
     {
         InitializeComponent();
         
-        ThemeWatcherService.Initialize();
-        ThemeWatcherService.ApplyTheme(ApplicationTheme.Dark);
-        ThemeWatcherService.Watch(this);
+        ToadTheme.Mode = ToadThemeMode.Dark;
         
         _viewModel = viewModel;
         var settings = Config.LoadSettings();

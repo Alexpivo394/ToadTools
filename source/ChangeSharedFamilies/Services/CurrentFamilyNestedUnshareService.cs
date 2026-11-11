@@ -1,7 +1,7 @@
+using ToadDesign;
 using Autodesk.Revit.DB;
 using System.IO;
 using ToadTools.UI.Progress;
-using Wpf.Ui.Controls;
 
 namespace ChangeSharedFamilies.Services;
 
@@ -40,7 +40,7 @@ public class CurrentFamilyNestedUnshareService
         // после текущего семейства, а уже заменённые остаются.
         using var progress = ToadProgress.Show("Замена общих семейств", new ProgressOptions
         {
-            Icon = SymbolRegular.ShareAndroid24,
+            Icon = Symbol.Share,
             CancelHint = "Остановимся после текущего семейства — уже заменённые останутся"
         });
         progress.Stage("Поиск общих вложенных семейств");

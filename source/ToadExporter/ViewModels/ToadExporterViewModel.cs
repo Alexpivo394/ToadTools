@@ -1,3 +1,4 @@
+using ToadDesign;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -11,7 +12,6 @@ using ToadExporter.Services;
 using ToadExporter.ViewModels.Tree;
 using ToadTools.UI.Models;
 using ToadTools.UI.Services;
-using Wpf.Ui.Appearance;
 using Alexpivo394.Revit.Export.Core;
 using Alexpivo394.Revit.Export.Services;
 using Alexpivo394.Revit.Export.Sources;
@@ -305,7 +305,7 @@ public sealed partial class ToadExporterViewModel : ObservableObject
                 UpdateLastLog();
                 break;
             case nameof(ExportSettings.DarkTheme):
-                ThemeWatcherService.ApplyTheme(Settings.DarkTheme ? ApplicationTheme.Dark : ApplicationTheme.Light);
+                ToadTheme.Mode = Settings.DarkTheme ? ToadThemeMode.Dark : ToadThemeMode.Light;
                 break;
         }
     }

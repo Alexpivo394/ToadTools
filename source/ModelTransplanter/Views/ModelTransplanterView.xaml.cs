@@ -1,7 +1,6 @@
 ﻿using ModelTransplanter.ViewModels;
+using ToadDesign;
 using ToadTools.UI.Services;
-using Wpf.Ui.Appearance;
-using Wpf.Ui.Controls;
 
 namespace ModelTransplanter.Views
 {
@@ -16,9 +15,7 @@ namespace ModelTransplanter.Views
         InitializeComponent(); 
         
         
-        ThemeWatcherService.Initialize();
-        ThemeWatcherService.Watch(this);
-        ThemeWatcherService.ApplyTheme(ApplicationTheme.Dark);
+        ToadTheme.Mode = ToadThemeMode.Dark;
 
         
 

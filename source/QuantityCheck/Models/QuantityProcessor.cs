@@ -1,8 +1,8 @@
+using ToadDesign;
 using QuantityCheck.Dictionaries;
 using QuantityCheck.Services;
 using System.Collections.Generic;
 using ToadTools.UI.Progress;
-using Wpf.Ui.Controls;
 
 namespace QuantityCheck.Models;
 
@@ -29,7 +29,7 @@ public class QuantityProcessor
             _logger?.StartLog(string.Empty);
             _logger?.Log($"Старт обработки. Параметр: '{_paramName}'");
             using var progress = ToadProgress.Show("Записать количество",
-                new ProgressOptions { Icon = SymbolRegular.NumberSymbol24 });
+                new ProgressOptions { Icon = Symbol.Hash });
             progress.Stage("Сбор элементов");
 
             // Собираем все элементы

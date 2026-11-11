@@ -5,8 +5,6 @@
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.Mvvm"/>
         <PackageReference Include="Newtonsoft.Json"/>
-        <PackageReference Include="WPF-UI"/>
-        <PackageReference Include="WPF-UI.Abstractions"/>
     </ItemGroup>
 
     <!-- HttpClient; на .NET входит в рантайм -->

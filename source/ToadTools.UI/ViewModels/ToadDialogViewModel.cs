@@ -1,10 +1,10 @@
 #nullable enable
+using ToadDesign;
 using System;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ToadTools.UI.Models;
-using Wpf.Ui.Controls;
 
 namespace ToadTools.UI.ViewModels;
 
@@ -12,11 +12,11 @@ public partial class ToadDialogViewModel : ObservableObject
 {
     private string _title = "";
     private string _message = "";
-    private SymbolRegular _icon = SymbolRegular.QuestionCircle24;
+    private Symbol _icon = Symbol.HelpCircle;
 
     public string Title { get => _title; set => SetProperty(ref _title, value); }
     public string Message { get => _message; set => SetProperty(ref _message, value); }
-    public SymbolRegular Icon { get => _icon; set => SetProperty(ref _icon, value); }
+    public Symbol Icon { get => _icon; set => SetProperty(ref _icon, value); }
 
     public string? Result { get; private set; }
 
@@ -33,7 +33,7 @@ public partial class ToadDialogViewModel : ObservableObject
 
     public void BuildButtons(DialogButtons buttons)
     {
-        void AddBtn(string? text, SymbolRegular icon)
+        void AddBtn(string? text, Symbol icon)
         {
             Buttons.Add(new DialogButtonModel
             {
@@ -46,28 +46,28 @@ public partial class ToadDialogViewModel : ObservableObject
         switch (buttons)
         {
             case DialogButtons.OK:
-                AddBtn("OK", SymbolRegular.Checkmark24);
+                AddBtn("OK", Symbol.Check);
                 break;
             case DialogButtons.OKCancel:
-                AddBtn("OK", SymbolRegular.Checkmark24);
-                AddBtn("Cancel", SymbolRegular.Dismiss24);
+                AddBtn("OK", Symbol.Check);
+                AddBtn("Cancel", Symbol.X);
                 break;
             case DialogButtons.YesNo:
-                AddBtn("Yes", SymbolRegular.Checkmark24);
-                AddBtn("No", SymbolRegular.Dismiss24);
+                AddBtn("Yes", Symbol.Check);
+                AddBtn("No", Symbol.X);
                 break;
             case DialogButtons.YesNoCancel:
-                AddBtn("Yes", SymbolRegular.Checkmark24);
-                AddBtn("No", SymbolRegular.Dismiss24);
-                AddBtn("Cancel", SymbolRegular.ArrowHookDownLeft24);
+                AddBtn("Yes", Symbol.Check);
+                AddBtn("No", Symbol.X);
+                AddBtn("Cancel", Symbol.ArrowBackUp);
                 break;
             case DialogButtons.RetryCancel:
-                AddBtn("Retry", SymbolRegular.ArrowClockwise24);
-                AddBtn("Cancel", SymbolRegular.Dismiss24);
+                AddBtn("Retry", Symbol.Refresh);
+                AddBtn("Cancel", Symbol.X);
                 break;
             case DialogButtons.RetryAbort:
-                AddBtn("Retry", SymbolRegular.ArrowClockwise24);
-                AddBtn("Abort", SymbolRegular.DismissCircle24);
+                AddBtn("Retry", Symbol.Refresh);
+                AddBtn("Abort", Symbol.CircleX);
                 break;
         }
     }

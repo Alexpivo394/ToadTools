@@ -1,22 +1,21 @@
-﻿<ui:FluentWindow
+﻿<toad:ToadWindow
     x:Class="ParamToFinish.Views.ParamToFinishView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:toad="urn:toaddesign"
+    xmlns:conv="clr-namespace:ToadTools.UI.Converters;assembly=ToadTools.UI"
     xmlns:viewModels="clr-namespace:ParamToFinish.ViewModels"
     d:DataContext="{d:DesignInstance Type=viewModels:ParamToFinishViewModel}"
     mc:Ignorable="d"
     Title="Основание отделки"
     WindowStartupLocation="CenterScreen"
-    WindowBackdropType="Mica"
-    WindowCornerPreference="Round"
     Height="500"
     Width="600"
     MinHeight="450"
     MinWidth="600"
-    ExtendsContentIntoTitleBar="True">
+    TitleIcon="CirclePlus">
 <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -24,7 +23,6 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <!-- Title Bar -->
-        <ui:TitleBar Grid.Row="0" Title="Основание отделки" Icon="AddCircle24" />
         
         <!-- Content -->
         <Grid Grid.Row="1" Margin="10,0,10,10">
@@ -46,7 +44,7 @@
             
             <TextBlock Grid.Row="2" Text="Ключевое слово для фильтра отделки" FontWeight="Bold" Margin="10,10,0,10" />
             
-            <ui:TextBox Grid.Row="3" Text="{Binding Filter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+            <toad:TextBox Grid.Row="3" Text="{Binding Filter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
             
             <TextBlock Grid.Row="4" Text="Параметр отделки" FontWeight="Bold" Margin="10,10,0,10" />
             
@@ -55,28 +53,24 @@
             
             <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Left" Margin="10,10,0,10">
                 <TextBlock Text="Вариант обработки модели:" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                <ui:ToggleSwitch
-                    IsChecked="{Binding DataContext.AllModel, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}, Mode=TwoWay}"
-                    OffContent="Активный вид"
-                    OnContent="Вся модель"/>
+                <RadioButton GroupName="Scope" Content="Активный вид" Margin="0,0,16,0"
+                             IsChecked="{Binding AllModel, Converter={conv:InverseBooleanConverter}}" />
+                <RadioButton GroupName="Scope" Content="Вся модель" IsChecked="{Binding AllModel}" />
             </StackPanel>
             
             <StackPanel Grid.Row="7" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,10,0,0">
-                <ui:Button Content="Запуск"
-                           Icon="{ui:SymbolIcon Rocket24}"
+                <toad:Button Content="Запуск"
+                           Icon="Rocket"
                            Command="{Binding StartCommand}"
-                           Appearance="Primary"
+                           Variant="Filled"
                            Margin="10,0,0,0" />
                     
             </StackPanel>
         </Grid>
         
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Left" Margin="10,0,0,10">
-            <TextBlock Text="Тема:" VerticalAlignment="Center" Margin="0,0,10,0"/>
-            <ui:ToggleSwitch
-                IsChecked="{Binding DataContext.DarkTheme, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}, Mode=TwoWay}"
-                OffContent="Светлая"
-                OnContent="Темная"/>
+            <toad:Switch Content="Тёмная тема"
+                IsChecked="{Binding DataContext.DarkTheme, RelativeSource={RelativeSource AncestorType=toad:ToadWindow}, Mode=TwoWay}"/>
         </StackPanel>
     </Grid>
-</ui:FluentWindow>
+</toad:ToadWindow>

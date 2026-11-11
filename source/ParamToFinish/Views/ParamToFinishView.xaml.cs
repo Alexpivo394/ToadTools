@@ -1,6 +1,6 @@
 ﻿using ParamToFinish.ViewModels;
+using ToadDesign;
 using ToadTools.UI.Services;
-using Wpf.Ui.Appearance;
 
 namespace ParamToFinish.Views;
 
@@ -10,9 +10,7 @@ public sealed partial class ParamToFinishView
     {
         InitializeComponent();
         
-        ThemeWatcherService.Initialize();
-        ThemeWatcherService.Watch(this);
-        ThemeWatcherService.ApplyTheme(ApplicationTheme.Dark);
+        ToadTheme.Mode = ToadThemeMode.Dark;
         
         DataContext = viewModel;
         

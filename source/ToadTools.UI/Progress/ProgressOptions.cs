@@ -1,6 +1,6 @@
 #nullable enable
+using ToadDesign;
 using System;
-using Wpf.Ui.Controls;
 
 namespace ToadTools.UI.Progress;
 
@@ -8,7 +8,7 @@ namespace ToadTools.UI.Progress;
 public sealed class ProgressOptions
 {
     /// <summary>Иконка в заголовке окна.</summary>
-    public SymbolRegular Icon { get; set; } = SymbolRegular.ArrowSync24;
+    public Symbol Icon { get; set; } = Symbol.Refresh;
 
     /// <summary>Показывать кнопку «Прервать».</summary>
     public bool CanCancel { get; set; } = true;

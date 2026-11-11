@@ -1,11 +1,11 @@
 ﻿using System.Collections.ObjectModel;
+using ToadDesign;
 using Nice3point.Revit.Extensions.Runtime;
 using Nice3point.Revit.Toolkit;
 using ParamToFinish.Models;
 using ParamToFinish.Services;
 using ToadTools.UI.Models;
 using ToadTools.UI.Services;
-using Wpf.Ui.Appearance;
 
 namespace ParamToFinish.ViewModels;
 
@@ -41,10 +41,10 @@ public sealed partial class ParamToFinishViewModel : ObservableObject
     partial void OnDarkThemeChanged(bool value)
     {
         var newTheme = value
-            ? ApplicationTheme.Dark
-            : ApplicationTheme.Light;
+            ? ToadThemeMode.Dark
+            : ToadThemeMode.Light;
 
-        ThemeWatcherService.ApplyTheme(newTheme);
+        ToadTheme.Mode = newTheme;
     }
 
     partial void OnFilterChanged(string value)

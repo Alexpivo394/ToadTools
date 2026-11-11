@@ -1,6 +1,6 @@
 ﻿using CreateSpaces.ViewModels;
+using ToadDesign;
 using ToadTools.UI.Services;
-using Wpf.Ui.Appearance;
 
 namespace CreateSpaces.Views;
 
@@ -10,9 +10,7 @@ public sealed partial class CreateSpacesView
     {
         InitializeComponent();
         
-        ThemeWatcherService.Initialize();
-        ThemeWatcherService.Watch(this);
-        ThemeWatcherService.ApplyTheme(ApplicationTheme.Dark);
+        ToadTheme.Mode = ToadThemeMode.Dark;
         
         DataContext = viewModel;
     }

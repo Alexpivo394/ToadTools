@@ -8,10 +8,8 @@ public sealed partial class NoteDialog
 {
     public NoteDialog(NoteViewModel viewModel)
     {
-        ThemeWatcherService.Initialize();
-        ThemeWatcherService.ApplyTheme(ThemeWatcherService.CurrentTheme);
+        
         InitializeComponent();
-        ThemeWatcherService.Watch(this);
         DataContext = viewModel;
         viewModel.Saved += (_, _) => DialogResult = true;
         Loaded += (_, _) => NoteBox.Focus();

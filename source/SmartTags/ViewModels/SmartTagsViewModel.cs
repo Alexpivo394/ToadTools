@@ -1,3 +1,4 @@
+using ToadDesign;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
@@ -5,7 +6,6 @@ using SmartTags.Layout;
 using SmartTags.Models;
 using SmartTags.Services;
 using ToadTools.UI.Services;
-using Wpf.Ui.Appearance;
 
 namespace SmartTags.ViewModels;
 
@@ -105,7 +105,7 @@ public sealed partial class SmartTagsViewModel : ObservableObject
 
     partial void OnDarkThemeChanged(bool value)
     {
-        ThemeWatcherService.ApplyTheme(value ? ApplicationTheme.Dark : ApplicationTheme.Light);
+        ToadTheme.Mode = value ? ToadThemeMode.Dark : ToadThemeMode.Light;
     }
 
     partial void OnOnlySelectedChanged(bool value) => RebuildRows();

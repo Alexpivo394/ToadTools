@@ -1,20 +1,18 @@
-﻿<ui:FluentWindow
+﻿<toad:ToadWindow
     x:Class="QuantityCheck.Views.QuantityCheckView"
-    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:toad="urn:toaddesign"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     mc:Ignorable="d"
     WindowStartupLocation="CenterScreen"
-    WindowBackdropType="Mica"
-    WindowCornerPreference="Round"
     Title="Записать количество"
     Height="300"
     Width="450"
     MinHeight="250"
     MinWidth="400"
-    ExtendsContentIntoTitleBar="True">
+    TitleIcon="CirclePlus">
     
     
 
@@ -26,13 +24,6 @@
         </Grid.RowDefinitions>
 
         <!-- Заголовок -->
-        <ui:TitleBar Grid.Row="0"
-                     Title="Записать количество"
-                     Margin="0,0,0,10">
-            <ui:TitleBar.Icon>
-                <ui:SymbolIcon Symbol="AddCircle24"/>
-            </ui:TitleBar.Icon>
-        </ui:TitleBar>
         
         <Grid Grid.Row="1" Margin="10,0,10,10">
             <Grid.RowDefinitions>
@@ -45,20 +36,20 @@
         
             <TextBlock  Text="Введите имя параметра для заполнения количества" FontWeight="Bold" Margin="10,0,0,10" />
             
-            <ui:TextBox Grid.Row="1" Text="{Binding ParameterName, Mode=TwoWay}"
-                        PlaceholderText="Имя параметра"/>
+            <toad:TextBox Grid.Row="1" Text="{Binding ParameterName, Mode=TwoWay}"
+                        Placeholder="Имя параметра"/>
             
             <TextBlock Grid.Row="2" Text="Введите запас в процентах для длиновых элементов" FontWeight="Bold" Margin="10,0,0,10" />
             
-            <ui:TextBox Grid.Row="3" Text="{Binding Reverse, Mode=TwoWay}"
-                        PlaceholderText="Запас в процентах"/>
+            <toad:TextBox Grid.Row="3" Text="{Binding Reverse, Mode=TwoWay}"
+                        Placeholder="Запас в процентах"/>
             
             
             <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,10,0,0">
-                <ui:Button Content="Запуск"
-                           Icon="{ui:SymbolIcon Rocket24}"
+                <toad:Button Content="Запуск"
+                           Icon="Rocket"
                            Command="{Binding WriteQuantityCommand}"
-                           Appearance="Primary"
+                           Variant="Filled"
                            Margin="10,0,0,0" />
                     
             </StackPanel>
@@ -67,12 +58,9 @@
 
         <!-- Переключатель темы -->
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Left" Margin="10,0,0,10">
-            <TextBlock Text="Тема:" VerticalAlignment="Center" Margin="0,0,10,0"/>
-            <ui:ToggleSwitch
-                IsChecked="{Binding DataContext.DarkTheme, RelativeSource={RelativeSource AncestorType=ui:FluentWindow}, Mode=TwoWay}"
-                OffContent="Светлая"
-                OnContent="Темная"/>
+            <toad:Switch Content="Тёмная тема"
+                IsChecked="{Binding DataContext.DarkTheme, RelativeSource={RelativeSource AncestorType=toad:ToadWindow}, Mode=TwoWay}"/>
         </StackPanel>
 
     </Grid>
-</ui:FluentWindow>
+</toad:ToadWindow>

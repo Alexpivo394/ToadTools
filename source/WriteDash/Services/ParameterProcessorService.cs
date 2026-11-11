@@ -1,7 +1,7 @@
+using ToadDesign;
 using Nice3point.Revit.Toolkit;
 using ToadTools.UI.Models;
 using ToadTools.UI.Progress;
-using Wpf.Ui.Controls;
 using ToadTools.UI.Services;
 using WriteDash.Models;
 
@@ -34,7 +34,7 @@ public class ParameterProcessorService
         try
         {
             using var progress = ToadProgress.Show("Записать прочерк",
-                new ProgressOptions { Icon = SymbolRegular.TextEditStyle24 });
+                new ProgressOptions { Icon = Symbol.Pencil });
             progress.Stage("Сбор элементов");
 
             var elements = new FilteredElementCollector(document)

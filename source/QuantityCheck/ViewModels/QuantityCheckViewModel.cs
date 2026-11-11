@@ -1,10 +1,10 @@
 ﻿using Nice3point.Revit.Toolkit;
+using ToadDesign;
 using QuantityCheck.Configuration;
 using QuantityCheck.Models;
 using QuantityCheck.Services;
 using ToadTools.UI.Models;
 using ToadTools.UI.Services;
-using Wpf.Ui.Appearance;
 using Settings = QuantityCheck.Configuration.Settings;
 
 namespace QuantityCheck.ViewModels;
@@ -18,8 +18,8 @@ public partial class QuantityCheckViewModel(Logger? logger) : ObservableObject
 
     partial void OnDarkThemeChanged(bool value)
     {
-        var newTheme = value ? ApplicationTheme.Dark : ApplicationTheme.Light;
-        ThemeWatcherService.ApplyTheme(newTheme);
+        var newTheme = value ? ToadThemeMode.Dark : ToadThemeMode.Light;
+        ToadTheme.Mode = newTheme;
     }
     
     public void LoadFromSettings(Settings settings)

@@ -4,8 +4,6 @@
         <PackageReference Include="Alexpivo394.Revit.Export"/>
         <PackageReference Include="CommunityToolkit.Mvvm"/>
         <PackageReference Include="Newtonsoft.Json"/>
-        <PackageReference Include="WPF-UI"/>
-        <PackageReference Include="WPF-UI.Abstractions"/>
     </ItemGroup>
 
     <!-- HttpClient для REST API Revit Server; на .NET входит в рантайм -->

@@ -11,7 +11,6 @@ public sealed partial class FilterEditorWindow
         InitializeComponent();
 
         // Тему не сбрасываем: окно открывается в той же теме, что главное.
-        ThemeWatcherService.Watch(this);
         DataContext = viewModel;
     }
 

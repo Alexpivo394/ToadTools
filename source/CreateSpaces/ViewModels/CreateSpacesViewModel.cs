@@ -1,3 +1,4 @@
+using ToadDesign;
 using System.Collections.ObjectModel;
 using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -9,8 +10,6 @@ using ToadTools.UI.Models;
 using ToadTools.UI.Services;
 using Microsoft.Win32;
 using Newtonsoft.Json;
-using Wpf.Ui.Appearance;
-using Wpf.Ui.Controls;
 
 namespace CreateSpaces.ViewModels;
 
@@ -35,8 +34,8 @@ public partial class CreateSpacesViewModel : ObservableObject
 
     partial void OnDarkThemeChanged(bool value)
     {
-        var newTheme = value ? ApplicationTheme.Dark : ApplicationTheme.Light;
-        ThemeWatcherService.ApplyTheme(newTheme);
+        var newTheme = value ? ToadThemeMode.Dark : ToadThemeMode.Light;
+        ToadTheme.Mode = newTheme;
     }
 
     partial void OnSelectedLinkChanged(LinkDescriptor? value)

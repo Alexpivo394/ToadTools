@@ -1,5 +1,5 @@
 ﻿using ToadTools.UI.Services;
-using Wpf.Ui.Appearance;
+using ToadDesign;
 using WriteDash.ViewModels;
 
 namespace WriteDash.Views;
@@ -10,9 +10,7 @@ public sealed partial class WriteDashView
     {
         InitializeComponent();
         
-        ThemeWatcherService.Initialize();
-        ThemeWatcherService.Watch(this);
-        ThemeWatcherService.ApplyTheme(ApplicationTheme.Dark);
+        ToadTheme.Mode = ToadThemeMode.Dark;
         
         DataContext = viewModel;
     }

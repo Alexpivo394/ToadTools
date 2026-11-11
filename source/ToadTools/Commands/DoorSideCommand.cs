@@ -1,3 +1,4 @@
+using ToadDesign;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using DoorSide;
@@ -5,7 +6,6 @@ using Nice3point.Revit.Toolkit.External;
 using ToadTools.UI.Models;
 using ToadTools.UI.Progress;
 using ToadTools.UI.Services;
-using Wpf.Ui.Controls;
 
 namespace ToadTools.Commands;
 
@@ -32,7 +32,7 @@ public class DoorSideCommand : ExternalCommand
 
             // Каждая дверь пишется своей транзакцией — группа нужна, чтобы «Прервать» откатило все сразу.
             using var progress = ToadProgress.Show("Открывание дверей",
-                new ProgressOptions { Icon = SymbolRegular.Door28 });
+                new ProgressOptions { Icon = Symbol.Door });
             using var group = new TransactionGroup(doc, "Открывание дверей");
             group.Start();
 

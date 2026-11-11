@@ -61,8 +61,6 @@
 
         <!-- UI -->
         <PackageVersion Include="Alexpivo394.ToadDesign" Version="0.1.0-preview.2"/>
-        <PackageVersion Include="WPF-UI" Version="4.0.2"/>
-        <PackageVersion Include="WPF-UI.Abstractions" Version="4.0.2"/>
         <PackageVersion Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135"/>
 
         <!-- Serialization & Office -->

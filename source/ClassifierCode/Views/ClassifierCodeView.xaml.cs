@@ -1,7 +1,7 @@
+using ToadDesign;
 using ClassifierCode.Models;
 using ClassifierCode.ViewModels;
 using ToadTools.UI.Services;
-using Wpf.Ui.Appearance;
 
 namespace ClassifierCode.Views;
 
@@ -11,9 +11,7 @@ public sealed partial class ClassifierCodeView
     {
         InitializeComponent();
 
-        ThemeWatcherService.Initialize();
-        ThemeWatcherService.Watch(this);
-        ThemeWatcherService.ApplyTheme(ApplicationTheme.Dark);
+        ToadTheme.Mode = ToadThemeMode.Dark;
 
         DataContext = viewModel;
 

@@ -1,12 +1,11 @@
 ﻿using Autodesk.Revit.UI;
+using ToadDesign;
 using System.Windows.Input;
 using ModelTransplanter.Models;
 using ModelTransplanter.Services;
 using Nice3point.Revit.Toolkit;
 using ToadTools.UI.Models;
 using ToadTools.UI.Progress;
-using Wpf.Ui.Controls;
-using Wpf.Ui.Appearance;
 using ToadTools.UI.Services;
 using Settings = ModelTransplanter.Configuration.Settings;
 
@@ -25,8 +24,8 @@ public partial class ModelTransplanterViewModel : ObservableObject
 
     partial void OnDarkThemeChanged(bool value)
     {
-        var newTheme = value ? ApplicationTheme.Dark : ApplicationTheme.Light;
-        ThemeWatcherService.ApplyTheme(newTheme);
+        var newTheme = value ? ToadThemeMode.Dark : ToadThemeMode.Light;
+        ToadTheme.Mode = newTheme;
     }
 
     public List<Document> OpenDocuments { get; }
@@ -91,7 +90,7 @@ public partial class ModelTransplanterViewModel : ObservableObject
             {
                 using (var progress = ToadProgress.Show("Копирование элементов", new ProgressOptions
                        {
-                           Icon = SymbolRegular.CopyArrowRight24
+                           Icon = Symbol.ArrowsRightLeft
                        }))
                 {
                     var transferService = new ElementTransferService(_logger);

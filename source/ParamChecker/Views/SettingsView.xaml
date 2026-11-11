@@ -4,7 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:toad="urn:toaddesign"
     xmlns:viewModels="clr-namespace:ParamChecker.ViewModels"
     d:DataContext="{d:DesignInstance Type=viewModels:MainViewModel}"
     mc:Ignorable="d">
@@ -13,7 +13,7 @@
         <StackPanel MaxWidth="760" HorizontalAlignment="Left" Margin="0,0,8,0">
             <TextBlock Text="Настройки" FontSize="20" FontWeight="SemiBold" Margin="10,0,0,10" />
 
-            <ui:Card Padding="14,10" Margin="0,0,0,8">
+            <toad:Card Padding="14,10" Margin="0,0,0,8">
                 <StackPanel>
                     <TextBlock Text="Отчёты" FontWeight="SemiBold" Margin="0,0,0,6" />
                     <TextBlock Text="Папка для отчётов" Opacity="0.8" Margin="0,0,0,4" />
@@ -23,10 +23,10 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <ui:TextBox Text="{Binding Settings.ReportsFolder, UpdateSourceTrigger=LostFocus}" />
-                        <ui:Button Grid.Column="1" Icon="{ui:SymbolIcon FolderOpen24}" Margin="8,0,0,0" VerticalAlignment="Stretch"
+                        <toad:TextBox Text="{Binding Settings.ReportsFolder, UpdateSourceTrigger=LostFocus}" />
+                        <toad:Button Grid.Column="1" Icon="FolderOpen" Margin="8,0,0,0" VerticalAlignment="Stretch"
                                    ToolTip="Выбрать папку" Command="{Binding BrowseReportsCommand}" />
-                        <ui:Button Grid.Column="2" Icon="{ui:SymbolIcon Open24}" Margin="8,0,0,0" VerticalAlignment="Stretch"
+                        <toad:Button Grid.Column="2" Icon="ExternalLink" Margin="8,0,0,0" VerticalAlignment="Stretch"
                                    ToolTip="Открыть папку" Command="{Binding OpenReportsCommand}" />
                     </Grid>
                     <TextBlock Margin="0,6,0,0" Opacity="0.7" FontSize="12" TextWrapping="Wrap"
@@ -37,18 +37,18 @@
                     <TextBlock Margin="28,0,0,0" Opacity="0.7" FontSize="12" TextWrapping="Wrap"
                                Text="Отчёты по большим моделям становятся в разы меньше и сразу показывают, что исправлять. Итоги и проценты считаются по всем элементам." />
                 </StackPanel>
-            </ui:Card>
+            </toad:Card>
 
-            <ui:Card Padding="14,10" Margin="0,0,0,8">
+            <toad:Card Padding="14,10" Margin="0,0,0,8">
                 <StackPanel>
                     <TextBlock Text="Открытие моделей" FontWeight="SemiBold" Margin="0,0,0,6" />
                     <CheckBox Content="Не загружать связи RVT" IsChecked="{Binding Settings.SkipLinks}" />
                     <TextBlock Margin="28,0,0,0" Opacity="0.7" FontSize="12" TextWrapping="Wrap"
                                Text="Модель копируется во временную папку, и в копии связи отключаются — так она открывается быстрее, а закрывать рабочие наборы связей не нужно. Исходная модель не меняется." />
                 </StackPanel>
-            </ui:Card>
+            </toad:Card>
 
-            <ui:Card Padding="14,10" Margin="0,0,0,8">
+            <toad:Card Padding="14,10" Margin="0,0,0,8">
                 <StackPanel>
                     <TextBlock Text="База для дашбордов (Power BI, Excel)" FontWeight="SemiBold" Margin="0,0,0,6" />
                     <CheckBox Content="Дописывать итоги каждого запуска в базу" IsChecked="{Binding Settings.HistoryEnabled}" />
@@ -60,18 +60,18 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <ui:TextBox Text="{Binding Settings.HistoryFile, UpdateSourceTrigger=LostFocus}"
-                                    PlaceholderText="{Binding HistoryPlaceholder}"
+                        <toad:TextBox Text="{Binding Settings.HistoryFile, UpdateSourceTrigger=LostFocus}"
+                                    Placeholder="{Binding HistoryPlaceholder}"
                                     ToolTip="Пусто — ParamChecker_База.xlsx в папке отчётов. Можно указать общий файл на сетевом диске" />
-                        <ui:Button Grid.Column="1" Icon="{ui:SymbolIcon FolderOpen24}" Margin="8,0,0,0" VerticalAlignment="Stretch"
+                        <toad:Button Grid.Column="1" Icon="FolderOpen" Margin="8,0,0,0" VerticalAlignment="Stretch"
                                    ToolTip="Выбрать файл" Command="{Binding BrowseHistoryCommand}" />
-                        <ui:Button Grid.Column="2" Icon="{ui:SymbolIcon Open24}" Margin="8,0,0,0" VerticalAlignment="Stretch"
+                        <toad:Button Grid.Column="2" Icon="ExternalLink" Margin="8,0,0,0" VerticalAlignment="Stretch"
                                    ToolTip="Открыть базу" Command="{Binding OpenHistoryCommand}" />
                     </Grid>
                 </StackPanel>
-            </ui:Card>
+            </toad:Card>
 
-            <ui:Card Padding="14,10" Margin="0,0,0,8">
+            <toad:Card Padding="14,10" Margin="0,0,0,8">
                 <StackPanel>
                     <TextBlock Text="Аналитика ToadFlow" FontWeight="SemiBold" Margin="0,0,0,6" />
                     <CheckBox Content="Отправлять итоги проверенных моделей в ToadFlow" IsChecked="{Binding Settings.ToadFlowEnabled}" />
@@ -83,33 +83,32 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="{Binding ToadFlowStatus}" VerticalAlignment="Center" TextWrapping="Wrap" />
-                        <ui:Button Grid.Column="1" Content="Подключение…" Margin="8,0,0,0" Command="{Binding ConnectToadFlowCommand}" />
+                        <toad:Button Grid.Column="1" Content="Подключение…" Margin="8,0,0,0" Command="{Binding ConnectToadFlowCommand}" />
                     </Grid>
                     <TextBlock Margin="0,6,0,0" Opacity="0.7" FontSize="12" TextWrapping="Wrap"
                                Text="Вход общий для всех плагинов ToadTools: ToadTools → Подключение к ToadFlow." />
                     <TextBlock Margin="0,4,0,0" FontSize="12" Text="{Binding ToadFlowQueue}" />
                 </StackPanel>
-            </ui:Card>
+            </toad:Card>
 
-            <ui:Card Padding="14,10" Margin="0,0,0,8">
+            <toad:Card Padding="14,10" Margin="0,0,0,8">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Тема" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,16,0" />
-                    <ui:ToggleSwitch IsChecked="{Binding Settings.DarkTheme, Mode=TwoWay}" OffContent="Светлая" OnContent="Тёмная" />
+                    <toad:Switch Content="Тёмная тема" IsChecked="{Binding Settings.DarkTheme, Mode=TwoWay}" />
                 </StackPanel>
-            </ui:Card>
+            </toad:Card>
 
-            <ui:Card Padding="14,10" Margin="0,0,0,8">
+            <toad:Card Padding="14,10" Margin="0,0,0,8">
                 <StackPanel>
                     <TextBlock Text="О плагине" FontWeight="SemiBold" Margin="0,0,0,6" />
                     <TextBlock TextWrapping="Wrap" Opacity="0.85"
                                Text="ParamChecker открывает модели с Revit Server или с диска, отбирает элементы по правилам и проверяет, заполнены ли у них нужные параметры. Итог — отчёт Excel по каждой модели и база для дашбордов." />
                     <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                        <ui:Button Content="Справка" Icon="{ui:SymbolIcon QuestionCircle24}" Command="{Binding OpenHelpCommand}" />
-                        <ui:Button Content="Написать разработчику" Icon="{ui:SymbolIcon Chat24}" Margin="8,0,0,0"
+                        <toad:Button Content="Справка" Icon="HelpCircle" Command="{Binding OpenHelpCommand}" />
+                        <toad:Button Content="Написать разработчику" Icon="Message" Margin="8,0,0,0"
                                    Command="{Binding WriteDeveloperCommand}" />
                     </StackPanel>
                 </StackPanel>
-            </ui:Card>
+            </toad:Card>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

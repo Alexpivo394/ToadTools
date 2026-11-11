@@ -1,3 +1,4 @@
+using ToadDesign;
 using ToadTools.UI.Progress;
 using WorksetCheck.Models;
 
@@ -10,7 +11,7 @@ public sealed class WorksetCheckSession(Document document, WorksetRules rules, E
 
     public Document Document { get; } = document;
 
-    public static ProgressOptions ProgressOptions => new() { Icon = Wpf.Ui.Controls.SymbolRegular.TaskListSquareLtr24 };
+    public static ProgressOptions ProgressOptions => new() { Icon = Symbol.ListCheck };
 
     public CheckResult Check(ToadProgress progress) => new CheckService(Document, rules).Run(progress);
 

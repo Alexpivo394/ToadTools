@@ -1,3 +1,4 @@
+using ToadDesign;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -13,7 +14,6 @@ using ToadTools.UI.Models;
 using Alexpivo394.Revit.Export.Sources;
 using ToadTools.Connection;
 using ToadTools.UI.Services;
-using Wpf.Ui.Appearance;
 
 namespace ParamChecker.ViewModels;
 
@@ -131,7 +131,7 @@ public sealed partial class MainViewModel : ObservableObject
     private void OnSettingsChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(CheckerSettings.DarkTheme))
-            ThemeWatcherService.ApplyTheme(Settings.DarkTheme ? ApplicationTheme.Dark : ApplicationTheme.Light);
+            ToadTheme.Mode = Settings.DarkTheme ? ToadThemeMode.Dark : ToadThemeMode.Light;
         if (e.PropertyName == nameof(CheckerSettings.ReportsFolder)) OnPropertyChanged(nameof(HistoryPlaceholder));
         ScheduleSave();
     }

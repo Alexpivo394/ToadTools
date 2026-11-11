@@ -1,23 +1,21 @@
-<ui:FluentWindow
+<toad:ToadWindow
     x:Class="SmartTags.Views.SmartTagsReportView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:toad="urn:toaddesign"
     xmlns:viewModels="clr-namespace:SmartTags.ViewModels"
     xmlns:uiConverters="clr-namespace:ToadTools.UI.Converters;assembly=ToadTools.UI"
     d:DataContext="{d:DesignInstance Type=viewModels:SmartTagsReportViewModel}"
     mc:Ignorable="d"
     Title="Умные выноски — отчёт"
     WindowStartupLocation="CenterScreen"
-    WindowBackdropType="Mica"
-    WindowCornerPreference="Round"
     Height="680"
     Width="760"
     MinHeight="440"
     MinWidth="600"
-    ExtendsContentIntoTitleBar="True">
+    TitleIcon="Tags">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -25,7 +23,6 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <!-- Title Bar -->
-        <ui:TitleBar Grid.Row="0" Title="Умные выноски" Icon="TagMultiple24" />
 
         <!-- Content -->
         <Grid Grid.Row="1" Margin="10,0,10,10">
@@ -46,12 +43,12 @@
                        TextWrapping="Wrap"
                        Text="{Binding Headline}" />
 
-            <ui:InfoBar Grid.Row="1"
+            <toad:Alert Grid.Row="1"
                         Margin="0,0,0,10"
                         IsOpen="True"
                         IsClosable="False"
                         Severity="{Binding Severity}"
-                        Message="{Binding Message}" />
+                        Content="{Binding Message}" />
 
             <!-- Counters -->
             <ItemsControl Grid.Row="2" ItemsSource="{Binding Counters}">
@@ -62,12 +59,12 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="{x:Type viewModels:ReportCounter}">
-                        <ui:Card Margin="0,0,8,0" Padding="12,8">
+                        <toad:Card Margin="0,0,8,0" Padding="12,8">
                             <StackPanel>
                                 <TextBlock Text="{Binding Value}" FontSize="22" FontWeight="SemiBold" />
                                 <TextBlock Text="{Binding Label}" Opacity="0.7" />
                             </StackPanel>
-                        </ui:Card>
+                        </toad:Card>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
@@ -114,21 +111,21 @@
         </Grid>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="10,0,10,10">
-            <ui:Button Content="Открыть журнал"
-                       Icon="{ui:SymbolIcon DocumentText24}"
+            <toad:Button Content="Открыть журнал"
+                       Icon="FileText"
                        Command="{Binding OpenLogCommand}"
                        Visibility="{Binding HasLog, Converter={uiConverters:BooleanCollapsedVisibilityConverter}}"
                        Margin="10,0,0,0" />
-            <ui:Button Content="{Binding SelectProblemsLabel}"
-                       Icon="{ui:SymbolIcon CursorClick24}"
+            <toad:Button Content="{Binding SelectProblemsLabel}"
+                       Icon="Click"
                        Command="{Binding SelectProblemsCommand}"
                        Visibility="{Binding HasProblems, Converter={uiConverters:BooleanCollapsedVisibilityConverter}}"
                        Margin="10,0,0,0" />
-            <ui:Button Content="Закрыть"
-                       Icon="{ui:SymbolIcon Dismiss24}"
+            <toad:Button Content="Закрыть"
+                       Icon="X"
                        Command="{Binding CloseCommand}"
-                       Appearance="Primary"
+                       Variant="Filled"
                        Margin="10,0,0,0" />
         </StackPanel>
     </Grid>
-</ui:FluentWindow>
+</toad:ToadWindow>

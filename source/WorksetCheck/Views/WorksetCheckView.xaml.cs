@@ -1,6 +1,6 @@
+using ToadDesign;
 using ToadTools.UI.Services;
 using WorksetCheck.ViewModels;
-using Wpf.Ui.Appearance;
 
 namespace WorksetCheck.Views;
 
@@ -10,9 +10,7 @@ public sealed partial class WorksetCheckView
     {
         InitializeComponent();
 
-        ThemeWatcherService.Initialize();
-        ThemeWatcherService.Watch(this);
-        ThemeWatcherService.ApplyTheme(viewModel.DarkTheme ? ApplicationTheme.Dark : ApplicationTheme.Light);
+        ToadTheme.Mode = viewModel.DarkTheme ? ToadThemeMode.Dark : ToadThemeMode.Light;
 
         DataContext = viewModel;
 

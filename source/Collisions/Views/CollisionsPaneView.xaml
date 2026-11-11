@@ -4,22 +4,19 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:toad="urn:toaddesign"
     xmlns:vm="clr-namespace:Collisions.ViewModels"
     xmlns:views="clr-namespace:Collisions.Views"
     xmlns:conv="clr-namespace:ToadTools.UI.Converters;assembly=ToadTools.UI"
     d:DataContext="{d:DesignInstance Type=vm:PaneViewModel}"
     mc:Ignorable="d"
     d:DesignWidth="380" d:DesignHeight="700"
-    Background="{DynamicResource ApplicationBackgroundBrush}"
-    Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+    Background="{DynamicResource Toad.Brush.Background}"
+    Foreground="{DynamicResource Toad.Brush.Text}"
+    toad:Theme.IsRoot="True">
 
     <UserControl.Resources>
         <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="pack://application:,,,/ToadTools.UI;component/Styles/App.Resources.xaml" />
-            </ResourceDictionary.MergedDictionaries>
-
             <CollectionViewSource x:Key="GroupedItems" Source="{Binding Items}">
                 <CollectionViewSource.GroupDescriptions>
                     <PropertyGroupDescription PropertyName="Group" />
@@ -44,7 +41,7 @@
                 <TextBlock Text="{Binding Header}" FontWeight="SemiBold" FontSize="14" TextTrimming="CharacterEllipsis" />
                 <TextBlock Text="{Binding Parts}" FontSize="11" Opacity="0.7" TextWrapping="Wrap" />
             </StackPanel>
-            <ui:Button Grid.Column="1" Content="Обновить" Command="{Binding RefreshCommand}" VerticalAlignment="Top" Margin="8,0,0,0"
+            <toad:Button Grid.Column="1" Content="Обновить" Command="{Binding RefreshCommand}" VerticalAlignment="Top" Margin="8,0,0,0"
                        Visibility="{Binding Screen, Converter={views:ScreenVisibilityConverter}, ConverterParameter='Ready,NoDocument,NotFound,Error,Choose'}" />
         </Grid>
 
@@ -52,25 +49,25 @@
         <StackPanel Grid.Row="1" VerticalAlignment="Top"
                     Visibility="{Binding Screen, Converter={views:ScreenVisibilityConverter}, ConverterParameter='NotConnected,NoDocument,NotFound,Error,Resolving'}">
             <TextBlock Text="{Binding Message}" TextWrapping="Wrap" FontSize="13" Margin="0,8,0,8" />
-            <TextBlock Text="{Binding Status}" FontSize="11" Foreground="{DynamicResource SystemFillColorCautionBrush}" TextWrapping="Wrap"
+            <TextBlock Text="{Binding Status}" FontSize="11" Foreground="{DynamicResource Toad.Brush.Warning}" TextWrapping="Wrap"
                        Margin="0,0,0,8" Visibility="{Binding Status, Converter={views:TextVisibilityConverter}}" />
             <TextBlock Text="{Binding SearchedPath, StringFormat=Искали: {0}}" TextWrapping="Wrap" FontSize="11" Opacity="0.7"
                        Visibility="{Binding Screen, Converter={views:ScreenVisibilityConverter}, ConverterParameter=NotFound}" />
-            <ui:Button Content="Подключение…" Appearance="Primary" Command="{Binding ConnectCommand}" Margin="0,8,0,0"
+            <toad:Button Content="Подключение…" Variant="Filled" Command="{Binding ConnectCommand}" Margin="0,8,0,0"
                        Visibility="{Binding Screen, Converter={views:ScreenVisibilityConverter}, ConverterParameter=NotConnected}" />
-            <ui:ProgressRing IsIndeterminate="True" Width="24" Height="24" HorizontalAlignment="Left"
+            <toad:Loader Width="24" Height="24" HorizontalAlignment="Left"
                              Visibility="{Binding Screen, Converter={views:ScreenVisibilityConverter}, ConverterParameter=Resolving}" />
         </StackPanel>
 
         <!-- Несколько моделей с таким именем — выбор -->
         <DockPanel Grid.Row="1" Visibility="{Binding Screen, Converter={views:ScreenVisibilityConverter}, ConverterParameter=Choose}">
             <TextBlock DockPanel.Dock="Top" Text="{Binding Message}" TextWrapping="Wrap" FontSize="13" Margin="0,8,0,8" />
-            <TextBlock DockPanel.Dock="Top" Text="{Binding Status}" FontSize="11" Foreground="{DynamicResource SystemFillColorCautionBrush}"
+            <TextBlock DockPanel.Dock="Top" Text="{Binding Status}" FontSize="11" Foreground="{DynamicResource Toad.Brush.Warning}"
                        TextWrapping="Wrap" Margin="0,0,0,8" Visibility="{Binding Status, Converter={views:TextVisibilityConverter}}" />
             <ItemsControl ItemsSource="{Binding Matches}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <ui:Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Margin="0,0,0,6" Padding="10,6"
+                        <toad:Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Margin="0,0,0,6" Padding="10,6"
                                    Command="{Binding DataContext.ChooseModelCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                    CommandParameter="{Binding}">
                             <StackPanel>
@@ -79,7 +76,7 @@
                                 </TextBlock>
                                 <TextBlock Text="{Binding ModelPath}" FontSize="11" Opacity="0.7" TextWrapping="Wrap" />
                             </StackPanel>
-                        </ui:Button>
+                        </toad:Button>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
@@ -128,12 +125,12 @@
                           SelectedValuePath="Value" SelectedValue="{Binding PairFilter}" />
                 <ComboBox Grid.Row="2" Grid.Column="2" ToolTip="Уровень" ItemsSource="{Binding LevelOptions}" DisplayMemberPath="Label"
                           SelectedValuePath="Value" SelectedValue="{Binding LevelFilter}" />
-                <ui:TextBox Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" PlaceholderText="№, ID элемента или UniqueId — Enter"
+                <toad:TextBox Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" Placeholder="№, ID элемента или UniqueId — Enter"
                             Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}">
-                    <ui:TextBox.InputBindings>
+                    <toad:TextBox.InputBindings>
                         <KeyBinding Key="Enter" Command="{Binding ApplyFiltersCommand}" />
-                    </ui:TextBox.InputBindings>
-                </ui:TextBox>
+                    </toad:TextBox.InputBindings>
+                </toad:TextBox>
             </Grid>
 
             <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,6">
@@ -150,10 +147,10 @@
                            Visibility="{Binding Counters, Converter={views:TextVisibilityConverter}}" />
             </WrapPanel>
 
-            <TextBlock DockPanel.Dock="Top" Text="{Binding Status}" FontSize="11" Foreground="{DynamicResource SystemFillColorCautionBrush}"
+            <TextBlock DockPanel.Dock="Top" Text="{Binding Status}" FontSize="11" Foreground="{DynamicResource Toad.Brush.Warning}"
                        TextWrapping="Wrap" Margin="0,0,0,6" Visibility="{Binding Status, Converter={views:TextVisibilityConverter}}" />
 
-            <ui:Button DockPanel.Dock="Bottom" Content="Показать ещё" HorizontalAlignment="Stretch" Margin="0,6,0,0"
+            <toad:Button DockPanel.Dock="Bottom" Content="Показать ещё" HorizontalAlignment="Stretch" Margin="0,6,0,0"
                        Command="{Binding LoadMoreCommand}" Visibility="{Binding HasMore, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
 
             <ListView x:Name="List" ItemsSource="{Binding Source={StaticResource GroupedItems}}" SelectedItem="{Binding SelectedItem}"
@@ -178,7 +175,7 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <Border Width="96" Height="72" CornerRadius="4" VerticalAlignment="Top"
-                                    Background="{DynamicResource ControlFillColorSecondaryBrush}">
+                                    Background="{DynamicResource Toad.Brush.Hover}">
                                 <Grid>
                                     <TextBlock Text="{Binding ThumbnailText}" FontSize="10" Opacity="0.6" TextWrapping="Wrap" TextAlignment="Center"
                                                HorizontalAlignment="Center" VerticalAlignment="Center" Margin="4" />
@@ -188,7 +185,7 @@
                             <StackPanel Grid.Column="1" Margin="8,0,0,0">
                                 <TextBlock TextTrimming="CharacterEllipsis">
                                     <!-- точка — новая для меня: я её ещё не открывал -->
-                                    <Run Text="{Binding Dot, Mode=OneWay}" Foreground="{DynamicResource SystemAccentColorBrush}"
+                                    <Run Text="{Binding Dot, Mode=OneWay}" Foreground="{DynamicResource Toad.Brush.Accent}"
                                          ToolTip="Вы ещё не открывали эту коллизию — она появилась или вернулась после вашего последнего просмотра. Откройте карточку, и отметка снимется" />
                                     <Run Text="{Binding Number, StringFormat=№{0}, Mode=OneWay}" FontWeight="SemiBold" />
                                     <Run Text=" · " /><Run Text="{Binding Status, Mode=OneWay}" />

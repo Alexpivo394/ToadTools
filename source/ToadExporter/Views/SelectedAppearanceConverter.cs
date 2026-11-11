@@ -1,7 +1,7 @@
+using ToadDesign;
 using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Markup;
-using Wpf.Ui.Controls;
 
 namespace ToadExporter.Views;
 
@@ -9,7 +9,7 @@ namespace ToadExporter.Views;
 public sealed class SelectedAppearanceConverter : MarkupExtension, IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
-        value is true ? ControlAppearance.Primary : ControlAppearance.Secondary;
+        value is true ? ButtonVariant.Filled : ButtonVariant.Default;
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
         throw new NotSupportedException();

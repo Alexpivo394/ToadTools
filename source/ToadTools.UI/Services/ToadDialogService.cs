@@ -1,4 +1,5 @@
 #nullable enable
+using ToadDesign;
 using System.Windows;
 using ToadTools.UI.Models;
 using ToadTools.UI.ViewModels;
@@ -16,10 +17,10 @@ public class ToadDialogService
             Message = message,
             Icon = icon switch
             {
-                DialogIcon.Info => Wpf.Ui.Controls.SymbolRegular.Info24,
-                DialogIcon.Warning => Wpf.Ui.Controls.SymbolRegular.Warning24,
-                DialogIcon.Error => Wpf.Ui.Controls.SymbolRegular.DismissCircle24,
-                _ => Wpf.Ui.Controls.SymbolRegular.QuestionCircle24
+                DialogIcon.Info => Symbol.InfoCircle,
+                DialogIcon.Warning => Symbol.AlertTriangle,
+                DialogIcon.Error => Symbol.CircleX,
+                _ => Symbol.HelpCircle
             }
         };
         vm.BuildButtons(buttons);

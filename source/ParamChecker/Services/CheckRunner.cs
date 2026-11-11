@@ -1,3 +1,4 @@
+using ToadDesign;
 using System.Diagnostics;
 using System.IO;
 using Alexpivo394.Revit.ParamCheck.Core;
@@ -8,7 +9,6 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using ToadTools.Connection;
 using ToadTools.UI.Progress;
-using Wpf.Ui.Controls;
 
 namespace ParamChecker.Services;
 
@@ -154,7 +154,7 @@ public sealed class CheckRunner(UIApplication uiApplication, CheckerSettings set
         bool cancelled;
         using (var progress = ToadProgress.Show("ParamChecker", new ProgressOptions
                {
-                   Icon = SymbolRegular.DocumentSearch24,
+                   Icon = Symbol.FileSearch,
                    SkipText = "Пропустить модель",
                    CancelHint = "Прерываем — текущая модель будет закрыта без отчёта"
                }))

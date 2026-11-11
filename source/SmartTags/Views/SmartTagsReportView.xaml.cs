@@ -11,7 +11,6 @@ public sealed partial class SmartTagsReportView
         InitializeComponent();
 
         // Тему не сбрасываем: отчёт открывается в той же теме, что выбрана в окне запуска.
-        ThemeWatcherService.Watch(this);
 
         DataContext = viewModel;
 

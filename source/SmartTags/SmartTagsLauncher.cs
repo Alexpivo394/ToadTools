@@ -1,3 +1,4 @@
+using ToadDesign;
 using System.Windows;
 using System.Windows.Interop;
 using Autodesk.Revit.UI;
@@ -153,7 +154,7 @@ public static class SmartTagsLauncher
     private static RunResult RunWithProgress(UIApplication application, TagView view, SmartTagsSettings settings)
     {
         // Окно прогресса само блокирует окна Revit на время работы и живёт в своём потоке.
-        using var progress = ToadProgress.Show(Title, new ProgressOptions { Icon = Wpf.Ui.Controls.SymbolRegular.TagMultiple24 });
+        using var progress = ToadProgress.Show(Title, new ProgressOptions { Icon = Symbol.Tags });
         return new SmartTagsRunner(view, settings).Run(progress);
     }
 

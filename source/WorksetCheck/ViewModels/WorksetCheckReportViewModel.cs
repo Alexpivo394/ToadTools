@@ -1,3 +1,4 @@
+using ToadDesign;
 using System.Diagnostics;
 using System.IO;
 using Microsoft.Win32;
@@ -6,7 +7,6 @@ using ToadTools.UI.Progress;
 using ToadTools.UI.Services;
 using WorksetCheck.Models;
 using WorksetCheck.Services;
-using Wpf.Ui.Controls;
 
 namespace WorksetCheck.ViewModels;
 
@@ -23,7 +23,7 @@ public sealed partial class WorksetCheckReportViewModel : ObservableObject
 
     [ObservableProperty] private string _headline = string.Empty;
     [ObservableProperty] private string _message = string.Empty;
-    [ObservableProperty] private InfoBarSeverity _severity;
+    [ObservableProperty] private AlertSeverity _severity;
     [ObservableProperty] private IReadOnlyList<ReportCounter> _counters = [];
     [ObservableProperty] private IReadOnlyList<WorksetIssue> _items = [];
 
@@ -61,13 +61,13 @@ public sealed partial class WorksetCheckReportViewModel : ObservableObject
         catch (OperationCanceledException)
         {
             Message = "Исправление прервано — изменения в модели откачены.";
-            Severity = InfoBarSeverity.Warning;
+            Severity = AlertSeverity.Warning;
             return;
         }
         catch (Exception exception)
         {
             Message = "Исправление завершилось с ошибкой, изменения откачены: " + exception.Message;
-            Severity = InfoBarSeverity.Error;
+            Severity = AlertSeverity.Error;
             return;
         }
 
@@ -171,8 +171,8 @@ public sealed partial class WorksetCheckReportViewModel : ObservableObject
 
         Message = string.Join("\n", lines);
         Severity = result.Issues.Count == 0
-            ? result.ClosedWorksets.Count > 0 ? InfoBarSeverity.Warning : InfoBarSeverity.Success
-            : InfoBarSeverity.Warning;
+            ? result.ClosedWorksets.Count > 0 ? AlertSeverity.Warning : AlertSeverity.Success
+            : AlertSeverity.Warning;
 
         OnPropertyChanged(nameof(CanFix));
         OnPropertyChanged(nameof(HasItems));

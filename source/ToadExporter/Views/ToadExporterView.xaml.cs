@@ -1,7 +1,7 @@
+using ToadDesign;
 using System.ComponentModel;
 using ToadExporter.ViewModels;
 using ToadTools.UI.Services;
-using Wpf.Ui.Appearance;
 
 namespace ToadExporter.Views;
 
@@ -13,9 +13,7 @@ public sealed partial class ToadExporterView
     {
         InitializeComponent();
 
-        ThemeWatcherService.Initialize();
-        ThemeWatcherService.Watch(this);
-        ThemeWatcherService.ApplyTheme(viewModel.Settings.DarkTheme ? ApplicationTheme.Dark : ApplicationTheme.Light);
+        ToadTheme.Mode = viewModel.Settings.DarkTheme ? ToadThemeMode.Dark : ToadThemeMode.Light;
 
         _viewModel = viewModel;
         DataContext = viewModel;

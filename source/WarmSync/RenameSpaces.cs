@@ -1,3 +1,4 @@
+using ToadDesign;
 using System.Text;
 using Autodesk.Revit.DB.Architecture;
 using Autodesk.Revit.DB.Mechanical;
@@ -5,7 +6,6 @@ using Nice3point.Revit.Toolkit;
 using ToadTools.UI.Models;
 using ToadTools.UI.Progress;
 using ToadTools.UI.Services;
-using Wpf.Ui.Controls;
 
 namespace WarmSync;
 
@@ -23,7 +23,7 @@ namespace WarmSync;
             var arLinks = 0;
 
             using (var progress = ToadProgress.Show("Номера пространств",
-                       new ProgressOptions { Icon = SymbolRegular.NumberSymbolSquare24 }))
+                       new ProgressOptions { Icon = Symbol.Hash }))
             using (Transaction t = new Transaction(doc, "Sync Space Numbers"))
             {
                 try

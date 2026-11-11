@@ -1,5 +1,5 @@
 ﻿using QuantityCheck.ViewModels;
-using Wpf.Ui.Appearance;
+using ToadDesign;
 using QuantityCheck.Configuration;
 using ToadTools.UI.Services;
 
@@ -13,9 +13,7 @@ public sealed partial class QuantityCheckView
     {
         InitializeComponent();
         
-        ThemeWatcherService.Initialize();
-        ThemeWatcherService.Watch(this);
-        ThemeWatcherService.ApplyTheme(ApplicationTheme.Dark);
+        ToadTheme.Mode = ToadThemeMode.Dark;
         
         _viewModel = viewModel;
         var settings = Config.LoadSettings();

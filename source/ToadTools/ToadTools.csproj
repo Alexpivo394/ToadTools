@@ -8,7 +8,6 @@
   <!-- Merged by ToadTools.Repack.targets instead of the SDK's IsRepackable (see the comment there) -->
   <PropertyGroup Condition="'$(RevitVersion)' &lt; '2027'">
     <RepackToadTools>true</RepackToadTools>
-    <RepackBinariesExcludes>Wpf*.dll</RepackBinariesExcludes>
   </PropertyGroup>
 
   <Import Project="ToadTools.Repack.targets"/>

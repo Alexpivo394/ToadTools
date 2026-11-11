@@ -1,4 +1,5 @@
 #nullable enable
+using ToadDesign;
 using System.Diagnostics;
 using System.IO;
 using Autodesk.Revit.DB.Mechanical;
@@ -8,7 +9,6 @@ using OfficeOpenXml;
 using ToadTools.UI.Models;
 using ToadTools.UI.Progress;
 using ToadTools.UI.Services;
-using Wpf.Ui.Controls;
 
 namespace WarmSync;
 
@@ -41,7 +41,7 @@ public class ExportSpacesToExcel
             List<Space> spaces = GetSpaces(doc);
 
             using (var progress = ToadProgress.Show("Выгрузка пространств",
-                       new ProgressOptions { Icon = SymbolRegular.TableArrowUp24 }))
+                       new ProgressOptions { Icon = Symbol.TableExport }))
             using (var package = new ExcelPackage())
             {
                 var ws = package.Workbook.Worksheets.Add("Spaces");

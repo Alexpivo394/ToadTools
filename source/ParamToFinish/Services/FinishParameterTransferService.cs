@@ -1,8 +1,8 @@
+using ToadDesign;
 using Autodesk.Revit.DB;
 using Nice3point.Revit.Toolkit;
 using ParamToFinish.Models;
 using ToadTools.UI.Progress;
-using Wpf.Ui.Controls;
 
 namespace ParamToFinish.Services;
 
@@ -59,7 +59,7 @@ public class FinishParameterTransferService : IFinishParameterTransferService
         }
 
         using var progress = ToadProgress.Show("Основание отделки",
-            new ProgressOptions { Icon = SymbolRegular.Wallpaper24 });
+            new ProgressOptions { Icon = Symbol.Wall });
 
         var finishWalls = new List<WallInfo>();
         var mainWalls = new List<WallInfo>();

@@ -11,7 +11,6 @@ public sealed partial class WorksetCheckReportView
         InitializeComponent();
 
         // Тему не сбрасываем: отчёт открывается в той же теме, что выбрана в окне запуска.
-        ThemeWatcherService.Watch(this);
 
         DataContext = viewModel;
 

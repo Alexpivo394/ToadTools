@@ -6,15 +6,13 @@ using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Threading;
 using ToadTools.UI.ViewModels;
-using Wpf.Ui.Appearance;
-using Wpf.Ui.Markup;
 using Point = System.Windows.Point;
 
 namespace ToadTools.UI.Views;
 
 /// <summary>
 ///     Окно прогресса. Создаётся в отдельном потоке (см. <see cref="Progress.ToadProgress" />), поэтому
-///     ресурсы темы у него свои — общие ресурсы окон Revit-потока отсюда трогать нельзя.
+///     ToadDesign раскрашивает его в этом потоке и доставляет сюда смену темы.
 /// </summary>
 public sealed partial class ToadProgressWindow
 {
@@ -26,25 +24,17 @@ public sealed partial class ToadProgressWindow
     private readonly DispatcherTimer _showTimer;
     private bool _allowClose;
 
-    public ToadProgressWindow(ToadProgressViewModel viewModel, ApplicationTheme theme, IntPtr anchor, TimeSpan showDelay)
+    public ToadProgressWindow(ToadProgressViewModel viewModel, IntPtr anchor, TimeSpan showDelay)
     {
         _viewModel = viewModel;
         _anchor = anchor;
-
-        Resources.MergedDictionaries.Add(new ThemesDictionary { Theme = theme });
-        Resources.MergedDictionaries.Add(new ControlsDictionary());
         InitializeComponent();
         DataContext = viewModel;
-
-        ProgressTitleBar.MinimizeActionOverride = (_, _) => MinimizeKeepingActivation();
         SourceInitialized += (_, _) =>
             HwndSource.FromHwnd(new WindowInteropHelper(this).Handle)?.AddHook(InterceptMinimize);
 
         Loaded += (_, _) =>
         {
-            // FluentWindow красит подложку по глобальной теме WPF-UI, а словарь у окна свой. Если тему окон плагина
-            // ещё никто не применил, подложка выходила светлой под белым текстом тёмной темы.
-            WindowBackgroundManager.UpdateBackground(this, theme, WindowBackdropType);
             CenterOverAnchor();
         };
         Closing += OnClosing;
@@ -104,7 +94,7 @@ public sealed partial class ToadProgressWindow
     /// </summary>
     private void MinimizeKeepingActivation() => ShowWindow(new WindowInteropHelper(this).Handle, SwShowMinimized);
 
-    /// <summary>Сворачивание из системного меню и с панели задач — так же, как кнопкой в заголовке.</summary>
+    /// <summary>Сворачивание кнопкой в заголовке, из системного меню и с панели задач.</summary>
     private IntPtr InterceptMinimize(IntPtr hwnd, int message, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
         if (message == WmSysCommand && (wParam.ToInt64() & 0xFFF0) == ScMinimize)

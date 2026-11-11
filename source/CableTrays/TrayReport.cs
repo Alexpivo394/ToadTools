@@ -1,8 +1,8 @@
+using ToadDesign;
 using Autodesk.Revit.DB;
 using ToadTools.UI.Models;
 using ToadTools.UI.Progress;
 using ToadTools.UI.Services;
-using Wpf.Ui.Controls;
 
 namespace CableTrays;
 
@@ -62,7 +62,7 @@ internal sealed class TrayReport
     /// <summary>Окно прогресса команды. «Прервать» откатывает транзакцию — изменения в модели не сохраняются.</summary>
     public static ToadProgress StartProgress(string commandName)
     {
-        return ToadProgress.Show(commandName, new ProgressOptions { Icon = SymbolRegular.LayerDiagonal24 });
+        return ToadProgress.Show(commandName, new ProgressOptions { Icon = Symbol.Stack2 });
     }
 
     public static void ShowWarning(string message)

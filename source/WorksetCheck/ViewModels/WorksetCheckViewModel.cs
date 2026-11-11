@@ -1,7 +1,7 @@
+using ToadDesign;
 using ToadTools.UI.Services;
 using WorksetCheck.Models;
 using WorksetCheck.Services;
-using Wpf.Ui.Appearance;
 using Settings = WorksetCheck.Configuration.Settings;
 
 namespace WorksetCheck.ViewModels;
@@ -74,7 +74,7 @@ public sealed partial class WorksetCheckViewModel : ObservableObject
 
     partial void OnDarkThemeChanged(bool value)
     {
-        ThemeWatcherService.ApplyTheme(value ? ApplicationTheme.Dark : ApplicationTheme.Light);
+        ToadTheme.Mode = value ? ToadThemeMode.Dark : ToadThemeMode.Light;
     }
 
     partial void OnCadWorksetChanged(string value)

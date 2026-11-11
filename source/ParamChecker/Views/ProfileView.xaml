@@ -4,7 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:toad="urn:toaddesign"
     xmlns:viewModels="clr-namespace:ParamChecker.ViewModels"
     xmlns:views="clr-namespace:ParamChecker.Views"
     d:DataContext="{d:DesignInstance Type=viewModels:ProfileViewModel}"
@@ -20,7 +20,7 @@
         </Grid.RowDefinitions>
 
         <!-- Имя профиля и умолчания для его моделей -->
-        <ui:Card Grid.Row="0" Padding="12,10" Margin="0,0,0,10">
+        <toad:Card Grid.Row="0" Padding="12,10" Margin="0,0,0,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="2*" />
@@ -31,21 +31,21 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
                     <TextBlock Text="Имя профиля" Opacity="0.8" Margin="0,0,0,4" />
-                    <ui:TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="Например: ЖК Восход — ОВ"
+                    <toad:TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Placeholder="Например: ЖК Восход — ОВ"
                                 FontWeight="SemiBold" />
                 </StackPanel>
                 <StackPanel Grid.Column="2">
                     <TextBlock Text="Вид для всех моделей" Opacity="0.8" Margin="0,0,0,4" />
-                    <ui:TextBox Text="{Binding ViewName, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="пусто — вся модель"
+                    <toad:TextBox Text="{Binding ViewName, UpdateSourceTrigger=PropertyChanged}" Placeholder="пусто — вся модель"
                                 ToolTip="Элементы собираются с этого вида (обычно 3D-вид «Navisworks»). Пусто — со всей модели. У модели можно задать свой вид" />
                 </StackPanel>
                 <StackPanel Grid.Column="4">
                     <TextBlock Text="Не открывать РН со словом" Opacity="0.8" Margin="0,0,0,4" />
-                    <ui:TextBox Text="{Binding WorksetKeyword, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="пусто — открыть все РН"
+                    <toad:TextBox Text="{Binding WorksetKeyword, UpdateSourceTrigger=PropertyChanged}" Placeholder="пусто — открыть все РН"
                                 ToolTip="Рабочие наборы, в имени которых есть это слово, при открытии останутся закрытыми — модель откроется быстрее. Связи RVT и так не загружаются (см. настройки)" />
                 </StackPanel>
             </Grid>
-        </ui:Card>
+        </toad:Card>
 
         <!-- Модели -->
         <Grid Grid.Row="1">
@@ -60,30 +60,30 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock VerticalAlignment="Center">
                     <Run Text="Модели" FontWeight="Bold" />
-                    <Run Text="{Binding Models.Count, Mode=OneWay}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                    <Run Text="{Binding Models.Count, Mode=OneWay}" Foreground="{DynamicResource Toad.Brush.TextDimmed}" />
                 </TextBlock>
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <ui:Button Content="С Revit Server" Icon="{ui:SymbolIcon Server24}" Appearance="Primary"
+                    <toad:Button Content="С Revit Server" Icon="Server" Variant="Filled"
                                ToolTip="Выбрать модели в дереве Revit Server — сразу сколько угодно"
                                Command="{Binding AddFromServerCommand}" />
-                    <ui:Button Content="Файлы" Icon="{ui:SymbolIcon FolderOpen24}" Margin="6,0,0,0"
+                    <toad:Button Content="Файлы" Icon="FolderOpen" Margin="6,0,0,0"
                                ToolTip="Добавить модели .rvt с диска или из сетевой папки"
                                Command="{Binding AddFilesCommand}" />
-                    <ui:Button Content="Путь" Icon="{ui:SymbolIcon TextEditStyle24}" Margin="6,0,0,0"
+                    <toad:Button Content="Путь" Icon="Pencil" Margin="6,0,0,0"
                                ToolTip="Добавить строку и вписать путь вручную"
                                Command="{Binding AddPathCommand}" />
-                    <ui:Button Icon="{ui:SymbolIcon Delete24}" Margin="6,0,0,0" Appearance="Transparent"
+                    <toad:Button Icon="Trash" Margin="6,0,0,0" Variant="Subtle"
                                ToolTip="Убрать все модели" Command="{Binding ClearModelsCommand}" />
                 </StackPanel>
             </Grid>
 
-            <ui:Card Grid.Row="1" Padding="0" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
+            <toad:Card Grid.Row="1" Padding="0" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <Border Grid.Row="0" BorderThickness="0,0,0,1" Padding="12,6" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+                    <Border Grid.Row="0" BorderThickness="0,0,0,1" Padding="12,6" BorderBrush="{DynamicResource Toad.Brush.Border}">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -109,32 +109,32 @@
                                             <ColumnDefinition Width="150" />
                                             <ColumnDefinition Width="40" />
                                         </Grid.ColumnDefinitions>
-                                        <ui:SymbolIcon Grid.Column="0" Margin="0,0,8,0" FontSize="18" Opacity="0.8" VerticalAlignment="Center">
-                                            <ui:SymbolIcon.Style>
-                                                <Style TargetType="ui:SymbolIcon">
-                                                    <Setter Property="Symbol" Value="Document24" />
+                                        <toad:Icon Grid.Column="0" Margin="0,0,8,0" Width="18" Height="18" Opacity="0.8" VerticalAlignment="Center">
+                                            <toad:Icon.Style>
+                                                <Style TargetType="toad:Icon">
+                                                    <Setter Property="Symbol" Value="File" />
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsServer}" Value="True">
-                                                            <Setter Property="Symbol" Value="Server24" />
+                                                            <Setter Property="Symbol" Value="Server" />
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
-                                            </ui:SymbolIcon.Style>
-                                        </ui:SymbolIcon>
+                                            </toad:Icon.Style>
+                                        </toad:Icon>
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Margin="2,0,0,2" />
                                             <TextBox Text="{Binding Path, UpdateSourceTrigger=LostFocus}" FontSize="12"
                                                      Background="Transparent" BorderThickness="0" Padding="0"
-                                                     Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                     Foreground="{DynamicResource Toad.Brush.TextDimmed}"
                                                      ToolTip="Путь к модели: RSN://сервер/папка/модель.rvt или путь к файлу. Можно поправить" />
                                         </StackPanel>
-                                        <ui:TextBox Grid.Column="2" Margin="8,0,0,0" VerticalAlignment="Center"
+                                        <toad:TextBox Grid.Column="2" Margin="8,0,0,0" VerticalAlignment="Center"
                                                     Text="{Binding ViewName, UpdateSourceTrigger=PropertyChanged}"
-                                                    PlaceholderText="{Binding ViewPlaceholder}" />
-                                        <ui:TextBox Grid.Column="3" Margin="8,0,0,0" VerticalAlignment="Center"
+                                                    Placeholder="{Binding ViewPlaceholder}" />
+                                        <toad:TextBox Grid.Column="3" Margin="8,0,0,0" VerticalAlignment="Center"
                                                     Text="{Binding WorksetKeyword, UpdateSourceTrigger=PropertyChanged}"
-                                                    PlaceholderText="{Binding WorksetPlaceholder}" />
-                                        <ui:Button Grid.Column="4" Margin="4,0,0,0" Icon="{ui:SymbolIcon Dismiss24}" Appearance="Transparent"
+                                                    Placeholder="{Binding WorksetPlaceholder}" />
+                                        <toad:Button Grid.Column="4" Margin="4,0,0,0" Icon="X" Variant="Subtle"
                                                    ToolTip="Убрать модель из профиля" Command="{Binding RemoveCommand}" />
                                     </Grid>
                                 </DataTemplate>
@@ -146,7 +146,7 @@
                                Text="Моделей пока нет. Добавьте их с Revit Server, из папки или вписав путь."
                                Visibility="{Binding Models.Count, Converter={views:ZeroVisibleConverter}}" />
                 </Grid>
-            </ui:Card>
+            </toad:Card>
         </Grid>
 
         <!-- Правила -->
@@ -162,24 +162,24 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock VerticalAlignment="Center">
                     <Run Text="Правила" FontWeight="Bold" />
-                    <Run Text="{Binding Rules.Count, Mode=OneWay}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                    <Run Text="  каждое правило — отдельный лист отчёта" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                    <Run Text="{Binding Rules.Count, Mode=OneWay}" Foreground="{DynamicResource Toad.Brush.TextDimmed}" />
+                    <Run Text="  каждое правило — отдельный лист отчёта" FontSize="12" Foreground="{DynamicResource Toad.Brush.TextDimmed}" />
                 </TextBlock>
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <ui:Button Content="Добавить правило" Icon="{ui:SymbolIcon Add24}" Command="{Binding AddRuleCommand}" />
-                    <ui:Button Content="Вставить" Icon="{ui:SymbolIcon ClipboardPaste24}" Margin="6,0,0,0"
+                    <toad:Button Content="Добавить правило" Icon="Plus" Command="{Binding AddRuleCommand}" />
+                    <toad:Button Content="Вставить" Icon="Clipboard" Margin="6,0,0,0"
                                ToolTip="Вставить правило, скопированное командой «Копировать» (в том числе из другого профиля)"
                                Command="{Binding PasteRuleCommand}" />
                 </StackPanel>
             </Grid>
 
-            <ui:Card Grid.Row="1" Padding="0" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
+            <toad:Card Grid.Row="1" Padding="0" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <Border Grid.Row="0" BorderThickness="0,0,0,1" Padding="12,6" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+                    <Border Grid.Row="0" BorderThickness="0,0,0,1" Padding="12,6" BorderBrush="{DynamicResource Toad.Brush.Border}">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="0.8*" />
@@ -204,62 +204,62 @@
                                             <ColumnDefinition Width="1.2*" />
                                             <ColumnDefinition Width="40" />
                                         </Grid.ColumnDefinitions>
-                                        <ui:TextBox Grid.Column="0" Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}"
-                                                    PlaceholderText="Например: Воздуховоды" VerticalAlignment="Center" />
+                                        <toad:TextBox Grid.Column="0" Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}"
+                                                    Placeholder="Например: Воздуховоды" VerticalAlignment="Center" />
 
-                                        <ui:Button Grid.Column="1" Margin="8,0,0,0" Appearance="Secondary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" VerticalAlignment="Stretch"
+                                        <toad:Button Grid.Column="1" Margin="8,0,0,0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" VerticalAlignment="Stretch"
                                                    Command="{Binding EditFilterCommand}" ToolTip="{Binding FilterTooltip}">
                                             <StackPanel Orientation="Horizontal">
-                                                <ui:SymbolIcon Symbol="Filter24" Margin="0,0,8,0" />
+                                                <toad:Icon Symbol="Filter" Margin="0,0,8,0" />
                                                 <TextBlock Text="{Binding FilterSummary}" TextTrimming="CharacterEllipsis">
                                                     <TextBlock.Style>
                                                         <Style TargetType="TextBlock">
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding FilterHasProblem}" Value="True">
-                                                                    <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCautionBrush}" />
+                                                                    <Setter Property="Foreground" Value="{DynamicResource Toad.Brush.Warning}" />
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
                                                     </TextBlock.Style>
                                                 </TextBlock>
                                             </StackPanel>
-                                        </ui:Button>
+                                        </toad:Button>
 
-                                        <ui:Button Grid.Column="2" Margin="8,0,0,0" Appearance="Secondary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" VerticalAlignment="Stretch"
+                                        <toad:Button Grid.Column="2" Margin="8,0,0,0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" VerticalAlignment="Stretch"
                                                    Command="{Binding EditParametersCommand}" ToolTip="{Binding ParametersTooltip}">
                                             <StackPanel Orientation="Horizontal">
-                                                <ui:SymbolIcon Symbol="TextBulletListLtr24" Margin="0,0,8,0" />
+                                                <toad:Icon Symbol="List" Margin="0,0,8,0" />
                                                 <TextBlock Text="{Binding ParametersSummary}" TextTrimming="CharacterEllipsis">
                                                     <TextBlock.Style>
                                                         <Style TargetType="TextBlock">
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding ParametersHaveProblem}" Value="True">
-                                                                    <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCautionBrush}" />
+                                                                    <Setter Property="Foreground" Value="{DynamicResource Toad.Brush.Warning}" />
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
                                                     </TextBlock.Style>
                                                 </TextBlock>
                                             </StackPanel>
-                                        </ui:Button>
+                                        </toad:Button>
 
-                                        <ui:Button x:Name="MoreButton" Grid.Column="3" Margin="4,0,0,0" Icon="{ui:SymbolIcon MoreVertical24}"
-                                                   Appearance="Transparent" ToolTip="Ещё" Click="OnMoreClick">
-                                            <ui:Button.ContextMenu>
+                                        <toad:Button x:Name="MoreButton" Grid.Column="3" Margin="4,0,0,0" Icon="DotsVertical"
+                                                   Variant="Subtle" ToolTip="Ещё" Click="OnMoreClick">
+                                            <toad:Button.ContextMenu>
                                                 <ContextMenu>
-                                                    <MenuItem Header="Дублировать" Icon="{ui:SymbolIcon CopyAdd24}" Command="{Binding DuplicateCommand}" />
-                                                    <MenuItem Header="Копировать правило" Icon="{ui:SymbolIcon Copy24}" Command="{Binding CopyCommand}"
+                                                    <MenuItem Header="Дублировать" Icon="CopyPlus" Command="{Binding DuplicateCommand}" />
+                                                    <MenuItem Header="Копировать правило" Icon="Copy" Command="{Binding CopyCommand}"
                                                               ToolTip="В буфер обмена — чтобы вставить в другой профиль или взять из него фильтр или параметры" />
                                                     <Separator />
-                                                    <MenuItem Header="Вставить фильтр" Icon="{ui:SymbolIcon ClipboardPaste24}" Command="{Binding PasteFilterCommand}"
+                                                    <MenuItem Header="Вставить фильтр" Icon="Clipboard" Command="{Binding PasteFilterCommand}"
                                                               ToolTip="Заменить фильтр этого правила фильтром скопированного" />
-                                                    <MenuItem Header="Вставить параметры" Icon="{ui:SymbolIcon ClipboardPaste24}" Command="{Binding PasteParametersCommand}"
+                                                    <MenuItem Header="Вставить параметры" Icon="Clipboard" Command="{Binding PasteParametersCommand}"
                                                               ToolTip="Заменить параметры этого правила параметрами скопированного" />
                                                     <Separator />
-                                                    <MenuItem Header="Удалить" Icon="{ui:SymbolIcon Delete24}" Command="{Binding RemoveCommand}" />
+                                                    <MenuItem Header="Удалить" Icon="Trash" Command="{Binding RemoveCommand}" />
                                                 </ContextMenu>
-                                            </ui:Button.ContextMenu>
-                                        </ui:Button>
+                                            </toad:Button.ContextMenu>
+                                        </toad:Button>
                                     </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -270,7 +270,7 @@
                                Text="Правил пока нет. Правило — какие элементы отобрать и какие параметры у них проверить."
                                Visibility="{Binding Rules.Count, Converter={views:ZeroVisibleConverter}}" />
                 </Grid>
-            </ui:Card>
+            </toad:Card>
         </Grid>
     </Grid>
 </UserControl>

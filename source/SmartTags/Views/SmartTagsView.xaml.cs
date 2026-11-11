@@ -1,7 +1,7 @@
+using ToadDesign;
 using System.ComponentModel;
 using SmartTags.ViewModels;
 using ToadTools.UI.Services;
-using Wpf.Ui.Appearance;
 
 namespace SmartTags.Views;
 
@@ -13,9 +13,7 @@ public sealed partial class SmartTagsView
     {
         InitializeComponent();
 
-        ThemeWatcherService.Initialize();
-        ThemeWatcherService.Watch(this);
-        ThemeWatcherService.ApplyTheme(ApplicationTheme.Dark);
+        ToadTheme.Mode = ToadThemeMode.Dark;
 
         _viewModel = viewModel;
         DataContext = viewModel;

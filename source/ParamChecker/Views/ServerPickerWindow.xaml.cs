@@ -11,7 +11,6 @@ public sealed partial class ServerPickerWindow
         InitializeComponent();
 
         // Тему не сбрасываем: окно открывается в той же теме, что главное.
-        ThemeWatcherService.Watch(this);
         DataContext = viewModel;
         Closed += (_, _) => viewModel.Detach();
     }

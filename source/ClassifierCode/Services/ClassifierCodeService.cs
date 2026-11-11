@@ -1,7 +1,7 @@
+using ToadDesign;
 using ClassifierCode.Dictionaries;
 using ClassifierCode.Models;
 using ToadTools.UI.Progress;
-using Wpf.Ui.Controls;
 
 namespace ClassifierCode.Services;
 
@@ -57,7 +57,7 @@ public sealed class ClassifierCodeService(ElementCollector collector)
             return null;
 
         using var progress = ToadProgress.Show("Код по классификатору",
-            new ProgressOptions { Icon = SymbolRegular.TextBulletListSquare24 });
+            new ProgressOptions { Icon = Symbol.ListDetails });
         progress.Stage("Сбор элементов");
 
         var targets = collector.Collect(document, document.ActiveView, scope, selection);
