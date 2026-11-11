@@ -60,7 +60,7 @@
         </Grid.RowDefinitions>
 
 
-        <Grid Grid.Row="1" Margin="10,0,10,10">
+        <Grid Grid.Row="1" Margin="16,4,16,0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -370,14 +370,14 @@
         </Grid>
 
         <!-- Подвал -->
-        <Grid Grid.Row="2" Margin="10,0,10,10">
+        <Grid Grid.Row="2" Margin="16,14,16,16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                <toad:Switch Content="Тёмная тема" IsChecked="{Binding Settings.DarkTheme, Mode=TwoWay}" />
+                <toad:Switch Content="Тёмная тема" VerticalAlignment="Center" IsChecked="{Binding Settings.DarkTheme, Mode=TwoWay}" />
                 <TextBlock Text="Конфигурация:" VerticalAlignment="Center" Margin="20,0,10,0" />
                 <toad:Button Content="Загрузить"
                            Icon="FolderOpen"

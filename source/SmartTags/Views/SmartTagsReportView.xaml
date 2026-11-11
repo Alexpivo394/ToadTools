@@ -25,7 +25,7 @@
         <!-- Title Bar -->
 
         <!-- Content -->
-        <Grid Grid.Row="1" Margin="10,0,10,10">
+        <Grid Grid.Row="1" Margin="20,6,20,0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -110,7 +110,7 @@
             </DataGrid>
         </Grid>
 
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="10,0,10,10">
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="20,14,20,18">
             <toad:Button Content="Открыть журнал"
                        Icon="FileText"
                        Command="{Binding OpenLogCommand}"

@@ -93,7 +93,7 @@
 
             <toad:Card Padding="14,10" Margin="0,0,0,8">
                 <StackPanel Orientation="Horizontal">
-                    <toad:Switch Content="Тёмная тема" IsChecked="{Binding Settings.DarkTheme, Mode=TwoWay}" />
+                    <toad:Switch Content="Тёмная тема" VerticalAlignment="Center" IsChecked="{Binding Settings.DarkTheme, Mode=TwoWay}" />
                 </StackPanel>
             </toad:Card>
 

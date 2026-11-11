@@ -22,7 +22,7 @@
         <!-- Title Bar -->
         
         <!-- Content -->
-        <Grid Grid.Row="1" Margin="10,0,10,10">
+        <Grid Grid.Row="1" Margin="20,6,20,18">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -30,7 +30,7 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <TextBlock Grid.Row="0" Text="Правила переноса параметров" FontWeight="Bold" Margin="0,0,0,10" HorizontalAlignment="Center" />
+            <TextBlock Grid.Row="0" Text="Правила переноса параметров" FontWeight="SemiBold" Margin="0,0,0,6" HorizontalAlignment="Center" />
             <Grid Grid.Row="1" Margin="0,0,0,10">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -98,8 +98,9 @@
             </StackPanel>
         </Grid>
         
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Left" Margin="10,0,0,10">
-            <toad:Switch Content="Тёмная тема"
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                    Margin="20,0,0,18" Height="{DynamicResource Toad.Size.Control}">
+            <toad:Switch Content="Тёмная тема" VerticalAlignment="Center"
                 IsChecked="{Binding DataContext.DarkTheme, RelativeSource={RelativeSource AncestorType=toad:ToadWindow}, Mode=TwoWay}"/>
         </StackPanel>
     </Grid>

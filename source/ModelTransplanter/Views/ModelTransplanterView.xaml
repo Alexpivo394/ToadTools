@@ -15,65 +15,27 @@
     MinWidth="350"
     TitleIcon="CirclePlus">
 
-    <Grid>
-        <!-- Title Bar -->
+    <DockPanel Margin="20,6,20,18">
+        <DockPanel DockPanel.Dock="Bottom" Margin="0,14,0,0" LastChildFill="False">
+            <toad:Button DockPanel.Dock="Right" Content="Начать перенос" Icon="Rocket" Variant="Filled"
+                         Command="{Binding TransferElementsCommand}"
+                         IsEnabled="{Binding IsBusy, Converter={converters:InverseBoolConverter}}" />
+            <toad:Switch Content="Тёмная тема" VerticalAlignment="Center" IsChecked="{Binding DarkTheme, Mode=TwoWay}" />
+        </DockPanel>
 
-        <!-- Content -->
-        <StackPanel Margin="20" VerticalAlignment="Center">
+        <StackPanel>
+            <TextBlock Text="Исходная модель" FontWeight="SemiBold" Margin="0,0,0,6" />
+            <ComboBox ItemsSource="{Binding OpenDocuments}" DisplayMemberPath="Title" SelectedItem="{Binding SelectedSourceDoc}" />
 
-            <!-- Source Model -->
-            <TextBlock Text="Исходная модель" FontWeight="SemiBold" Margin="0,0,0,5"/>
-            <ComboBox 
-                ItemsSource="{Binding OpenDocuments}" 
-                DisplayMemberPath="Title"
-                SelectedItem="{Binding SelectedSourceDoc}"
-                Height="35"
-                Margin="0,0,0,15"/>
+            <TextBlock Text="Целевая модель" FontWeight="SemiBold" Margin="0,14,0,6" />
+            <ComboBox ItemsSource="{Binding OpenDocuments}" DisplayMemberPath="Title" SelectedItem="{Binding SelectedTargetDoc}" />
 
-            <!-- Target Model -->
-            <TextBlock Text="Целевая модель" FontWeight="SemiBold" Margin="0,0,0,5"/>
-            <ComboBox 
-                ItemsSource="{Binding OpenDocuments}" 
-                DisplayMemberPath="Title"
-                SelectedItem="{Binding SelectedTargetDoc}"
-                Height="35"
-                Margin="0,0,0,15"/>
-
-            <!-- Log File -->
-            <TextBlock Text="Путь к лог-файлу" FontWeight="SemiBold" Margin="0,0,0,5"/>
-            <Grid Margin="0,0,0,15">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <TextBox 
-                    Text="{Binding LogFilePath, Mode=OneWay}" 
-                    IsReadOnly="True"
-                    Height="35"
-                    VerticalContentAlignment="Center"
-                    Margin="0,0,8,0"/>
-                <toad:Button 
-                    Content="..." 
-                    Width="40" 
-                    Height="35"
-                    Command="{Binding SelectLogPathCommand}"
-                    Grid.Column="1"/>
-            </Grid>
-
-            <!-- Start Transfer -->
-            <toad:Button 
-                Content="🚀 Начать перенос" 
-                Height="40" 
-                Command="{Binding TransferElementsCommand}" 
-                IsEnabled="{Binding IsBusy, Converter={converters:InverseBoolConverter}}"
-                Variant="Filled"
-                Margin="0,0,0,15"/>
-
-            <!-- Theme Toggle -->
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <toad:Switch Content="Тёмная тема"
-                    IsChecked="{Binding DataContext.DarkTheme, RelativeSource={RelativeSource AncestorType=toad:ToadWindow}, Mode=TwoWay}"/>
-            </StackPanel>
+            <TextBlock Text="Путь к лог-файлу" FontWeight="SemiBold" Margin="0,14,0,6" />
+            <DockPanel>
+                <toad:Button DockPanel.Dock="Right" Icon="FolderOpen" Margin="8,0,0,0" ToolTip="Куда сохранить лог-файл"
+                             Command="{Binding SelectLogPathCommand}" />
+                <toad:TextBox Text="{Binding LogFilePath, Mode=OneWay}" IsReadOnly="True" />
+            </DockPanel>
         </StackPanel>
-    </Grid>
+    </DockPanel>
 </toad:ToadWindow>

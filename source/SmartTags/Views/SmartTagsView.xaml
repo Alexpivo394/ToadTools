@@ -35,7 +35,7 @@
         <!-- Title Bar -->
 
         <!-- Content -->
-        <Grid Grid.Row="1" Margin="10,0,10,10">
+        <Grid Grid.Row="1" Margin="16,4,16,0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -306,13 +306,13 @@
         </Grid>
 
         <!-- Footer -->
-        <Grid Grid.Row="2" Margin="10,0,10,10">
+        <Grid Grid.Row="2" Margin="16,14,16,16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                <toad:Switch Content="Тёмная тема"
+                <toad:Switch Content="Тёмная тема" VerticalAlignment="Center"
                     IsChecked="{Binding DataContext.DarkTheme, RelativeSource={RelativeSource AncestorType=toad:ToadWindow}, Mode=TwoWay}" />
             </StackPanel>
             <toad:Button Grid.Column="1"

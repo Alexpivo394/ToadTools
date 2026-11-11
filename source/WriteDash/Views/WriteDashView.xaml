@@ -24,7 +24,7 @@
         <DockPanel DockPanel.Dock="Bottom" Margin="0,14,0,0" LastChildFill="False">
             <toad:Button DockPanel.Dock="Right" Content="Запуск" Icon="Rocket" Variant="Filled"
                          Command="{Binding StartCommand}" />
-            <toad:Switch Content="Тёмная тема" IsChecked="{Binding DarkTheme, Mode=TwoWay}" />
+            <toad:Switch Content="Тёмная тема" VerticalAlignment="Center" IsChecked="{Binding DarkTheme, Mode=TwoWay}" />
         </DockPanel>
 
         <Border Margin="0,12,0,0" Padding="4" BorderThickness="1"

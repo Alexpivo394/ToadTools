@@ -24,7 +24,7 @@
         </Grid.RowDefinitions>
 
 
-        <Grid Grid.Row="1" Margin="10,0,10,10">
+        <Grid Grid.Row="1" Margin="20,6,20,0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -91,7 +91,7 @@
             </DataGrid>
         </Grid>
 
-        <DockPanel Grid.Row="2" Margin="10,0,10,10">
+        <DockPanel Grid.Row="2" Margin="20,14,20,18">
             <toad:Button DockPanel.Dock="Left"
                        Content="Сохранить в Excel"
                        Icon="DeviceFloppy"

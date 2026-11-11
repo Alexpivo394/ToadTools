@@ -34,7 +34,7 @@
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                <Border Grid.Row="0" Padding="10" BorderThickness="2" BorderBrush="{DynamicResource Toad.Brush.Accent}" CornerRadius="5">
+                <Border Grid.Row="0" Padding="10" BorderThickness="1" BorderBrush="{DynamicResource Toad.Brush.Border}" CornerRadius="{DynamicResource Toad.Radius.Control}">
                     <ScrollViewer VerticalScrollBarVisibility="Auto" MinHeight="150">
                         <ListView
                             ItemsSource="{Binding LinkedModels, Mode=TwoWay}"
@@ -67,7 +67,7 @@
                 </StackPanel>
             </Grid>
             <Grid Grid.Column="1" Margin="5,0,0,0">
-                <Border Padding="10" BorderThickness="2" BorderBrush="{DynamicResource Toad.Brush.Accent}" CornerRadius="5">
+                <Border Padding="10" BorderThickness="1" BorderBrush="{DynamicResource Toad.Brush.Border}" CornerRadius="{DynamicResource Toad.Radius.Control}">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -132,7 +132,7 @@
             </Grid.ColumnDefinitions>
             
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="10,0,0,10">
-                <toad:Switch Content="Тёмная тема"
+                <toad:Switch Content="Тёмная тема" VerticalAlignment="Center"
                     IsChecked="{Binding DataContext.DarkTheme, RelativeSource={RelativeSource AncestorType=toad:ToadWindow}, Mode=TwoWay}"/>
                 
                 <toad:Button Content="Экспорт"
