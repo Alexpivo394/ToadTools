@@ -76,9 +76,8 @@
                                     Icon="Trash"
                                     Command="{Binding DataContext.RemoveModelCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                     CommandParameter="{Binding}"
-                                    Variant="Subtle"
                                     VerticalAlignment="Stretch"
-                                    Margin="10,0,0,0" />
+                                    Margin="10,0,0,0"  Tone="Danger"/>
                             </Grid>
                         </DataTemplate>
                     </ListView.ItemTemplate>

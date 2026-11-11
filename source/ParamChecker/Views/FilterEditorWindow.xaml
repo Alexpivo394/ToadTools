@@ -78,7 +78,7 @@
                             Placeholder="Значение"
                             ToolTip="Без учёта регистра. Для сравнения чисел — число в единицах проекта: «1000» для 1000 мм"
                             Visibility="{Binding NeedsValue, Converter={uiConverters:BooleanHiddenVisibilityConverter}}" />
-                <toad:Button Grid.Column="3" Margin="4,0,0,0" Icon="X" Variant="Subtle"
+                <toad:Button Grid.Column="3" Margin="4,0,0,0" Icon="X"
                            ToolTip="Удалить условие" Command="{Binding RemoveCommand}" />
             </Grid>
         </DataTemplate>
@@ -102,8 +102,8 @@
                         <TextBlock Text="Группа — должны выполняться все её условия (И)" FontSize="12" Opacity="0.75" VerticalAlignment="Center" />
                         <toad:Button Grid.Column="1" Content="Условие" Icon="Plus" Variant="Subtle"
                                    Command="{Binding AddCommand}" />
-                        <toad:Button Grid.Column="2" Icon="Trash" Variant="Subtle"
-                                   ToolTip="Удалить группу" Command="{Binding RemoveGroupCommand}" />
+                        <toad:Button Grid.Column="2" Icon="Trash"
+                                   ToolTip="Удалить группу" Command="{Binding RemoveGroupCommand}"  Tone="Danger"/>
                     </Grid>
                     <ItemsControl ItemsSource="{Binding Children}" ItemTemplate="{StaticResource ConditionRow}" />
                 </StackPanel>

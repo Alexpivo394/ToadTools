@@ -33,10 +33,10 @@
         </Grid.RowDefinitions>
 
 
-        <Grid Grid.Row="1" Margin="10,0,10,10">
+        <Grid Grid.Row="1" Margin="16,4,16,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="270" />
-                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="16" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
@@ -48,7 +48,7 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <Grid Grid.Row="0" Margin="10,0,0,5">
+                <Grid Grid.Row="0" Margin="4,0,0,8" MinHeight="34">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
@@ -57,7 +57,7 @@
                     <StackPanel Grid.Column="1" Orientation="Horizontal">
                         <toad:Button Content="Добавить" Icon="Plus" Variant="Subtle"
                                    Command="{Binding AddProfileCommand}" />
-                        <toad:Button Icon="Trash" Variant="Subtle" ToolTip="Удалить все профили"
+                        <toad:Button Icon="Trash" Tone="Danger" ToolTip="Удалить все профили"
                                    Command="{Binding ClearProfilesCommand}" />
                     </StackPanel>
                 </Grid>
@@ -72,10 +72,8 @@
                                     <Grid Background="Transparent">
                                         <Grid.ContextMenu>
                                             <ContextMenu>
-                                                <MenuItem Header="Дублировать" Command="{Binding DuplicateCommand}"
-                                                          Icon="Copy" />
-                                                <MenuItem Header="Удалить" Command="{Binding RemoveCommand}"
-                                                          Icon="Trash" />
+                                                <MenuItem Header="Дублировать" Command="{Binding DuplicateCommand}" ><MenuItem.Icon><toad:Icon Symbol="Copy" /></MenuItem.Icon></MenuItem>
+                                                <MenuItem Header="Удалить" Command="{Binding RemoveCommand}"  toad:Theme.Tone="Danger"><MenuItem.Icon><toad:Icon Symbol="Trash" /></MenuItem.Icon></MenuItem>
                                             </ContextMenu>
                                         </Grid.ContextMenu>
                                         <Grid.ColumnDefinitions>
@@ -85,9 +83,9 @@
                                         <CheckBox Grid.Column="0" MinWidth="0" Margin="0,0,4,0" VerticalAlignment="Center"
                                                   IsChecked="{Binding IsEnabled}" ToolTip="Проверять при запуске" />
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis"
+                                            <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" FontWeight="SemiBold"
                                                        ToolTip="{Binding DisplayName}" />
-                                            <TextBlock Text="{Binding Summary}" FontSize="12" Opacity="0.65" />
+                                            <TextBlock Text="{Binding Summary}" FontSize="12" Foreground="{DynamicResource Toad.Brush.TextDimmed}" />
                                         </StackPanel>
                                     </Grid>
                                 </DataTemplate>
@@ -100,17 +98,17 @@
                     </Grid>
                 </toad:Card>
 
-                <StackPanel Grid.Row="2" Margin="0,8,0,0">
+                <StackPanel Grid.Row="2" Margin="0,10,0,0">
                     <UniformGrid Columns="2">
-                        <toad:Button Content="Импорт" Icon="FolderOpen" HorizontalAlignment="Stretch"
+                        <toad:Button Content="Импорт" Icon="Download" HorizontalAlignment="Stretch"
                                    ToolTip="Загрузить профили из файла .json (в том числе из прежних версий ParamChecker)"
                                    Command="{Binding ImportCommand}" />
-                        <toad:Button Content="Экспорт" Icon="DeviceFloppy" HorizontalAlignment="Stretch" Margin="6,0,0,0"
+                        <toad:Button Content="Экспорт" Icon="Upload" HorizontalAlignment="Stretch" Margin="8,0,0,0"
                                    ToolTip="Сохранить все профили в файл .json — чтобы поделиться с коллегами"
                                    Command="{Binding ExportCommand}" />
                     </UniformGrid>
                     <toad:Button Margin="0,8,0,0" HorizontalAlignment="Stretch" Content="Настройки"
-                               Icon="Settings"
+                               Icon="AdjustmentsHorizontal"
                                Variant="{Binding IsSettingsOpen, Converter={views:SelectedAppearanceConverter}}"
                                Command="{Binding ToggleSettingsCommand}" />
                 </StackPanel>
@@ -133,13 +131,14 @@
         </Grid>
 
         <!-- Подвал -->
-        <Grid Grid.Row="2" Margin="10,0,10,10">
+        <Grid Grid.Row="2" Margin="16,14,16,16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" Margin="10,0,0,0" VerticalAlignment="Center" Opacity="0.7" Text="{Binding RunHint}" />
+            <TextBlock Grid.Column="0" Margin="4,0,0,0" VerticalAlignment="Center" Text="{Binding RunHint}"
+                       Foreground="{DynamicResource Toad.Brush.TextDimmed}" />
             <toad:Button Grid.Column="1" Margin="0,0,8,0"
                        Content="Проверить открытую модель"
                        Icon="FileCheck"
