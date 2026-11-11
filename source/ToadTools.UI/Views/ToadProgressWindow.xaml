@@ -17,7 +17,9 @@
     Width="500"
     MinHeight="0"
     SizeToContent="Height"
-    ShowMaximizeButton="False">
+    ShowMaximizeButton="False"
+    ShowCloseButton="False"
+    TitleIcon="{Binding Icon}">
 
     <toad:ToadWindow.TaskbarItemInfo>
         <TaskbarItemInfo ProgressState="{Binding TaskbarState}" ProgressValue="{Binding TaskbarValue}" />
