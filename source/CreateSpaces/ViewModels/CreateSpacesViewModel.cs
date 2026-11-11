@@ -15,7 +15,6 @@ namespace CreateSpaces.ViewModels;
 
 public partial class CreateSpacesViewModel : ObservableObject
 {
-    [ObservableProperty] private bool _darkTheme = true;
     [ObservableProperty] private bool _createSpaces = true;
     [ObservableProperty] private ObservableCollection<ParameterMappingModel> _models = new();
     public ObservableCollection<LinkDescriptor> LinkedModels { get; set; }
@@ -30,12 +29,6 @@ public partial class CreateSpacesViewModel : ObservableObject
         _loadParameterService = loadParameterService;
         _roomProvider = roomProvider;
         _spaceCreationService = spaceCreationService;
-    }
-
-    partial void OnDarkThemeChanged(bool value)
-    {
-        var newTheme = value ? ToadThemeMode.Dark : ToadThemeMode.Light;
-        ToadTheme.Mode = newTheme;
     }
 
     partial void OnSelectedLinkChanged(LinkDescriptor? value)

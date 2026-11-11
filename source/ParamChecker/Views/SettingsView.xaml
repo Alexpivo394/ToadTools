@@ -5,6 +5,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:toad="urn:toaddesign"
+    xmlns:themes="clr-namespace:ToadTools.UI.Services;assembly=ToadTools.UI"
     xmlns:viewModels="clr-namespace:ParamChecker.ViewModels"
     d:DataContext="{d:DesignInstance Type=viewModels:MainViewModel}"
     mc:Ignorable="d">
@@ -93,7 +94,8 @@
 
             <toad:Card Padding="14,10" Margin="0,0,0,8">
                 <StackPanel Orientation="Horizontal">
-                    <toad:Switch Content="Тёмная тема" VerticalAlignment="Center" IsChecked="{Binding Settings.DarkTheme, Mode=TwoWay}" />
+                    <toad:Switch Content="Тёмная тема" VerticalAlignment="Center"
+                         IsChecked="{Binding IsDark, Source={x:Static themes:ThemePreference.Instance}}" />
                 </StackPanel>
             </toad:Card>
 

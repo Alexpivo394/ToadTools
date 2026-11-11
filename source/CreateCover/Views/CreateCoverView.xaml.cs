@@ -10,7 +10,7 @@ public sealed partial class CreateCoverView
     {
         InitializeComponent();
         
-        ToadTheme.Mode = ToadThemeMode.Dark;
+        ThemePreference.Apply();
         
         DataContext = viewModel;
     }

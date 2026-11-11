@@ -1,5 +1,6 @@
 ﻿<toad:ToadWindow
     xmlns:toad="urn:toaddesign"
+    xmlns:themes="clr-namespace:ToadTools.UI.Services;assembly=ToadTools.UI"
     x:Class="WorkingSet.Views.WorkingSetView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -24,7 +25,8 @@
             <DockPanel DockPanel.Dock="Bottom" Margin="0,14,0,0" LastChildFill="False">
                 <toad:Button DockPanel.Dock="Right" Content="Создать" Icon="PlayerPlay" Variant="Filled"
                              Command="{Binding CreateWorksetsCommand}" />
-                <toad:Switch Content="Тёмная тема" VerticalAlignment="Center" IsChecked="{Binding DarkTheme, Mode=TwoWay}" />
+                <toad:Switch Content="Тёмная тема" VerticalAlignment="Center"
+                         IsChecked="{Binding IsDark, Source={x:Static themes:ThemePreference.Instance}}" />
             </DockPanel>
 
             <StackPanel>

@@ -10,7 +10,6 @@ namespace CreateCover.ViewModels;
 public sealed partial class CreateCoverViewModel : ObservableObject
 {
     [ObservableProperty] private ObservableCollection<ParamModel> _models = new();
-    [ObservableProperty] private bool _darkTheme = true;
     private ParamModelCreator _paramCreator;
     private CreateCoverService _service;
 
@@ -18,11 +17,6 @@ public sealed partial class CreateCoverViewModel : ObservableObject
     {
         _paramCreator = paramCreator;
         _service = service;
-    }
-    partial void OnDarkThemeChanged(bool value)
-    {
-        var newTheme = value ? ToadThemeMode.Dark : ToadThemeMode.Light;
-        ToadTheme.Mode = newTheme;
     }
     
     [RelayCommand]

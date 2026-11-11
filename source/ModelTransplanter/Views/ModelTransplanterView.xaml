@@ -5,6 +5,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:toad="urn:toaddesign"
+    xmlns:themes="clr-namespace:ToadTools.UI.Services;assembly=ToadTools.UI"
     xmlns:converters="clr-namespace:ToadTools.UI.Converters;assembly=ToadTools.UI"
     mc:Ignorable="d"
     Title="Копирование элементов"
@@ -20,7 +21,8 @@
             <toad:Button DockPanel.Dock="Right" Content="Начать перенос" Icon="Rocket" Variant="Filled"
                          Command="{Binding TransferElementsCommand}"
                          IsEnabled="{Binding IsBusy, Converter={converters:InverseBoolConverter}}" />
-            <toad:Switch Content="Тёмная тема" VerticalAlignment="Center" IsChecked="{Binding DarkTheme, Mode=TwoWay}" />
+            <toad:Switch Content="Тёмная тема" VerticalAlignment="Center"
+                         IsChecked="{Binding IsDark, Source={x:Static themes:ThemePreference.Instance}}" />
         </DockPanel>
 
         <StackPanel>

@@ -304,9 +304,6 @@ public sealed partial class ToadExporterViewModel : ObservableObject
             case nameof(ExportSettings.OutputFolder):
                 UpdateLastLog();
                 break;
-            case nameof(ExportSettings.DarkTheme):
-                ToadTheme.Mode = Settings.DarkTheme ? ToadThemeMode.Dark : ToadThemeMode.Light;
-                break;
         }
     }
 

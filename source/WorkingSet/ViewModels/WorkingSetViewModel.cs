@@ -17,14 +17,8 @@ public partial class WorkingSetViewModel : ObservableObject
 
     [ObservableProperty] private string? _selectedSection;
     [ObservableProperty] private List<string>? _sections;
-    [ObservableProperty] private bool _darkTheme = true;
     [ObservableProperty] private string? _excelFilePath;
     
-    partial void OnDarkThemeChanged(bool value)
-    {
-        var newTheme = value ? ToadThemeMode.Dark : ToadThemeMode.Light;
-        ToadTheme.Mode = newTheme;
-    }
 
     partial void OnExcelFilePathChanged(string? value)
     {
@@ -118,13 +112,12 @@ public partial class WorkingSetViewModel : ObservableObject
 
     public void LoadFromSettings(Settings settings)
     {
-        DarkTheme = settings.DarkTheme;
         ExcelFilePath = settings.ExcelFilePath;
     }
 
     public Settings ToSettings()
     {
-        var settings = new Settings { DarkTheme = DarkTheme };
+        var settings = new Settings();
         if (ExcelFilePath != null)
             settings.ExcelFilePath = ExcelFilePath;
 

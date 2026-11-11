@@ -77,7 +77,6 @@ public sealed class SettingsStore
         var json = JObject.Parse(File.ReadAllText(path));
         var settings = new CheckerSettings
         {
-            DarkTheme = (bool?)json["IsDarkTheme"] ?? true,
             SkipLinks = (bool?)json["SkipLinks"] ?? true
         };
         if ((string?)json["ReportsPath"] is { Length: > 0 } reports) settings.ReportsFolder = reports;

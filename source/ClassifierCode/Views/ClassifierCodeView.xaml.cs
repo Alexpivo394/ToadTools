@@ -11,7 +11,7 @@ public sealed partial class ClassifierCodeView
     {
         InitializeComponent();
 
-        ToadTheme.Mode = ToadThemeMode.Dark;
+        ThemePreference.Apply();
 
         DataContext = viewModel;
 

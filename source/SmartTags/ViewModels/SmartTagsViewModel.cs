@@ -15,7 +15,6 @@ public sealed partial class SmartTagsViewModel : ObservableObject
     private readonly SmartTagsSettingsStore _store;
     private SmartTagsFormState _state;
 
-    [ObservableProperty] private bool _darkTheme = true;
 
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(ScopeTitle), nameof(ScopeButtonText))]
     private bool _onlySelected;
@@ -103,10 +102,6 @@ public sealed partial class SmartTagsViewModel : ObservableObject
 
     public bool CanStart => Rows.Any(row => row.IsReady);
 
-    partial void OnDarkThemeChanged(bool value)
-    {
-        ToadTheme.Mode = value ? ToadThemeMode.Dark : ToadThemeMode.Light;
-    }
 
     partial void OnOnlySelectedChanged(bool value) => RebuildRows();
 

@@ -8,6 +8,7 @@ public sealed partial class ClassifierReportView
     public ClassifierReportView(ClassifierReportViewModel viewModel)
     {
         InitializeComponent();
+        ThemePreference.Apply();
 
         // Тему не сбрасываем: отчёт открывается в той же теме, что выбрана в окне запуска.
 

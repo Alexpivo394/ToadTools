@@ -13,7 +13,7 @@ public sealed partial class SmartTagsView
     {
         InitializeComponent();
 
-        ToadTheme.Mode = ToadThemeMode.Dark;
+        ThemePreference.Apply();
 
         _viewModel = viewModel;
         DataContext = viewModel;

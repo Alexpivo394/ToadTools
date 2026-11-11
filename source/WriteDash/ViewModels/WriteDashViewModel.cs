@@ -14,9 +14,6 @@ public sealed partial class WriteDashViewModel : ObservableObject
     private readonly ParameterProcessorService _processorService;
 
     [ObservableProperty]
-    private bool _darkTheme = true;
-
-    [ObservableProperty]
     private string? _parametersFilter;
 
     public ObservableCollection<ParameterDescriptor> Parameters { get; } = new();
@@ -37,15 +34,6 @@ public sealed partial class WriteDashViewModel : ObservableObject
         }
 
         ApplyFilter();
-    }
-
-    partial void OnDarkThemeChanged(bool value)
-    {
-        var newTheme = value
-            ? ToadThemeMode.Dark
-            : ToadThemeMode.Light;
-
-        ToadTheme.Mode = newTheme;
     }
 
     partial void OnParametersFilterChanged(string? value)

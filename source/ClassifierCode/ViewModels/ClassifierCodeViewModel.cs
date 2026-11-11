@@ -10,7 +10,6 @@ public sealed partial class ClassifierCodeViewModel : ObservableObject
 {
     private readonly ClassifierCodeService _service;
 
-    [ObservableProperty] private bool _darkTheme = true;
     [ObservableProperty] private SectionOption? _selectedSection;
     [ObservableProperty] private RunScope _scope;
     [ObservableProperty] private bool _keepExisting;
@@ -42,10 +41,6 @@ public sealed partial class ClassifierCodeViewModel : ObservableObject
     public bool HasSelection => SelectedCount > 0;
     public string SelectionLabel => $"Выбранные элементы ({SelectedCount})";
 
-    partial void OnDarkThemeChanged(bool value)
-    {
-        ToadTheme.Mode = value ? ToadThemeMode.Dark : ToadThemeMode.Light;
-    }
 
     [RelayCommand]
     private void Start()

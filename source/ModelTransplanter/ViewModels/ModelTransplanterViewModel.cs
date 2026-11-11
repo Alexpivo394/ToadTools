@@ -20,13 +20,7 @@ public partial class ModelTransplanterViewModel : ObservableObject
     [ObservableProperty] private Document? _selectedTargetDoc;
     [ObservableProperty] private string _logFilePath;
     [ObservableProperty] private int _progressValue;
-    [ObservableProperty] private bool _darkTheme = true;
 
-    partial void OnDarkThemeChanged(bool value)
-    {
-        var newTheme = value ? ToadThemeMode.Dark : ToadThemeMode.Light;
-        ToadTheme.Mode = newTheme;
-    }
 
     public List<Document> OpenDocuments { get; }
     public ModelTransplanterViewModel()
@@ -137,7 +131,6 @@ public partial class ModelTransplanterViewModel : ObservableObject
 
     public void LoadFromSettings(Settings settings)
     {
-        DarkTheme = settings.IsDarkTheme;
 
         // Пустой путь в настройках — остаётся лог по умолчанию в «Документах».
         if (string.IsNullOrWhiteSpace(settings.LogFilePath)) return;
@@ -149,7 +142,6 @@ public partial class ModelTransplanterViewModel : ObservableObject
     {
         return new Settings
         {
-            IsDarkTheme = DarkTheme,
             LogFilePath = LogFilePath
         };
     }

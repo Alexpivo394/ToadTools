@@ -17,6 +17,7 @@ public sealed partial class PickPanelView
     public PickPanelView(IntPtr owner)
     {
         InitializeComponent();
+        ThemePreference.Apply();
 
         // Тему не сбрасываем: панель открывается в той же теме, что выбрана в окне плагина.
 

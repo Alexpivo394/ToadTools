@@ -12,7 +12,7 @@ namespace WorkingSet.Views
         {
             InitializeComponent();
             
-            ToadTheme.Mode = ToadThemeMode.Dark;
+            ThemePreference.Apply();
             
             _viewModel = viewModel;
             var settings = Config.LoadSettings();

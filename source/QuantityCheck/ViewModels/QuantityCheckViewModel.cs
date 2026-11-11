@@ -11,27 +11,19 @@ namespace QuantityCheck.ViewModels;
 
 public partial class QuantityCheckViewModel(Logger? logger) : ObservableObject
 {
-    [ObservableProperty] private bool _darkTheme = true;
     [ObservableProperty] private string? _parameterName = "";
     [ObservableProperty] private double _reverse = 0;
     private readonly QuantityProcessor _processor = new QuantityProcessor(RevitContext.ActiveDocument!, logger);
 
-    partial void OnDarkThemeChanged(bool value)
-    {
-        var newTheme = value ? ToadThemeMode.Dark : ToadThemeMode.Light;
-        ToadTheme.Mode = newTheme;
-    }
     
     public void LoadFromSettings(Settings settings)
     {
-        DarkTheme = settings.DarkTheme;
     }
 
     public Settings ToSettings()
     {
         return new Settings
         {
-            DarkTheme = DarkTheme
         };
     }
 

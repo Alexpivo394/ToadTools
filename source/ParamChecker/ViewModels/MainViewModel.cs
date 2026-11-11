@@ -130,8 +130,6 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void OnSettingsChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(CheckerSettings.DarkTheme))
-            ToadTheme.Mode = Settings.DarkTheme ? ToadThemeMode.Dark : ToadThemeMode.Light;
         if (e.PropertyName == nameof(CheckerSettings.ReportsFolder)) OnPropertyChanged(nameof(HistoryPlaceholder));
         ScheduleSave();
     }

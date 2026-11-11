@@ -9,6 +9,7 @@ public sealed partial class WorksetCheckReportView
     public WorksetCheckReportView(WorksetCheckReportViewModel viewModel)
     {
         InitializeComponent();
+        ThemePreference.Apply();
 
         // Тему не сбрасываем: отчёт открывается в той же теме, что выбрана в окне запуска.
 

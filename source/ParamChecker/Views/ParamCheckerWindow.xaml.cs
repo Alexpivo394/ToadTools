@@ -13,7 +13,7 @@ public sealed partial class ParamCheckerWindow
     {
         InitializeComponent();
 
-        ToadTheme.Mode = viewModel.Settings.DarkTheme ? ToadThemeMode.Dark : ToadThemeMode.Light;
+        ThemePreference.Apply();
 
         _viewModel = viewModel;
         DataContext = viewModel;

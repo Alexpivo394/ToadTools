@@ -13,6 +13,7 @@ public sealed partial class ParametersWindow
     public ParametersWindow(ParametersEditorViewModel viewModel)
     {
         InitializeComponent();
+        ThemePreference.Apply();
 
         // Тему не сбрасываем: окно открывается в той же теме, что главное.
         _viewModel = viewModel;

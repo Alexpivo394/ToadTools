@@ -10,6 +10,7 @@ public sealed partial class NoteDialog
     {
         
         InitializeComponent();
+        ThemePreference.Apply();
         DataContext = viewModel;
         viewModel.Saved += (_, _) => DialogResult = true;
         Loaded += (_, _) => NoteBox.Focus();

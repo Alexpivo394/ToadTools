@@ -1,3 +1,4 @@
+using ToadTools.UI.Services;
 using System.Windows.Input;
 using Collisions.ViewModels;
 
@@ -13,6 +14,7 @@ public sealed partial class CollisionsPaneView
     public CollisionsPaneView(PaneViewModel viewModel)
     {
         InitializeComponent();
+        ThemePreference.Apply();
         DataContext = _viewModel = viewModel;
         PreviewKeyDown += OnPaneKeyDown;
     }

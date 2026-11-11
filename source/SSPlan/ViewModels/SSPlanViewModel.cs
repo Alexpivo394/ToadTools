@@ -12,7 +12,6 @@ namespace SSPlan.ViewModels;
 
 public partial class SSPlanViewModel(Document doc, UIDocument uidoc, View view) : ObservableObject
 {
-    [ObservableProperty] private bool _darkTheme = true;
     [ObservableProperty] private int _axisX = 5;
     [ObservableProperty] private int _axisY = 5;
     [ObservableProperty] private PanelItem _selectedPanel = null!;
@@ -120,15 +119,9 @@ public partial class SSPlanViewModel(Document doc, UIDocument uidoc, View view) 
     }
 
     
-    partial void OnDarkThemeChanged(bool value)
-    {
-        var newTheme = value ? ToadThemeMode.Dark : ToadThemeMode.Light;
-        ToadTheme.Mode = newTheme;
-    }
     
     public void LoadFromSettings(Settings settings)
     {
-        DarkTheme = settings.DarkTheme;
         AxisX = settings.AxisX;
         AxisY = settings.AxisY;
     }
@@ -137,7 +130,6 @@ public partial class SSPlanViewModel(Document doc, UIDocument uidoc, View view) 
     {
         return new Settings
         {
-            DarkTheme = DarkTheme,
             AxisX = AxisX,
             AxisY = AxisY
         };

@@ -1,3 +1,4 @@
+using ToadTools.UI.Services;
 using System;
 using System.Windows;
 using ToadDesign;
@@ -13,6 +14,7 @@ public partial class ToadDialog : ToadWindow
     public ToadDialog()
     {
         InitializeComponent();
+        ThemePreference.Apply();
 
         // A long message scrolls instead of growing the dialog past the screen.
         var workArea = SystemParameters.WorkArea;

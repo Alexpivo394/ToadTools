@@ -11,7 +11,6 @@ namespace ParamToFinish.ViewModels;
 
 public sealed partial class ParamToFinishViewModel : ObservableObject
 {
-    [ObservableProperty] private bool _darkTheme = true;
     [ObservableProperty] private bool _allModel = false;
     [ObservableProperty] private string _filter = "";
     public event EventHandler? CloseRequested;
@@ -38,14 +37,6 @@ public sealed partial class ParamToFinishViewModel : ObservableObject
         RestoreSettings();
     }
     
-    partial void OnDarkThemeChanged(bool value)
-    {
-        var newTheme = value
-            ? ToadThemeMode.Dark
-            : ToadThemeMode.Light;
-
-        ToadTheme.Mode = newTheme;
-    }
 
     partial void OnFilterChanged(string value)
     {

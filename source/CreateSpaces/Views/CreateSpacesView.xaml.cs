@@ -10,7 +10,7 @@ public sealed partial class CreateSpacesView
     {
         InitializeComponent();
         
-        ToadTheme.Mode = ToadThemeMode.Dark;
+        ThemePreference.Apply();
         
         DataContext = viewModel;
     }

@@ -10,7 +10,7 @@ public sealed partial class WorksetCheckView
     {
         InitializeComponent();
 
-        ToadTheme.Mode = viewModel.DarkTheme ? ToadThemeMode.Dark : ToadThemeMode.Light;
+        ThemePreference.Apply();
 
         DataContext = viewModel;
 

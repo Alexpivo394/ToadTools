@@ -1,3 +1,4 @@
+using ToadTools.UI.Services;
 #nullable enable
 using System;
 using System.ComponentModel;
@@ -29,6 +30,7 @@ public sealed partial class ToadProgressWindow
         _viewModel = viewModel;
         _anchor = anchor;
         InitializeComponent();
+        ThemePreference.Apply();
         DataContext = viewModel;
         SourceInitialized += (_, _) =>
             HwndSource.FromHwnd(new WindowInteropHelper(this).Handle)?.AddHook(InterceptMinimize);

@@ -9,6 +9,7 @@ public sealed partial class SmartTagsReportView
     public SmartTagsReportView(SmartTagsReportViewModel viewModel)
     {
         InitializeComponent();
+        ThemePreference.Apply();
 
         // Тему не сбрасываем: отчёт открывается в той же теме, что выбрана в окне запуска.
 

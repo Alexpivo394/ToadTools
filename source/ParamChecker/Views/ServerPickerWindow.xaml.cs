@@ -9,6 +9,7 @@ public sealed partial class ServerPickerWindow
     public ServerPickerWindow(ServerPickerViewModel viewModel)
     {
         InitializeComponent();
+        ThemePreference.Apply();
 
         // Тему не сбрасываем: окно открывается в той же теме, что главное.
         DataContext = viewModel;

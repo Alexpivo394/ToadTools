@@ -5,6 +5,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:toad="urn:toaddesign"
+    xmlns:themes="clr-namespace:ToadTools.UI.Services;assembly=ToadTools.UI"
     xmlns:viewModels="clr-namespace:WorksetCheck.ViewModels"
     d:DataContext="{d:DesignInstance Type=viewModels:WorksetCheckViewModel}"
     mc:Ignorable="d"
@@ -80,7 +81,8 @@
             <!-- ReSharper restore Xaml.DynamicResourceError -->
             <DockPanel Margin="20,14,20,18">
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
-                    <toad:Switch Content="Тёмная тема" VerticalAlignment="Center" IsChecked="{Binding DarkTheme, Mode=TwoWay}" />
+                    <toad:Switch Content="Тёмная тема" VerticalAlignment="Center"
+                         IsChecked="{Binding IsDark, Source={x:Static themes:ThemePreference.Instance}}" />
                 </StackPanel>
                 <toad:Button Content="Проверить"
                            Icon="PlayerPlay"

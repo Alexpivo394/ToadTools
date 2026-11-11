@@ -14,7 +14,6 @@ public sealed partial class WorksetCheckViewModel : ObservableObject
 {
     private const string Skipped = "Поле пустое — проверка пропускается";
 
-    [ObservableProperty] private bool _darkTheme = true;
     [ObservableProperty] private string _cadWorkset = string.Empty;
     [ObservableProperty] private string _gridsWorkset = string.Empty;
     [ObservableProperty] private string _openingsWorkset = string.Empty;
@@ -27,7 +26,6 @@ public sealed partial class WorksetCheckViewModel : ObservableObject
     public WorksetCheckViewModel(IReadOnlyList<string> worksets, DetectedWorksets detected, Settings settings)
     {
         Worksets = worksets;
-        DarkTheme = settings.DarkTheme;
 
         (CadWorkset, CadSource) = Pick(settings.CadWorkset, detected.CadWorkset, Exists);
         (GridsWorkset, GridsSource) = Pick(settings.GridsWorkset, detected.GridsWorkset, Exists);
@@ -63,7 +61,6 @@ public sealed partial class WorksetCheckViewModel : ObservableObject
 
     public Settings ToSettings() => new()
     {
-        DarkTheme = DarkTheme,
         CadWorkset = CadWorkset.Trim(),
         GridsWorkset = GridsWorkset.Trim(),
         OpeningsWorkset = OpeningsWorkset.Trim()
@@ -72,10 +69,6 @@ public sealed partial class WorksetCheckViewModel : ObservableObject
     [RelayCommand]
     private void Start() => StartRequested?.Invoke(this, EventArgs.Empty);
 
-    partial void OnDarkThemeChanged(bool value)
-    {
-        ToadTheme.Mode = value ? ToadThemeMode.Dark : ToadThemeMode.Light;
-    }
 
     partial void OnCadWorksetChanged(string value)
     {

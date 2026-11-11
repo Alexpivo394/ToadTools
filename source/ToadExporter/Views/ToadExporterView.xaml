@@ -5,6 +5,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:toad="urn:toaddesign"
+    xmlns:themes="clr-namespace:ToadTools.UI.Services;assembly=ToadTools.UI"
     xmlns:sys="clr-namespace:System;assembly=mscorlib"
     xmlns:viewModels="clr-namespace:ToadExporter.ViewModels"
     xmlns:tree="clr-namespace:ToadExporter.ViewModels.Tree"
@@ -377,7 +378,8 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                <toad:Switch Content="Тёмная тема" VerticalAlignment="Center" IsChecked="{Binding Settings.DarkTheme, Mode=TwoWay}" />
+                <toad:Switch Content="Тёмная тема" VerticalAlignment="Center"
+                         IsChecked="{Binding IsDark, Source={x:Static themes:ThemePreference.Instance}}" />
                 <TextBlock Text="Конфигурация:" VerticalAlignment="Center" Margin="20,0,10,0" />
                 <toad:Button Content="Загрузить"
                            Icon="FolderOpen"

@@ -26,8 +26,7 @@ public static class ExportConfig
         nameof(ExportSettings.RvtExpanded),
         nameof(ExportSettings.NwcMainExpanded),
         nameof(ExportSettings.NwcContentExpanded),
-        nameof(ExportSettings.NwcExtraExpanded),
-        nameof(ExportSettings.DarkTheme)
+        nameof(ExportSettings.NwcExtraExpanded)
     ];
 
     public static void Save(string path, ExportSettings settings, IReadOnlyList<CheckedModel> models)

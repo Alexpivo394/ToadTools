@@ -15,7 +15,7 @@ namespace ModelTransplanter.Views
         InitializeComponent(); 
         
         
-        ToadTheme.Mode = ToadThemeMode.Dark;
+        ThemePreference.Apply();
 
         
 

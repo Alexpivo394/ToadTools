@@ -9,6 +9,7 @@ public sealed partial class ConnectionWindow
     {
         
         InitializeComponent();
+        ThemePreference.Apply();
         DataContext = viewModel;
         Loaded += async (_, _) =>
         {

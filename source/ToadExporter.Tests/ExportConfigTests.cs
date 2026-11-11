@@ -41,14 +41,13 @@ public class ExportConfigTests
     public async Task Load_KeepsWindowState()
     {
         using var file = new TempFile();
-        ExportConfig.Save(file.Path, new ExportSettings { DarkTheme = false, RvtExpanded = false }, Models);
+        ExportConfig.Save(file.Path, new ExportSettings { RvtExpanded = false }, Models);
 
-        var target = new ExportSettings { DarkTheme = true, RvtExpanded = true };
+        var target = new ExportSettings { RvtExpanded = true };
         ExportConfig.Load(file.Path, target);
 
-        target.DarkTheme.ShouldBeTrue();
         target.RvtExpanded.ShouldBeTrue();
-        File.ReadAllText(file.Path).ShouldNotContain("DarkTheme");
+        File.ReadAllText(file.Path).ShouldNotContain("RvtExpanded");
         await Task.CompletedTask;
     }
 
