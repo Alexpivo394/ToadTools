@@ -50,7 +50,7 @@
             <_ILRepackInput>@(_ILRepackInputAssemblies -> '&quot;%(FullPath)&quot;', ' ')</_ILRepackInput>
             <_ILRepackPath>&quot;$(NuGetPackageRoot)\ilrepack\%(_ILRepackVersion.Version)\tools\ILRepack.exe&quot;</_ILRepackPath>
             <_ILRepackLib>@(ReferencePath->'%(RelativeDir)'->Distinct()->'/lib:&quot;%(identity) &quot;', ' ')</_ILRepackLib>
-            <_ILRepackOptions>/union /illink /parallel</_ILRepackOptions>
+            <_ILRepackOptions>/union /illink /parallel /copyattrs /allowMultiple</_ILRepackOptions>
             <_ILRepackOptions Condition="$(Configuration.Contains('Release'))">$(_ILRepackOptions) /noRepackRes</_ILRepackOptions>
         </PropertyGroup>
 
