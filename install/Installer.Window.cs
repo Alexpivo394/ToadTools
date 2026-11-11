@@ -30,16 +30,28 @@ public static partial class Window
         };
     }
 
-    /// <summary>The properties of one package: version, changelog highlights, where add-ins go, the other package.</summary>
-    public static Property[] Properties(string version, string addinsFolder, string otherPackage) =>
-    [
-        new("TOAD_VERSION", version),
-        new("TOAD_HIGHLIGHTS", Highlights(version)),
-        new("TOAD_ADDINS", addinsFolder),
-        new("TOAD_OTHER_MSI", otherPackage),
-        // A verbose log next to %TEMP%\MSI*.LOG: "Журнал установки" on the error page opens it
-        new("MsiLogging", "voicewarmup")
-    ];
+    /// <summary>
+    ///     Sets the properties of one package: version, changelog highlights, where add-ins go, the other package.
+    ///     Only these are replaced: WixSharp keeps its own ones (ARPPRODUCTICON) in the same list between the builds.
+    /// </summary>
+    public static void SetProperties(Project project, string version, string addinsFolder, string otherPackage)
+    {
+        var properties = new List<Property>
+        {
+            new("TOAD_VERSION", version),
+            new("TOAD_ADDINS", addinsFolder),
+            new("TOAD_OTHER_MSI", otherPackage),
+            // A verbose log in %TEMP%\MSI*.LOG: "Журнал установки" on the error page opens it
+            new("MsiLogging", "voicewarmup")
+        };
+        // An MSI property cannot be empty: no changelog section, no property, no "what's new" list. Base64 of UTF-8:
+        // the package code page (1252) has no Cyrillic letters.
+        if (Highlights(version) is { Length: > 0 } highlights)
+            properties.Add(new Property("TOAD_HIGHLIGHTS", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(highlights))));
+
+        var names = properties.Select(p => p.Name).ToHashSet();
+        project.Properties = project.Properties.Where(p => !names.Contains(p.Name) && p.Name != "TOAD_HIGHLIGHTS").Concat(properties).ToArray();
+    }
 
     /// <summary>Up to three bullet points of the version's section in Changelog.md, separated by "|", without links.</summary>
     public static string Highlights(string version)

@@ -71,6 +71,20 @@ public sealed class SetupInfo
 
     private static readonly Regex FeatureId = new(@"^Revit(\d{4})$");
 
+    /// <summary>TOAD_HIGHLIGHTS is Base64 of UTF-8: the package code page has no Cyrillic letters.</summary>
+    private static string Decode(string base64)
+    {
+        if (string.IsNullOrEmpty(base64)) return "";
+        try
+        {
+            return System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(base64));
+        }
+        catch (FormatException)
+        {
+            return "";
+        }
+    }
+
     /// <summary>Reads the session: product version, mode, Revit versions of the package and their state.</summary>
     public static SetupInfo Read(Session session)
     {
@@ -98,7 +112,7 @@ public sealed class SetupInfo
             Version = session["TOAD_VERSION"],
             PerMachine = session["ALLUSERS"] == "1",
             OtherPackage = session["TOAD_OTHER_MSI"],
-            Highlights = session["TOAD_HIGHLIGHTS"].Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries).Take(3).ToArray(),
+            Highlights = Decode(session["TOAD_HIGHLIGHTS"]).Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries).Take(3).ToArray(),
             Targets = targets.OrderBy(t => t.Year).ToArray(),
             Package = session["OriginalDatabase"]
         };

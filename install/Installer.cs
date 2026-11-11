@@ -36,20 +36,21 @@ void BuildSingleUserMsi()
 {
     project.Scope = InstallScope.perUser;
     project.OutFileName = $"{outputName}-{versioning.Version}-SingleUser";
-    project.Properties = Window.Properties(versioning.Version, @"%APPDATA%\Autodesk\Revit\Addins",
+    Window.SetProperties(project, versioning.Version, @"%APPDATA%\Autodesk\Revit\Addins",
         $"{outputName}-{versioning.Version}-MultiUser.msi");
     project.Dirs =
     [
         new InstallDir(@"%AppDataFolder%\Autodesk\Revit\Addins\", wixEntities)
     ];
-    project.BuildMsi();
+    if (project.BuildMsi() is not { } msi || !System.IO.File.Exists(msi))
+        throw new InvalidOperationException($"WiX failed to build {project.OutFileName}.msi, see the output above");
 }
 
 void BuildMultiUserUserMsi()
 {
     project.Scope = InstallScope.perMachine;
     project.OutFileName = $"{outputName}-{versioning.Version}-MultiUser";
-    project.Properties = Window.Properties(versioning.Version,
+    Window.SetProperties(project, versioning.Version,
         versioning.VersionPrefix.Major >= 2027 ? @"%ProgramFiles%\Autodesk\Revit\Addins" : @"%ProgramData%\Autodesk\Revit\Addins",
         $"{outputName}-{versioning.Version}-SingleUser.msi");
     project.Dirs =
@@ -59,5 +60,6 @@ void BuildMultiUserUserMsi()
                 ? @"%ProgramFiles%\Autodesk\Revit\Addins"
                 : @"%CommonAppDataFolder%\Autodesk\Revit\Addins", wixEntities)
     ];
-    project.BuildMsi();
+    if (project.BuildMsi() is not { } msi || !System.IO.File.Exists(msi))
+        throw new InvalidOperationException($"WiX failed to build {project.OutFileName}.msi, see the output above");
 }
