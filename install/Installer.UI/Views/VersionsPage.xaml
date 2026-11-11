@@ -1,0 +1,48 @@
+<UserControl x:Class="Installer.UI.Views.VersionsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:toad="urn:toaddesign">
+    <UserControl.Resources>
+        <ResourceDictionary Source="/ToadTools.Installer.UI;component/Views/Shared.xaml" />
+    </UserControl.Resources>
+
+    <DockPanel>
+        <DockPanel DockPanel.Dock="Bottom" Margin="{StaticResource FooterMargin}" LastChildFill="False">
+            <toad:Button DockPanel.Dock="Left" Icon="ChevronLeft" Content="Назад" Command="{Binding BackCommand}" IsCancel="True" />
+            <toad:Button DockPanel.Dock="Right" Variant="Filled" Icon="Download"
+                         Content="{Binding InstallText}" Command="{Binding InstallCommand}" IsDefault="True" />
+        </DockPanel>
+
+        <DockPanel Margin="{StaticResource BodyMargin}">
+            <StackPanel DockPanel.Dock="Top">
+                <TextBlock Style="{StaticResource Heading}" Text="Для каких версий Revit установить" />
+                <TextBlock Style="{StaticResource Hint}" Text="Можно отметить и ненайденную версию — например, если Revit поставят позже." />
+            </StackPanel>
+
+            <StackPanel DockPanel.Dock="Bottom">
+                <toad:Alert Severity="Warning" Margin="0,12,0,0" Title="{Binding BlockTitle}" Content="{Binding BlockText}"
+                            Visibility="{Binding IsBlocked, Converter={StaticResource Visible}}" />
+                <toad:Alert Severity="Warning" Margin="0,12,0,0" Title="{Binding RestartTitle}" Content="{Binding RestartText}"
+                            Visibility="{Binding NeedsRestartNote, Converter={StaticResource Visible}}" />
+            </StackPanel>
+
+            <Border BorderThickness="1" Padding="4" BorderBrush="{DynamicResource Toad.Brush.Border}"
+                    CornerRadius="{DynamicResource Toad.Radius.Control}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Versions}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <CheckBox Style="{DynamicResource Toad.Style.CheckBoxRow}" IsChecked="{Binding IsChecked}"
+                                              Content="{Binding Name}" />
+                                    <toad:Badge HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0"
+                                                IsHitTestVisible="False" Tone="{Binding BadgeTone}" Content="{Binding Badge}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Border>
+        </DockPanel>
+    </DockPanel>
+</UserControl>

@@ -10,4 +10,12 @@
         <PackageReference Include="WixSharp.Msi.Core"/>
     </ItemGroup>
 
+    <!-- The installer window (net472): built first, packed into ToadTools.Installer.UI.CA.dll; not referenced as an assembly -->
+    <ItemGroup>
+        <ProjectReference Include="Installer.UI\Installer.UI.csproj" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" Private="false"/>
+        <Compile Remove="Installer.UI\**"/>
+        <None Remove="Installer.UI\**"/>
+        <EmbeddedResource Remove="Installer.UI\**"/>
+    </ItemGroup>
+
 </Project>

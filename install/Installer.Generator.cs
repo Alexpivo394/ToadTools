@@ -29,6 +29,8 @@ public static partial class Generator
 
             var feature = new Feature
             {
+                // A stable id: the installer window selects versions by it (ADDLOCAL=Revit2024)
+                Id = $"Revit{fileVersion}",
                 Name = fileVersion,
                 Description = $"Install add-in for Revit {fileVersion}",
                 ConfigurableDir = $"INSTALL{fileVersion}"

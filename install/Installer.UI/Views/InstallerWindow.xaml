@@ -1,0 +1,15 @@
+<toad:ToadWindow x:Class="Installer.UI.Views.InstallerWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:toad="urn:toaddesign"
+                 Title="{Binding Title}"
+                 TitleIcon="Download"
+                 Width="600"
+                 Height="440"
+                 ResizeMode="NoResize"
+                 WindowStartupLocation="CenterScreen"
+                 ShowMinimizeButton="False"
+                 ShowMaximizeButton="False"
+                 ShowCloseButton="{Binding CanClose}">
+    <ContentControl x:Name="Host" Focusable="False" />
+</toad:ToadWindow>

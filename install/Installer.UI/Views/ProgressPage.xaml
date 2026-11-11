@@ -1,0 +1,55 @@
+<UserControl x:Class="Installer.UI.Views.ProgressPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:toad="urn:toaddesign"
+             xmlns:ui="clr-namespace:Installer.UI">
+    <UserControl.Resources>
+        <ResourceDictionary Source="/ToadTools.Installer.UI;component/Views/Shared.xaml" />
+    </UserControl.Resources>
+
+    <DockPanel>
+        <DockPanel DockPanel.Dock="Bottom" Margin="{StaticResource FooterMargin}" LastChildFill="False">
+            <toad:Button DockPanel.Dock="Right" Content="Отмена" Command="{Binding CancelCommand}" />
+        </DockPanel>
+
+        <StackPanel Margin="{StaticResource BodyMargin}">
+            <TextBlock Style="{StaticResource Heading}" Text="{Binding ProgressTitle}" />
+            <TextBlock Style="{StaticResource Hint}" Text="Это займёт меньше минуты." />
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Right" Text="{Binding Percent}" FontSize="12" Foreground="{DynamicResource Toad.Brush.TextDimmed}" />
+                <TextBlock Text="{Binding Status}" FontSize="12" Foreground="{DynamicResource Toad.Brush.TextDimmed}"
+                           TextTrimming="CharacterEllipsis" />
+            </DockPanel>
+            <ProgressBar Height="8" Margin="0,6,0,8" Maximum="1" Value="{Binding Progress, Mode=OneWay}" />
+
+            <ItemsControl ItemsSource="{Binding Tasks}" Margin="0,10,0,0">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type ui:TaskItem}">
+                        <DockPanel Margin="0,5">
+                            <Grid Width="18" Height="18" Margin="0,0,10,0">
+                                <toad:Icon x:Name="Mark" Symbol="Clock" Width="18" Height="18"
+                                           Foreground="{DynamicResource Toad.Brush.TextDimmed}" />
+                                <toad:Loader x:Name="Spinner" Width="16" Height="16" IsActive="False" Visibility="Collapsed" />
+                            </Grid>
+                            <TextBlock x:Name="Label" Text="{Binding Text}" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource Toad.Brush.TextDimmed}" />
+                        </DockPanel>
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding State}" Value="Running">
+                                <Setter TargetName="Mark" Property="Visibility" Value="Collapsed" />
+                                <Setter TargetName="Spinner" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="Spinner" Property="IsActive" Value="True" />
+                                <Setter TargetName="Label" Property="Foreground" Value="{DynamicResource Toad.Brush.Text}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding State}" Value="Done">
+                                <Setter TargetName="Mark" Property="Symbol" Value="CircleCheck" />
+                                <Setter TargetName="Mark" Property="Foreground" Value="{DynamicResource Toad.Brush.Accent}" />
+                                <Setter TargetName="Label" Property="Foreground" Value="{DynamicResource Toad.Brush.Text}" />
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </DockPanel>
+</UserControl>

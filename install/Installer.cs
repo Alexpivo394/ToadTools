@@ -27,6 +27,7 @@ var project = new Project
 
 var wixEntities = Generator.GenerateWixEntities(args[1..]);
 project.RemoveDialogsBetween(NativeDialogs.WelcomeDlg, NativeDialogs.CustomizeDlg);
+Window.Attach(project);
 
 BuildSingleUserMsi();
 BuildMultiUserUserMsi();
@@ -35,6 +36,8 @@ void BuildSingleUserMsi()
 {
     project.Scope = InstallScope.perUser;
     project.OutFileName = $"{outputName}-{versioning.Version}-SingleUser";
+    project.Properties = Window.Properties(versioning.Version, @"%APPDATA%\Autodesk\Revit\Addins",
+        $"{outputName}-{versioning.Version}-MultiUser.msi");
     project.Dirs =
     [
         new InstallDir(@"%AppDataFolder%\Autodesk\Revit\Addins\", wixEntities)
@@ -46,6 +49,9 @@ void BuildMultiUserUserMsi()
 {
     project.Scope = InstallScope.perMachine;
     project.OutFileName = $"{outputName}-{versioning.Version}-MultiUser";
+    project.Properties = Window.Properties(versioning.Version,
+        versioning.VersionPrefix.Major >= 2027 ? @"%ProgramFiles%\Autodesk\Revit\Addins" : @"%ProgramData%\Autodesk\Revit\Addins",
+        $"{outputName}-{versioning.Version}-SingleUser.msi");
     project.Dirs =
     [
         new InstallDir(

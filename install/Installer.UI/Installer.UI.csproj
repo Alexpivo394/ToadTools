@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- Windows of the ToadTools installer: an MSI embedded UI (IEmbeddedUI) on .NET Framework, so msiexec can load it.
+         WixToolset.Dtf.CustomAction packs the assembly with ToadDesign and DTF into ToadTools.Installer.UI.CA.dll,
+         which Installer.csproj puts into the MsiEmbeddedUI table. x64 like the package. -->
+    <PropertyGroup>
+        <TargetFramework>net472</TargetFramework>
+        <UseWPF>true</UseWPF>
+        <AssemblyName>ToadTools.Installer.UI</AssemblyName>
+        <RootNamespace>Installer.UI</RootNamespace>
+        <ImplicitUsings>false</ImplicitUsings>
+        <Platform>x64</Platform>
+        <PlatformTarget>x64</PlatformTarget>
+        <OutputPath>bin\$(Configuration)\</OutputPath>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Using Remove="JetBrains.Annotations"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Alexpivo394.ToadDesign"/>
+        <PackageReference Include="WixToolset.Dtf.WindowsInstaller"/>
+        <PackageReference Include="WixToolset.Dtf.CustomAction"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Resource Include="Resources\logo.png"/>
+        <!-- MakeSfxCA packs Content; the CLR loader of the embedded UI reads EmbeddedUI.config -->
+        <Content Include="EmbeddedUI.config" CopyToOutputDirectory="PreserveNewest"/>
+    </ItemGroup>
+
+</Project>

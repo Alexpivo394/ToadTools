@@ -1,0 +1,95 @@
+<UserControl x:Class="Installer.UI.Views.MaintenancePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:toad="urn:toaddesign">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/ToadTools.Installer.UI;component/Views/Shared.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <!-- A card that is a button: hover like a list row, the whole card clicks -->
+            <Style x:Key="ChoiceCard" TargetType="Button">
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Focusable" Value="True" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Frame" Padding="14,12" BorderThickness="1" CornerRadius="{DynamicResource Toad.Radius.Control}"
+                                    Background="{DynamicResource Toad.Brush.Surface}" BorderBrush="{DynamicResource Toad.Brush.Border}">
+                                <ContentPresenter />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Frame" Property="Background" Value="{DynamicResource Toad.Brush.Hover}" />
+                                </Trigger>
+                                <Trigger Property="IsKeyboardFocused" Value="True">
+                                    <Setter TargetName="Frame" Property="BorderBrush" Value="{DynamicResource Toad.Brush.Accent}" />
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.5" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="Tile" TargetType="Border">
+                <Setter Property="Width" Value="34" />
+                <Setter Property="Height" Value="34" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="Margin" Value="0,0,14,0" />
+                <Setter Property="Background" Value="{DynamicResource Toad.Brush.AccentLight}" />
+                <Setter Property="TextElement.Foreground" Value="{DynamicResource Toad.Brush.AccentLightText}" />
+            </Style>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <DockPanel>
+        <DockPanel DockPanel.Dock="Bottom" Margin="{StaticResource FooterMargin}" LastChildFill="False">
+            <toad:Button DockPanel.Dock="Right" Content="Закрыть" Command="{Binding CloseCommand}" IsCancel="True" />
+        </DockPanel>
+
+        <StackPanel Margin="{StaticResource BodyMargin}">
+            <TextBlock Style="{StaticResource Heading}" Text="{Binding ProductTitle, StringFormat='{}{0} уже установлен'}" />
+            <TextBlock Style="{StaticResource Hint}" Text="{Binding MaintenanceHint}" />
+
+            <Button Style="{StaticResource ChoiceCard}" AutomationProperties.Name="Изменить версии Revit" Command="{Binding ShowVersionsCommand}">
+                <DockPanel>
+                    <Border Style="{StaticResource Tile}"><toad:Icon Symbol="Adjustments" /></Border>
+                    <toad:Icon DockPanel.Dock="Right" Symbol="ChevronRight" Foreground="{DynamicResource Toad.Brush.TextDimmed}" />
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Изменить версии Revit" FontWeight="SemiBold" />
+                        <TextBlock Text="добавить или убрать Revit, для которого установлены плагины" FontSize="12"
+                                   Foreground="{DynamicResource Toad.Brush.TextDimmed}" />
+                    </StackPanel>
+                </DockPanel>
+            </Button>
+            <Button Style="{StaticResource ChoiceCard}" AutomationProperties.Name="Восстановить" Margin="0,8,0,0" Command="{Binding RepairCommand}">
+                <DockPanel>
+                    <Border Style="{StaticResource Tile}"><toad:Icon Symbol="Tool" /></Border>
+                    <toad:Icon DockPanel.Dock="Right" Symbol="ChevronRight" Foreground="{DynamicResource Toad.Brush.TextDimmed}" />
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Восстановить" FontWeight="SemiBold" />
+                        <TextBlock Text="вернуть файлы плагинов, если что-то удалили или испортили" FontSize="12"
+                                   Foreground="{DynamicResource Toad.Brush.TextDimmed}" />
+                    </StackPanel>
+                </DockPanel>
+            </Button>
+            <Button Style="{StaticResource ChoiceCard}" AutomationProperties.Name="Удалить" Margin="0,8,0,0" Command="{Binding RemoveCommand}">
+                <DockPanel>
+                    <Border Style="{StaticResource Tile}" Background="{DynamicResource Toad.Brush.DangerLight}"
+                            TextElement.Foreground="{DynamicResource Toad.Brush.Danger}"><toad:Icon Symbol="Trash" /></Border>
+                    <toad:Icon DockPanel.Dock="Right" Symbol="ChevronRight" Foreground="{DynamicResource Toad.Brush.TextDimmed}" />
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Удалить" FontWeight="SemiBold" />
+                        <TextBlock Text="настройки и профили в %AppData%\ToadTools останутся" FontSize="12"
+                                   Foreground="{DynamicResource Toad.Brush.TextDimmed}" />
+                    </StackPanel>
+                </DockPanel>
+            </Button>
+
+            <toad:Alert Severity="Warning" Margin="0,12,0,0" Title="{Binding BlockTitle}" Content="{Binding BlockText}"
+                        Visibility="{Binding IsBlocked, Converter={StaticResource Visible}}" />
+        </StackPanel>
+    </DockPanel>
+</UserControl>
