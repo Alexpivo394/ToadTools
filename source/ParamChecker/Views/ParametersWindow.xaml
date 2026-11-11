@@ -31,7 +31,7 @@
 
 
         <!-- Ввод имени с подсказками -->
-        <Grid Grid.Row="1" Margin="10,0,10,8">
+        <Grid Grid.Row="1" Margin="16,4,16,12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
@@ -43,7 +43,7 @@
                        Command="{Binding AddCommand}" />
         </Grid>
 
-        <toad:Card Grid.Row="2" Margin="10,0,10,0" Padding="0" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
+        <toad:Card Grid.Row="2" Margin="16,0,16,0" Padding="0" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
             <Grid>
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <ItemsControl ItemsSource="{Binding Parameters}" Margin="8,6" AlternationCount="100000">
@@ -85,7 +85,7 @@
         <TextBlock Grid.Row="3" Margin="20,6,10,0" FontSize="12" TextWrapping="Wrap" Opacity="0.75"
                    Text="Подсказки — из ФОП, открытого проекта и системных параметров Revit. ⚠ — имени нет нигде из них (сверка работает, когда в Revit подключён ФОП). Параметр ищется у экземпляра, а если его там нет — у типа." />
 
-        <Grid Grid.Row="4" Margin="10">
+        <Grid Grid.Row="4" Margin="16,14,16,16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
@@ -96,7 +96,7 @@
             <toad:Button Grid.Column="0" Content="Вставить список" Icon="Clipboard"
                        ToolTip="Добавить имена из буфера обмена: по одному в строке, через табуляцию или «;»"
                        Command="{Binding PasteListCommand}" />
-            <toad:Button Grid.Column="1" Margin="8,0,0,0" Content="Очистить" Icon="Trash" Variant="Subtle"
+            <toad:Button Grid.Column="1" Margin="8,0,0,0" Content="Очистить" Icon="Trash" Variant="Subtle" Tone="Danger"
                        Command="{Binding ClearCommand}" />
             <toad:Button Grid.Column="3" Content="Отмена" Icon="X" IsCancel="True" Click="OnCancel" />
             <toad:Button Grid.Column="4" Margin="8,0,0,0" Content="Применить" Icon="Check" Variant="Filled"

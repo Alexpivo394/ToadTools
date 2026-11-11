@@ -121,7 +121,7 @@
 
 
         <!-- Как отбирать -->
-        <toad:Card Grid.Row="1" Margin="10,0,10,10" Padding="12,10">
+        <toad:Card Grid.Row="1" Margin="16,4,16,12" Padding="14,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -134,7 +134,7 @@
             </Grid>
         </toad:Card>
 
-        <Grid Grid.Row="2" Margin="10,0,10,0">
+        <Grid Grid.Row="2" Margin="16,0,16,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="340" />
                 <ColumnDefinition Width="10" />
@@ -156,16 +156,20 @@
                         </Style.Triggers>
                     </Style>
                 </Grid.Style>
-                <Grid Grid.Row="0" Margin="10,0,0,5">
+                <Grid Grid.Row="0" Margin="4,0,0,8" MinHeight="34">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock VerticalAlignment="Center">
-                        <Run Text="Категории" FontWeight="Bold" />
-                        <Run Text="· выбрано" Foreground="{DynamicResource Toad.Brush.TextDimmed}" />
-                        <Run Text="{Binding SelectedCount, Mode=OneWay}" Foreground="{DynamicResource Toad.Brush.TextDimmed}" />
-                    </TextBlock>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Категории" FontWeight="Bold" VerticalAlignment="Center" />
+                        <toad:Badge Tone="Neutral" Height="20" Padding="8,0" Margin="6,0,0,0" VerticalAlignment="Center">
+                            <TextBlock FontSize="12" FontWeight="SemiBold">
+                                <Run Text="выбрано" />
+                                <Run Text="{Binding SelectedCount, Mode=OneWay}" />
+                            </TextBlock>
+                        </toad:Badge>
+                    </StackPanel>
                     <toad:Button Grid.Column="1" Content="Снять все" Variant="Subtle" Command="{Binding ClearCategoriesCommand}" />
                 </Grid>
                 <toad:Card Grid.Row="1" Padding="0" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
@@ -205,7 +209,7 @@
                         </Style.Triggers>
                     </Style>
                 </Grid.Style>
-                <Grid Grid.Row="0" Margin="10,0,0,5">
+                <Grid Grid.Row="0" Margin="4,0,0,8" MinHeight="34">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
@@ -239,7 +243,7 @@
             </Grid>
         </Grid>
 
-        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="10">
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="16,14,16,16">
             <toad:Button Content="Отмена" Icon="X" IsCancel="True" Click="OnCancel" />
             <toad:Button Content="Применить" Icon="Check" Variant="Filled" Margin="8,0,0,0"
                        IsDefault="False" Click="OnApply" />

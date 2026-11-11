@@ -20,7 +20,6 @@
     ShowMaximizeButton="False"
     ShowMinimizeButton="False"
     TitleIcon="Plug">
-    <!-- Стиль FluentWindow задаёт минимум 460 × 320: окно было выше содержимого, с пустой полосой внизу -->
 
     <Grid>
         <Grid.RowDefinitions>
@@ -28,7 +27,6 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Значок выравнивает заголовок по левому краю полей: без него полоса заголовка оставляет пустое место -->
 
         <StackPanel Grid.Row="1" Margin="16,4,16,16">
             <TextBlock TextWrapping="Wrap" Opacity="0.75" FontSize="12" Margin="0,0,0,12"

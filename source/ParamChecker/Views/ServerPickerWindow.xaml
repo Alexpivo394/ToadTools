@@ -72,7 +72,7 @@
 
 
         <!-- Сервер -->
-        <toad:Card Grid.Row="1" Margin="10,0,10,8" Padding="12,8">
+        <toad:Card Grid.Row="1" Margin="16,4,16,12" Padding="14,8">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -91,7 +91,7 @@
             </Grid>
         </toad:Card>
 
-        <Grid Grid.Row="2" Margin="10,0,10,6">
+        <Grid Grid.Row="2" Margin="16,0,16,8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
@@ -106,7 +106,7 @@
             </StackPanel>
         </Grid>
 
-        <toad:Card Grid.Row="3" Margin="10,0,10,0" Padding="0" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
+        <toad:Card Grid.Row="3" Margin="16,0,16,0" Padding="0" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -191,7 +191,7 @@
             </Grid>
         </toad:Card>
 
-        <Grid Grid.Row="4" Margin="10">
+        <Grid Grid.Row="4" Margin="16,14,16,16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
