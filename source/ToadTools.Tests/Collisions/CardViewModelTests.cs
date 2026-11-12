@@ -43,8 +43,31 @@ public class CardViewModelTests
         api.Rows = [row];
         var dialogs = new FakeDialogs();
         var temp = new TempFolder();
-        var card = new CardViewModel(api, row, me, dialogs, new ThumbnailCache(temp.File("images"), api.ImageAsync));
+        var card = new CardViewModel(api, row, me, dialogs, new ThumbnailCache(temp.File("images"), api.ImageAsync), new FakeRevit());
         return (card, api, dialogs, row, temp);
+    }
+
+    [Test]
+    public async Task Card_SelectOther_OnlyThatElement_ReasonShown()
+    {
+        var api = new FakeClashApi();
+        var row = FakeClashApi.Row(7);
+        api.Rows = [row];
+        using var temp = new TempFolder();
+        var revit = new FakeRevit { SelectResult = SelectState.NoLink };
+        var card = new CardViewModel(api, row, User(Roles.Designer, "ОВ"), new FakeDialogs(), new ThumbnailCache(temp.File("images"), api.ImageAsync), revit);
+
+        await card.SelectOtherCommand.ExecuteAsync(null);
+
+        revit.Selected.ShouldHaveSingleItem().Element.ShouldBe(CollisionElement.Other);
+        revit.Selected[0].Request.OtherUniqueId.ShouldBe(row.Other.UniqueId);
+        card.NavigateMessage.ShouldBe($"Модель {row.Other.ModelName} не подгружена связью");
+
+        revit.SelectResult = SelectState.Selected;
+        await card.SelectOwnCommand.ExecuteAsync(null);
+
+        revit.Selected[1].Element.ShouldBe(CollisionElement.Own);
+        card.NavigateMessage.ShouldBeNull();
     }
 
     [Test]

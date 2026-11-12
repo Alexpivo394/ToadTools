@@ -48,25 +48,8 @@ public class ModelChoicesTests
 public class CollisionBoxTests
 {
     [Test]
-    public void Box_Default3m()
+    public void Box_2m_CenteredOnPoint()
     {
-        CollisionBox.Around((1000, 2000, 3000), null).ShouldBe(new Box3(-500, 500, 1500, 2500, 3500, 4500));
-    }
-
-    [Test]
-    public void Box_GrowsToElements()
-    {
-        // элементы — от -4000 по X до 1500 по Z: куб растёт симметрично вокруг точки до дальней грани
-        var box = CollisionBox.Around((0, 0, 0), new Box3(-4000, -100, -100, 1000, 100, 2500));
-
-        box.ShouldBe(new Box3(-4000, -1500, -2500, 4000, 1500, 2500));
-    }
-
-    [Test]
-    public void Box_CappedAt20m()
-    {
-        var box = CollisionBox.Around((100, 0, 0), new Box3(-50_000, -10, -10, 90_000, 10, 10));
-
-        box.ShouldBe(new Box3(-9_900, -1500, -1500, 10_100, 1500, 1500));
+        CollisionBox.Around((10_000, -5_000, 3_000)).ShouldBe(new Box3(9_000, -6_000, 2_000, 11_000, -4_000, 4_000));
     }
 }

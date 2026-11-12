@@ -27,6 +27,15 @@ internal sealed class FakeRevit : IRevitBridge
         if (Fail is { } fail) throw fail;
         return Result;
     }
+
+    public List<(NavigateRequest Request, CollisionElement Element)> Selected { get; } = [];
+    public SelectState SelectResult { get; set; } = SelectState.Selected;
+
+    public Task<SelectState> SelectAsync(NavigateRequest request, CollisionElement element)
+    {
+        Selected.Add((request, element));
+        return Task.FromResult(SelectResult);
+    }
 }
 
 public class PaneViewModelTests

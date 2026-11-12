@@ -54,7 +54,11 @@
                            Visibility="{Binding CanUnfake, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
                 <toad:Button Content="Примечание…" Command="{Binding NoteCommand}" Margin="0,0,6,6"
                            Visibility="{Binding CanNote, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
-                <toad:Button Content="Открыть в 3D" ToolTip="Просмотрщик коллизии в браузере" Command="{Binding OpenIn3DCommand}" Margin="0,0,6,6" />
+                <toad:Button Content="Показать в ToadFlow" ToolTip="3D коллизии в ToadFlow — в браузере" Command="{Binding OpenIn3DCommand}" Margin="0,0,6,6" />
+            </WrapPanel>
+            <WrapPanel>
+                <toad:Button Content="Выбрать свой" ToolTip="Выделить в Revit только свой элемент" Command="{Binding SelectOwnCommand}" Margin="0,0,6,6" />
+                <toad:Button Content="Выбрать второй" ToolTip="Выделить в Revit только второй элемент" Command="{Binding SelectOtherCommand}" Margin="0,0,6,6" />
             </WrapPanel>
             <TextBlock Text="{Binding Hint}" FontSize="11" Opacity="0.7" TextWrapping="Wrap"
                        Visibility="{Binding Hint, Converter={views:TextVisibilityConverter}}" />

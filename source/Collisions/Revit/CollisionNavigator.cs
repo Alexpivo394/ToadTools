@@ -5,7 +5,7 @@ using Collisions.Core;
 namespace Collisions.Revit;
 
 /// <summary>
-///     Переход к коллизии: 3D-вид «ToadClash — {пользователь Revit}» с секущим кубом вокруг точки и выбор элементов. Кроме
+///     Переход к коллизии: 3D-вид «ToadClash — {пользователь Revit}» с секущим кубом 2 м вокруг точки и выбор элементов. Кроме
 ///     этого вида и выбора, в модели ничего не меняется; если вид уже есть и куб уже нужный — не меняется ничего.
 /// </summary>
 public static class CollisionNavigator
@@ -25,23 +25,9 @@ public static class CollisionNavigator
         var document = uiDocument.Document;
         // Точка и габариты — в общей системе координат; сюда (общая → внутренняя) переводит полное преобразование площадки.
         var shared = document.ActiveProjectLocation.GetTotalTransform();
-        var toShared = shared.Inverse;
 
-        var own = document.GetElement(request.OwnUniqueId);
-        var sameModel = string.Equals(DocumentModel.Read(document).FileName, request.OtherModelName, StringComparison.OrdinalIgnoreCase);
-        var link = sameModel ? null : LinkFinder.Find(document, request.OtherModelName, request.OtherModelPath);
-        var other = sameModel ? document.GetElement(request.OtherUniqueId) : link?.GetLinkDocument()?.GetElement(request.OtherUniqueId);
-
-        var corners = new List<XYZ>();
-        if (own?.get_BoundingBox(null) is { } ownBox) corners.AddRange(Corners(ownBox, toShared));
-        if (other?.get_BoundingBox(null) is { } otherBox)
-            corners.AddRange(Corners(otherBox, link is null ? toShared : toShared.Multiply(link.GetTotalTransform())));
-
-        var elements = corners.Count == 0
-            ? null
-            : new Box3(corners.Min(p => p.X), corners.Min(p => p.Y), corners.Min(p => p.Z), corners.Max(p => p.X), corners.Max(p => p.Y),
-                corners.Max(p => p.Z));
-        var cube = CollisionBox.Around(request.PointMm, elements);
+        var (own, other, link, sameModel) = Find(document, request);
+        var cube = CollisionBox.Around(request.PointMm);
 
         var view = PrepareView(document, cube, shared);
         uiDocument.ActiveView = view;
@@ -59,6 +45,35 @@ public static class CollisionNavigator
             : OtherState.InLinkNotSelectable;
 #endif
         return new NavigateResult(own is not null, state, link?.Name);
+    }
+
+    /// <summary>«Выбрать»: выделен только этот элемент коллизии, вид не меняется — среди многих систем видно, какой из двух где.</summary>
+    public static SelectState SelectOne(UIDocument uiDocument, NavigateRequest request, CollisionElement element)
+    {
+        var (own, other, link, sameModel) = Find(uiDocument.Document, request);
+        if (element == CollisionElement.Own)
+        {
+            if (own is null) return SelectState.NotFound;
+            Select(uiDocument, own, null, null);
+            return SelectState.Selected;
+        }
+
+        if (other is null) return link is null && !sameModel ? SelectState.NoLink : SelectState.NotFound;
+#if !REVIT2023_OR_GREATER
+        if (link is not null) return SelectState.InLinkNotSelectable;
+#endif
+        Select(uiDocument, null, other, link);
+        return SelectState.Selected;
+    }
+
+    /// <summary>Оба элемента коллизии: свой — в открытой модели, второй — в ней же или в связи по имени файла.</summary>
+    private static (Element? Own, Element? Other, RevitLinkInstance? Link, bool SameModel) Find(Document document, NavigateRequest request)
+    {
+        var own = document.GetElement(request.OwnUniqueId);
+        var sameModel = string.Equals(DocumentModel.Read(document).FileName, request.OtherModelName, StringComparison.OrdinalIgnoreCase);
+        var link = sameModel ? null : LinkFinder.Find(document, request.OtherModelName, request.OtherModelPath);
+        var other = sameModel ? document.GetElement(request.OtherUniqueId) : link?.GetLinkDocument()?.GetElement(request.OtherUniqueId);
+        return (own, other, link, sameModel);
     }
 
     /// <summary>

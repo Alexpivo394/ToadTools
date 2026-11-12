@@ -38,6 +38,7 @@ public sealed partial class CardViewModel : ObservableObject
     private readonly UserInfo _me;
     private readonly ICardDialogs _dialogs;
     private readonly ThumbnailCache _images;
+    private readonly IRevitBridge _revit;
 
     [ObservableProperty] private CollisionRowDto _collision;
     [ObservableProperty] private byte[]? _image;
@@ -54,9 +55,9 @@ public sealed partial class CardViewModel : ObservableObject
     [ObservableProperty] private string? _error;
     [ObservableProperty] private bool _isBusy;
 
-    public CardViewModel(IClashApi api, ModelCollisionRow row, UserInfo me, ICardDialogs dialogs, ThumbnailCache images)
+    public CardViewModel(IClashApi api, ModelCollisionRow row, UserInfo me, ICardDialogs dialogs, ThumbnailCache images, IRevitBridge revit)
     {
-        (_api, _row, _me, _dialogs, _images) = (api, row, me, dialogs, images);
+        (_api, _row, _me, _dialogs, _images, _revit) = (api, row, me, dialogs, images, revit);
         _collision = row.Collision;
     }
 
@@ -175,6 +176,39 @@ public sealed partial class CardViewModel : ObservableObject
     {
         if (_dialogs.AskNote(NoteTitle) is not { } note || string.IsNullOrWhiteSpace(note)) return Task.CompletedTask;
         return ActAsync(() => _api.NoteAsync(Collision.Id, note.Trim(), CancellationToken.None));
+    }
+
+    /// <summary>Запрос в Revit по строке; пути другой модели в строке нет — связь ищется по имени файла.</summary>
+    public static NavigateRequest Request(ModelCollisionRow row) =>
+        new(row.Own.UniqueId, row.Other.ModelName, "", row.Other.UniqueId, (row.Collision.X, row.Collision.Y, row.Collision.Z));
+
+    [RelayCommand]
+    private Task SelectOwn() => SelectAsync(CollisionElement.Own);
+
+    [RelayCommand]
+    private Task SelectOther() => SelectAsync(CollisionElement.Other);
+
+    /// <summary>«Выбрать»: в Revit выделен только этот элемент; не вышло — причина на месте сообщения перехода.</summary>
+    private async Task SelectAsync(CollisionElement element)
+    {
+        try
+        {
+            var state = await _revit.SelectAsync(Request(_row), element);
+            var link = _row.Other.ModelName;
+            NavigateMessage = state switch
+            {
+                SelectState.Selected => null,
+                SelectState.NotFound when element == CollisionElement.Own =>
+                    "Элемент не найден — возможно, уже удалён или заменён. Исправление подтвердит следующий прогон",
+                SelectState.NotFound => $"Второй элемент не найден в связи {link}",
+                SelectState.NoLink => $"Модель {link} не подгружена связью",
+                _ => $"Второй элемент — в связи {link}: в этой версии Revit выделить его нельзя, данные — ниже"
+            };
+        }
+        catch (Exception exception)
+        {
+            NavigateMessage = $"Не получилось выбрать элемент в Revit: {exception.Message}";
+        }
     }
 
     [RelayCommand]

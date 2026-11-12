@@ -21,6 +21,28 @@ public sealed record NavigateRequest(string OwnUniqueId, string OtherModelName, 
 
 public sealed record NavigateResult(bool OwnFound, OtherState Other, string? OtherLinkName);
 
+/// <summary>Какой элемент коллизии выделить.</summary>
+public enum CollisionElement
+{
+    Own,
+    Other
+}
+
+/// <summary>Итог «Выбрать»: выделен ли элемент, а если нет — почему.</summary>
+public enum SelectState
+{
+    Selected,
+
+    /// <summary>Элемента нет в модели или в связи.</summary>
+    NotFound,
+
+    /// <summary>Модель второго элемента не подгружена связью.</summary>
+    NoLink,
+
+    /// <summary>Элемент в связи, а эта версия Revit не выделяет элементы связей.</summary>
+    InLinkNotSelectable
+}
+
 /// <summary>Всё, что панели нужно от Revit. Реализация ходит в Revit через внешние события; модели панели Revit API не нужен.</summary>
 public interface IRevitBridge
 {
@@ -29,4 +51,7 @@ public interface IRevitBridge
 
     /// <summary>Вид «ToadClash» с секущим кубом вокруг коллизии и выбор её элементов.</summary>
     Task<NavigateResult> ShowAsync(NavigateRequest request);
+
+    /// <summary>Выделяет только один элемент коллизии, второй снимается с выделения; вид и куб не меняются.</summary>
+    Task<SelectState> SelectAsync(NavigateRequest request, CollisionElement element);
 }

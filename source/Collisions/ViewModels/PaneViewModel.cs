@@ -291,7 +291,7 @@ public sealed partial class PaneViewModel : ObservableObject
         }
 
         if (!ReferenceEquals(SelectedItem, item)) return;
-        var card = new CardViewModel(_api, item.Row, _me, _dialogs, _thumbnails);
+        var card = new CardViewModel(_api, item.Row, _me, _dialogs, _thumbnails, _revit);
         card.Changed += OnCardChanged;
         Card = card;
         SeenTask = MarkSeenAsync(item);
@@ -463,12 +463,9 @@ public sealed partial class PaneViewModel : ObservableObject
 
     private async Task<NavigateOutcome> ShowInRevitAsync(ModelCollisionRow row)
     {
-        var c = row.Collision;
         try
         {
-            // Пути другой модели в строке нет: связь ищется по имени файла.
-            return new NavigateOutcome(
-                await _revit.ShowAsync(new NavigateRequest(row.Own.UniqueId, row.Other.ModelName, "", row.Other.UniqueId, (c.X, c.Y, c.Z))), null);
+            return new NavigateOutcome(await _revit.ShowAsync(CardViewModel.Request(row)), null);
         }
         catch (Exception exception)
         {
