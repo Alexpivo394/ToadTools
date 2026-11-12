@@ -52,6 +52,7 @@ public enum SkipReason
     Vertical,
     OutsideCrop,
     NoAnchor,
+    EmptyText,
     CreateFailed,
     MeasureFailed,
     PlaceFailed,

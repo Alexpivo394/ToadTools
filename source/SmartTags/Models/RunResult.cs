@@ -28,6 +28,7 @@ public sealed class ItemReport(string label, IReadOnlyList<ElementId> elementIds
         SkipReason.Vertical => "Вертикальный участок",
         SkipReason.OutsideCrop => "Вне подрезки вида",
         SkipReason.NoAnchor => "Нет точки привязки",
+        SkipReason.EmptyText => "Пустая марка: параметр не заполнен",
         SkipReason.CreateFailed => "Не удалось создать марку",
         SkipReason.MeasureFailed => "Не удалось измерить марку",
         SkipReason.PlaceFailed => "Не удалось разместить марку",

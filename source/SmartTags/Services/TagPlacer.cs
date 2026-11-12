@@ -134,6 +134,22 @@ internal sealed class TagPlacer(TagView view, Action<string>? log, TagTextMetric
         return true;
     }
 
+    /// <summary>
+    ///     Марка без текста: параметры её подписи у элемента не заполнены, и Revit прячет подпись целиком.
+    ///     Если текст не читается, марка пустой не считается.
+    /// </summary>
+    public static bool IsEmpty(IndependentTag tag)
+    {
+        try
+        {
+            return string.IsNullOrWhiteSpace(tag.TagText);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     public static string SafeText(IndependentTag tag)
     {
         try

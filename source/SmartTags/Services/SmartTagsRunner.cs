@@ -75,6 +75,14 @@ public sealed class SmartTagsRunner(TagView view, SmartTagsSettings settings)
 
             foreach (var target in active.Where(target => target is { IsSkipped: false, ExistingTag: null }))
             {
+                // Пустую марку не ставим: созданная для неё марка уйдёт при очистке.
+                if (target.Tag is { } tag && TagPlacer.IsEmpty(tag))
+                {
+                    target.MarkSkipped(SkipReason.EmptyText);
+                    _log.Write($"Пустая марка для {target.Label}: параметр не заполнен — пропущена");
+                    continue;
+                }
+
                 if (!placer.Measure(target)) target.MarkSkipped(SkipReason.MeasureFailed);
             }
 
