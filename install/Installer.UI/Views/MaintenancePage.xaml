@@ -53,24 +53,13 @@
             <TextBlock Style="{StaticResource Heading}" Text="{Binding ProductTitle, StringFormat='{}{0} уже установлен'}" />
             <TextBlock Style="{StaticResource Hint}" Text="{Binding MaintenanceHint}" />
 
-            <Button Style="{StaticResource ChoiceCard}" AutomationProperties.Name="Изменить версии Revit" Command="{Binding ShowVersionsCommand}">
-                <DockPanel>
-                    <Border Style="{StaticResource Tile}"><toad:Icon Symbol="Adjustments" /></Border>
-                    <toad:Icon DockPanel.Dock="Right" Symbol="ChevronRight" Foreground="{DynamicResource Toad.Brush.TextDimmed}" />
-                    <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="Изменить версии Revit" FontWeight="SemiBold" />
-                        <TextBlock Text="добавить или убрать Revit, для которого установлены плагины" FontSize="12"
-                                   Foreground="{DynamicResource Toad.Brush.TextDimmed}" />
-                    </StackPanel>
-                </DockPanel>
-            </Button>
-            <Button Style="{StaticResource ChoiceCard}" AutomationProperties.Name="Восстановить" Margin="0,8,0,0" Command="{Binding RepairCommand}">
+            <Button Style="{StaticResource ChoiceCard}" AutomationProperties.Name="Восстановить" Command="{Binding RepairCommand}">
                 <DockPanel>
                     <Border Style="{StaticResource Tile}"><toad:Icon Symbol="Tool" /></Border>
                     <toad:Icon DockPanel.Dock="Right" Symbol="ChevronRight" Foreground="{DynamicResource Toad.Brush.TextDimmed}" />
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="Восстановить" FontWeight="SemiBold" />
-                        <TextBlock Text="вернуть файлы плагинов, если что-то удалили или испортили" FontSize="12"
+                        <TextBlock Text="вернуть файлы программы, если что-то удалили или испортили" FontSize="12"
                                    Foreground="{DynamicResource Toad.Brush.TextDimmed}" />
                     </StackPanel>
                 </DockPanel>
@@ -82,14 +71,14 @@
                     <toad:Icon DockPanel.Dock="Right" Symbol="ChevronRight" Foreground="{DynamicResource Toad.Brush.TextDimmed}" />
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="Удалить" FontWeight="SemiBold" />
-                        <TextBlock Text="настройки и профили в %AppData%\ToadTools останутся" FontSize="12"
+                        <TextBlock Text="программа и плагин; настройки в %AppData%\ToadTools останутся" FontSize="12"
                                    Foreground="{DynamicResource Toad.Brush.TextDimmed}" />
                     </StackPanel>
                 </DockPanel>
             </Button>
 
             <toad:Alert Severity="Warning" Margin="0,12,0,0" Title="{Binding BlockTitle}" Content="{Binding BlockText}"
-                        Visibility="{Binding IsBlocked, Converter={StaticResource Visible}}" />
+                        Visibility="{Binding IsRemoveBlocked, Converter={StaticResource Visible}}" />
         </StackPanel>
     </DockPanel>
 </UserControl>

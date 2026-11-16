@@ -1,0 +1,146 @@
+<toad:ToadWindow x:Class="ToadTools.Desktop.Views.SettingsWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:toad="urn:toaddesign"
+                 Title="ToadTools"
+                 TitleIcon="Refresh"
+                 Width="600"
+                 Height="720"
+                 MinWidth="520"
+                 MinHeight="480"
+                 WindowStartupLocation="CenterScreen"
+                 ShowMaximizeButton="False">
+    <toad:ToadWindow.Resources>
+        <BooleanToVisibilityConverter x:Key="Visible" />
+        <Style x:Key="Section" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource Toad.Brush.TextDimmed}" />
+            <Setter Property="Margin" Value="2,18,0,8" />
+        </Style>
+    </toad:ToadWindow.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="24,6,24,24">
+
+            <!-- Шапка: логотип, версии, статус, кнопки -->
+            <DockPanel Margin="0,8,0,0">
+                <Image DockPanel.Dock="Left" Width="56" Height="56" Margin="0,0,16,0" VerticalAlignment="Top"
+                       RenderOptions.BitmapScalingMode="HighQuality"
+                       Source="/ToadTools;component/Resources/logo.png" />
+                <StackPanel>
+                    <TextBlock Text="ToadTools" FontSize="22" FontWeight="SemiBold" />
+                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                        <toad:Badge Content="{Binding PluginVersion}" />
+                        <toad:Badge Tone="Neutral" Margin="6,0,0,0" Content="{Binding AppVersion}" />
+                    </StackPanel>
+                </StackPanel>
+            </DockPanel>
+
+            <toad:Card Margin="0,16,0,0" Icon="InfoCircle" Header="{Binding StatusText}" Description="{Binding LastCheck}">
+                <toad:Card.TrailingContent>
+                    <StackPanel Orientation="Horizontal">
+                        <toad:Loader IsActive="{Binding IsBusy}" Width="18" Height="18" Margin="0,0,10,0"
+                                     Visibility="{Binding IsBusy, Converter={StaticResource Visible}}" />
+                        <toad:Button Variant="Filled" Icon="Download" Content="Установить сейчас" Margin="0,0,8,0"
+                                     Command="{Binding InstallNowCommand}"
+                                     Visibility="{Binding CanInstallNow, Converter={StaticResource Visible}}" />
+                        <toad:Button Variant="Filled" Icon="Refresh" Content="Обновить программу" Margin="0,0,8,0"
+                                     Command="{Binding UpdateAppCommand}"
+                                     Visibility="{Binding CanUpdateApp, Converter={StaticResource Visible}}" />
+                        <toad:Button Icon="Refresh" Content="Проверить" Command="{Binding CheckNowCommand}" />
+                    </StackPanel>
+                </toad:Card.TrailingContent>
+            </toad:Card>
+
+            <toad:Alert Severity="Warning" Margin="0,8,0,0" Title="Найдена старая установка для всех пользователей"
+                        Content="Плагин стоит ещё и в общей папке Revit. Удалите старую версию ToadTools в «Программах и компонентах», иначе Revit загрузит обе."
+                        Visibility="{Binding HasLegacyInstall, Converter={StaticResource Visible}}" />
+
+            <!-- Обновления -->
+            <TextBlock Style="{StaticResource Section}" Text="Обновления" />
+            <toad:Card Icon="Clock" Header="Проверять обновления" Description="Как часто спрашивать GitHub о новой версии">
+                <toad:Card.TrailingContent>
+                    <ComboBox Width="190" ItemsSource="{Binding Intervals}" SelectedItem="{Binding Interval}" />
+                </toad:Card.TrailingContent>
+            </toad:Card>
+            <toad:Card Icon="Download" Margin="0,8,0,0" Header="Скачивать автоматически"
+                       Description="Выключено — только уведомление о новой версии">
+                <toad:Card.TrailingContent>
+                    <toad:Switch IsChecked="{Binding AutoDownload}" />
+                </toad:Card.TrailingContent>
+            </toad:Card>
+            <toad:Card Icon="BuildingSkyscraper" Margin="0,8,0,0" Header="Устанавливать после закрытия Revit"
+                       Description="Выключено — установка кнопкой «Установить сейчас»">
+                <toad:Card.TrailingContent>
+                    <toad:Switch IsChecked="{Binding InstallWhenRevitCloses}" />
+                </toad:Card.TrailingContent>
+            </toad:Card>
+            <toad:Card Icon="Refresh" Margin="0,8,0,0" Header="Обновлять программу автоматически"
+                       Description="Программа ToadTools обновляется сама, в фоне">
+                <toad:Card.TrailingContent>
+                    <toad:Switch IsChecked="{Binding AutoUpdateApp}" />
+                </toad:Card.TrailingContent>
+            </toad:Card>
+
+            <!-- Revit -->
+            <TextBlock Style="{StaticResource Section}" Text="Версии Revit" />
+            <TextBlock Text="Revit на этом компьютере не найден." Foreground="{DynamicResource Toad.Brush.TextDimmed}"
+                       Margin="2,0,0,0">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasYears}" Value="False">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+            <ItemsControl ItemsSource="{Binding Years}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <toad:Card Icon="Building" Margin="0,0,0,8" Header="{Binding Title}"
+                                   Description="Ставить ToadTools в эту версию">
+                            <toad:Card.TrailingContent>
+                                <toad:Switch IsChecked="{Binding IsEnabled}" />
+                            </toad:Card.TrailingContent>
+                        </toad:Card>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Общие -->
+            <TextBlock Style="{StaticResource Section}" Text="Общие" />
+            <toad:Card Icon="Power" Header="Запускать вместе с Windows">
+                <toad:Card.TrailingContent>
+                    <toad:Switch IsChecked="{Binding StartWithWindows}" />
+                </toad:Card.TrailingContent>
+            </toad:Card>
+            <toad:Card Icon="Bell" Margin="0,8,0,0" Header="Показывать уведомления">
+                <toad:Card.TrailingContent>
+                    <toad:Switch IsChecked="{Binding Notifications}" />
+                </toad:Card.TrailingContent>
+            </toad:Card>
+            <toad:Card Icon="World" Margin="0,8,0,0" Header="Прокси" Description="Для сетей, где GitHub доступен только через прокси">
+                <toad:Card.TrailingContent>
+                    <ComboBox Width="190" ItemsSource="{Binding Proxies}" SelectedItem="{Binding Proxy}" />
+                </toad:Card.TrailingContent>
+            </toad:Card>
+            <toad:TextBox Margin="0,8,0,0" Icon="Link" Placeholder="http://proxy.company.local:3128"
+                          Text="{Binding ProxyAddress, UpdateSourceTrigger=LostFocus}"
+                          Visibility="{Binding IsCustomProxy, Converter={StaticResource Visible}}" />
+
+            <!-- Что нового -->
+            <TextBlock Style="{StaticResource Section}" Text="Что нового" />
+            <TextBlock Text="{Binding ReleaseNotes}" TextWrapping="Wrap" LineHeight="20" Margin="2,0,0,0" />
+            <StackPanel Orientation="Horizontal" Margin="-10,8,0,0">
+                <toad:Button Variant="Subtle" Padding="10,0" Icon="BrandGithub" Content="Все изменения"
+                             Command="{Binding OpenReleasesCommand}" />
+                <toad:Button Variant="Subtle" Padding="10,0" Icon="Folder" Content="Папка логов"
+                             Command="{Binding OpenLogsCommand}" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</toad:ToadWindow>

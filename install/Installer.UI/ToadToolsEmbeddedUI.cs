@@ -23,7 +23,7 @@ public sealed class ToadToolsEmbeddedUI : IEmbeddedUI
     private Thread? _thread;
     private SetupViewModel? _model;
     private Dispatcher? _dispatcher;
-    private SetupChoice? _choice;
+    private SetupAction? _choice;
 
     public bool Initialize(Session session, string resourcePath, ref InstallUIOptions internalUILevel)
     {
@@ -42,8 +42,8 @@ public sealed class ToadToolsEmbeddedUI : IEmbeddedUI
             return false;
         }
 
-        Trace.Write($"{info.Mode} {info.Version}, previous '{info.PreviousVersion}', per machine {info.PerMachine}, " +
-                    string.Join(", ", info.Targets.Select(t => $"{t.Year}{(t.Found ? " found" : "")}{(t.Installed ? " installed" : "")}")));
+        Trace.Write($"{info.Mode} {info.Version} (add-in {info.PluginVersion}), previous '{info.PreviousVersion}', " +
+                    $"legacy add-in package {info.ReplacesLegacyPlugin}, Revit {string.Join(", ", info.RevitYears)}");
         var log = session["MsiLogFileLocation"];
         _thread = new Thread(() => Run(info, log)) { Name = "ToadTools installer window" };
         _thread.SetApartmentState(ApartmentState.STA);
@@ -55,8 +55,8 @@ public sealed class ToadToolsEmbeddedUI : IEmbeddedUI
             throw new InstallCanceledException();
         }
 
-        Trace.Write("Start: " + _choice!.Action + " " + string.Join(",", _choice.Selected.Select(t => t.Feature)));
-        Apply(session, info, _choice);
+        Trace.Write("Start: " + _choice);
+        Apply(session, _choice!.Value);
         internalUILevel = InstallUIOptions.Silent | InstallUIOptions.SourceResolutionOnly;
         return true;
     }
@@ -146,27 +146,11 @@ public sealed class ToadToolsEmbeddedUI : IEmbeddedUI
         }
     }
 
-    /// <summary>Puts the user's choice into the MSI properties that select features.</summary>
-    private static void Apply(Session session, SetupInfo info, SetupChoice choice)
+    /// <summary>Puts the user's choice into the MSI properties: a new installation keeps the defaults.</summary>
+    private static void Apply(Session session, SetupAction action)
     {
-        var selected = choice.Selected.Select(t => t.Feature).ToList();
-        switch (choice.Action)
+        switch (action)
         {
-            case SetupAction.Install:
-                session["ADDLOCAL"] = string.Join(",", selected);
-                break;
-            case SetupAction.Change:
-                var add = info.Targets.Where(t => !t.Installed && selected.Contains(t.Feature)).Select(t => t.Feature).ToList();
-                var remove = info.Targets.Where(t => t.Installed && !selected.Contains(t.Feature)).Select(t => t.Feature).ToList();
-                if (selected.Count == 0)
-                {
-                    session["REMOVE"] = "ALL";
-                    break;
-                }
-
-                if (add.Count > 0) session["ADDLOCAL"] = string.Join(",", add);
-                if (remove.Count > 0) session["REMOVE"] = string.Join(",", remove);
-                break;
             case SetupAction.Repair:
                 session["REINSTALL"] = "ALL";
                 session["REINSTALLMODE"] = "amus";

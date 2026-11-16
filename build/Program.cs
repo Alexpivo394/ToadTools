@@ -5,6 +5,20 @@ using Microsoft.Extensions.DependencyInjection;
 using ModularPipelines;
 using ModularPipelines.Extensions;
 
+if (args.Contains("keygen"))
+{
+    Build.SigningKeys.Generate(args.SkipWhile(arg => arg != "keygen").Skip(1).FirstOrDefault() ?? "signing-keys.txt");
+    return;
+}
+
+// dotnet run -- sign <file>: {file}.sig with the key from the SIGNING_KEY environment variable (manual checks of the program)
+if (args.Contains("sign"))
+{
+    var file = args.SkipWhile(arg => arg != "sign").Skip(1).First();
+    File.WriteAllText(file + ".sig", Build.SigningKeys.Sign(Environment.GetEnvironmentVariable("SIGNING_KEY")!, file));
+    return;
+}
+
 var builder = Pipeline.CreateBuilder();
 
 builder.Configuration.AddJsonFile("appsettings.json");
@@ -27,7 +41,9 @@ if (args.Contains("test"))
 if (args.Contains("pack"))
 {
     builder.Services.AddModule<CleanProjectModule>();
+    builder.Services.AddModule<CreatePluginArchiveModule>();
     builder.Services.AddModule<CreateInstallerModule>();
+    builder.Services.AddModule<SignArtifactsModule>();
 }
 
 if (args.Contains("publish"))

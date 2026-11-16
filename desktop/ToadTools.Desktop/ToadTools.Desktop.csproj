@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- Программа ToadTools в трее: проверяет обновления плагина на GitHub и ставит их после закрытия Revit -->
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <UseWPF>true</UseWPF>
+        <AssemblyName>ToadTools</AssemblyName>
+        <RootNamespace>ToadTools.Desktop</RootNamespace>
+        <ApplicationIcon>Resources\ToadTools.ico</ApplicationIcon>
+        <ApplicationManifest>app.manifest</ApplicationManifest>
+        <PlatformTarget>x64</PlatformTarget>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Alexpivo394.ToadDesign"/>
+        <PackageReference Include="H.NotifyIcon.Wpf"/>
+        <PackageReference Include="CommunityToolkit.Mvvm"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\ToadTools.Desktop.Core\ToadTools.Desktop.Core.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Reference Include="System.Net.Http"/>
+        <Using Include="System.Net.Http"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Resource Include="Resources\ToadTools.ico"/>
+        <Resource Include="Resources\logo.png"/>
+    </ItemGroup>
+
+</Project>

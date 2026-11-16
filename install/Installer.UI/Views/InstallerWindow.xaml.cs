@@ -26,7 +26,6 @@ public partial class InstallerWindow : ToadWindow
     {
         FrameworkElement page = _model.Page switch
         {
-            SetupPage.Versions => new VersionsPage(),
             SetupPage.Maintenance => new MaintenancePage(),
             SetupPage.Progress => new ProgressPage(),
             SetupPage.Done => new DonePage(),

@@ -62,6 +62,7 @@
         <!-- UI -->
         <PackageVersion Include="Alexpivo394.ToadDesign" Version="1.0.0"/>
         <PackageVersion Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135"/>
+        <PackageVersion Include="H.NotifyIcon.Wpf" Version="2.3.0"/>
 
         <!-- Serialization & Office -->
         <PackageVersion Include="Newtonsoft.Json" Version="13.0.3"/>

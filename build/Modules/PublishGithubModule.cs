@@ -21,6 +21,7 @@ namespace Build.Modules;
 [DependsOn<ResolveVersioningModule>]
 [DependsOn<GenerateGitHubChangelogModule>]
 [DependsOn<CreateInstallerModule>(Optional = true)]
+[DependsOn<SignArtifactsModule>(Optional = true)]
 public sealed class PublishGithubModule(IOptions<BuildOptions> buildOptions) : Module
 {
     protected override async Task ExecuteModuleAsync(IModuleContext context, CancellationToken cancellationToken)
@@ -33,6 +34,9 @@ public sealed class PublishGithubModule(IOptions<BuildOptions> buildOptions) : M
         var outputFolder = context.Git().RootDirectory.GetFolder(buildOptions.Value.OutputDirectory);
         var targetFiles = outputFolder.ListFiles().ToArray();
         targetFiles.ShouldNotBeEmpty("No artifacts were found to create the Release");
+        // Программа ToadTools не ставит файлы без подписи: релиз без .sig пользователям бесполезен
+        foreach (var file in targetFiles.Where(file => SignArtifactsModule.IsSigned(file.Path)))
+            System.IO.File.Exists(file.Path + ".sig").ShouldBeTrue($"{file.Name} is not signed: set Publish:SigningKey (secret SIGNING_KEY)");
 
         var repositoryInfo = context.GitHub().RepositoryInfo;
         var newRelease = new NewRelease(versioning.Version)

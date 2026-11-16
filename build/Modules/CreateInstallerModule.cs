@@ -16,10 +16,10 @@ using File = ModularPipelines.FileSystem.File;
 namespace Build.Modules;
 
 /// <summary>
-///     Create the .msi installer.
+///     Create the .msi installer of the ToadTools program (tray updater): output/ToadTools-App-{app version}.msi.
+///     The add-in itself is not in the MSI: the program downloads it as ToadTools-{version}.zip.
 /// </summary>
 [DependsOn<ResolveVersioningModule>]
-[DependsOn<CompileProjectModule>]
 public sealed class CreateInstallerModule(IOptions<BuildOptions> buildOptions) : Module
 {
     protected override async Task ExecuteModuleAsync(IModuleContext context, CancellationToken cancellationToken)
@@ -27,7 +27,20 @@ public sealed class CreateInstallerModule(IOptions<BuildOptions> buildOptions) :
         var versioningResult = await context.GetModule<ResolveVersioningModule>();
         var versioning = versioningResult.ValueOrDefault!;
 
-        var wixTarget = new File(Projects.ToadTools.FullName);
+        var root = context.Git().RootDirectory;
+        var desktopProject = root.GetFolder("desktop").GetFolder("ToadTools.Desktop").GetFile("ToadTools.Desktop.csproj");
+        // The program has the release version: every release updates installed programs to it
+        var appVersion = versioning.VersionPrefix;
+        var publishFolder = Folder.CreateTemporaryFolder();
+        await context.DotNet().Publish(new DotNetPublishOptions
+        {
+            ProjectSolution = desktopProject.Path,
+            Configuration = "Release",
+            Output = publishFolder.Path,
+            Properties = [("VersionPrefix", versioning.VersionPrefix)]
+        }, cancellationToken: cancellationToken);
+        publishFolder.GetFile("ToadTools.exe").Exists.ShouldBeTrue("The ToadTools program was not published");
+
         var wixInstaller = new File(Projects.Installer.FullName);
         var wixToolFolder = await InstallWixAsync(context, cancellationToken);
 
@@ -45,18 +58,11 @@ public sealed class CreateInstallerModule(IOptions<BuildOptions> buildOptions) :
         builderFile.ShouldNotBeNull(
             $"No installer builder was found for the project: {wixInstaller.NameWithoutExtension}");
 
-        var targetDirectories = wixTarget.Folder!
-            .GetFolder("bin")
-            .GetFolders(folder => folder.Name == "publish")
-            .Select(folder => folder.Path)
-            .ToArray();
-
-        targetDirectories.ShouldNotBeEmpty("No content were found to create an installer");
-
+        // Installer builder arguments: program version, its published files, add-in version (for "what's new")
         await context.Shell.Command.ExecuteCommandLineTool(
             new GenericCommandLineToolOptions(builderFile.Path)
             {
-                Arguments = [versioning.Version, ..targetDirectories]
+                Arguments = [appVersion, publishFolder.Path, versioning.Version]
             },
             new CommandExecutionOptions
             {

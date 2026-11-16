@@ -25,7 +25,9 @@ ToadTools — набор инструментов для Revit, который �
 
 ## Установка
 
-Скачайте установщик `.msi` из [релизов](https://github.com/Alexpivo394/ToadTools/releases), закройте Revit и запустите установщик.
+Скачайте `ToadTools-App-*.msi` из [последнего релиза](https://github.com/Alexpivo394/ToadTools/releases/latest) и запустите. Права администратора не нужны.
+
+Установщик ставит программу ToadTools. Она сидит в трее, сама скачивает плагин для найденных версий Revit и ставит новые версии, когда Revit закрыт. Частота проверки, версии Revit, автозапуск и уведомления настраиваются в её окне: щёлкните значок в трее.
 Изменения по версиям — в [Changelog.md](Changelog.md).
 
 Панель «Коллизии» и отправка итогов ParamChecker в ToadFlow требуют сервера ToadFlow 2.0.0 и подключения: **ToadTools → Вход → Подключение к ToadFlow**.
@@ -58,11 +60,15 @@ dotnet run --project source/ToadTools.Tests -c Release -f net10.0-windows
 dotnet run --project source/ToadTools.Tests -c Release -f net48
 ```
 
-Установщик для всех версий Revit — в папку `output`:
+Архив плагина для всех версий Revit (`ToadTools-X.Y.Z.zip`), установщик программы (`ToadTools-App-X.Y.Z.msi`) и их подписи (`.sig`) — в папку `output`:
 
 ```powershell
 cd build; dotnet run -c Release -- pack
 ```
+
+Программа ToadTools (трей) — в `desktop/`: ядро без интерфейса `ToadTools.Desktop.Core` с тестами `ToadTools.Desktop.Tests` (`dotnet run --project desktop/ToadTools.Desktop.Tests -c Release`) и WPF-программа `ToadTools.Desktop`. Версия программы — версия релиза из тега, как у плагина: каждый релиз несёт `ToadTools-App-X.Y.Z.msi`, и установленные программы тихо обновляются до неё. Локальная сборка — `0.0.0`; Debug-сборка сама себя не обновляет.
+
+Файлы релиза подписываются ключом ECDSA P-256: приватный ключ — секрет `SIGNING_KEY` репозитория (локально `dotnet user-secrets set Publish:SigningKey <ключ>` в `build`), публичный зашит в `desktop/ToadTools.Desktop.Core/Security/PublicKey.cs`. Без подписи релиз не публикуется, а программа не ставит файл. Новая пара ключей: `dotnet run --project build -- keygen <файл>`.
 
 Код для отдельных версий Revit отделяют директивы `#if REVIT2024_OR_GREATER` и подобные.
 
@@ -72,7 +78,7 @@ cd build; dotnet run -c Release -- pack
 2. Тег `X.Y.Z` или **Actions → Publish Release → Run workflow** с номером версии.
 
 Workflow собирает установщик и создаёт релиз на GitHub с текстом раздела из `Changelog.md`; версию без тега определяет GitVersion по истории git.
-Каждый push проверяет `.github/workflows/Compile.yml`: тесты под `net10.0-windows` и `net48` и сборку под все версии Revit.
+Каждый push проверяет `.github/workflows/Compile.yml`: тесты плагина под `net10.0-windows` и `net48`, тесты программы и сборку под все версии Revit.
 
 ## Связанные проекты
 

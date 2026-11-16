@@ -31,22 +31,21 @@ public static partial class Window
     }
 
     /// <summary>
-    ///     Sets the properties of one package: version, changelog highlights, where add-ins go, the other package.
-    ///     Only these are replaced: WixSharp keeps its own ones (ARPPRODUCTICON) in the same list between the builds.
+    ///     Sets the properties the window reads: program version, add-in version and its changelog highlights.
+    ///     Only these are replaced: WixSharp keeps its own ones (ARPPRODUCTICON) in the same list.
     /// </summary>
-    public static void SetProperties(Project project, string version, string addinsFolder, string otherPackage)
+    public static void SetProperties(Project project, string version, string pluginVersion)
     {
         var properties = new List<Property>
         {
             new("TOAD_VERSION", version),
-            new("TOAD_ADDINS", addinsFolder),
-            new("TOAD_OTHER_MSI", otherPackage),
+            new("TOAD_PLUGIN_VERSION", pluginVersion),
             // A verbose log in %TEMP%\MSI*.LOG: "Журнал установки" on the error page opens it
             new("MsiLogging", "voicewarmup")
         };
         // An MSI property cannot be empty: no changelog section, no property, no "what's new" list. Base64 of UTF-8:
         // the package code page (1252) has no Cyrillic letters.
-        if (Highlights(version) is { Length: > 0 } highlights)
+        if (Highlights(pluginVersion) is { Length: > 0 } highlights)
             properties.Add(new Property("TOAD_HIGHLIGHTS", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(highlights))));
 
         var names = properties.Select(p => p.Name).ToHashSet();

@@ -42,6 +42,8 @@ jobs:
         working-directory: "build"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Подпись .zip и .msi релиза (пара к публичному ключу программы): без неё программа ToadTools их не поставит
+          Publish__SigningKey: ${{ secrets.SIGNING_KEY }}
           DOTNET_ENVIRONMENT: ${{ (github.ref_name == 'main' || github.ref_type == 'tag') && 'Production' || 'Development' }}
           # Версия релиза — из тега (BuildOptions.Version). Без неё версию вычисляет GitVersion, а он на теге, где есть и
           # ветка dev, падает: стратегия Mainline не умеет приращение Inherit из шаблона ветки develop.

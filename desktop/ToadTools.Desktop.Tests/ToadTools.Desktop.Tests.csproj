@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- Тесты логики программы ToadTools (net48, как сама программа) -->
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="TUnit"/>
+        <PackageReference Include="Shouldly"/>
+        <!-- Покрытие кода TUnit под net48 требует System.Text.Json не ниже 10.0.10 -->
+        <PackageReference Include="System.Text.Json" VersionOverride="10.0.10"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\ToadTools.Desktop.Core\ToadTools.Desktop.Core.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Reference Include="System.Net.Http"/>
+        <Reference Include="System.IO.Compression"/>
+        <Reference Include="System.IO.Compression.FileSystem"/>
+        <Using Include="System.Net.Http"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="TestData\**\*" CopyToOutputDirectory="PreserveNewest"/>
+    </ItemGroup>
+
+</Project>
