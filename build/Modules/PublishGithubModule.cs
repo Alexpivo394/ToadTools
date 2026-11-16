@@ -21,6 +21,7 @@ namespace Build.Modules;
 [DependsOn<ResolveVersioningModule>]
 [DependsOn<GenerateGitHubChangelogModule>]
 [DependsOn<SignArtifactsModule>(Optional = true)]
+[DependsOn<CreateReleaseManifestModule>(Optional = true)]
 public sealed class PublishGithubModule(IOptions<BuildOptions> buildOptions) : Module
 {
     protected override async Task ExecuteModuleAsync(IModuleContext context, CancellationToken cancellationToken)
