@@ -25,11 +25,12 @@
 
 Расставить марки на виде, проверить заполнение параметров в десятках моделей, выгрузить их пачкой в NWC, разложить элементы по рабочим наборам — такие задачи отнимают часы и не требуют инженера. ToadTools делает их по кнопке.
 
-| До | После |
-|---|---|
-| ![Вид без марок](wiki/images/SmartTags/before.png) | ![Тот же вид с марками](wiki/images/SmartTags/after.png) |
+| [ParamChecker](https://github.com/Alexpivo394/ToadTools/wiki/ParamChecker) | [ToadExporter](https://github.com/Alexpivo394/ToadTools/wiki/ToadExporter) | [Умные выноски](https://github.com/Alexpivo394/ToadTools/wiki/SmartTags) |
+|---|---|---|
+| ![Окно ParamChecker](wiki/images/ParamChecker/main-window.png) | ![Окно ToadExporter](wiki/images/ToadExporter/main-window.png) | ![Окно «Умные выноски»](wiki/images/SmartTags/main-window.png) |
+| Проверка заполнения параметров по профилям и правилам | Пакетная выгрузка моделей в RVT и NWC | Марки на виде без наложений текста и выносок |
 
-<p align="center"><sub><a href="https://github.com/Alexpivo394/ToadTools/wiki/SmartTags">Умные выноски</a>: одна команда — и марки стоят без наложений текста и пересечений выносок.</sub></p>
+Это три инструмента из двадцати с лишним — полный список [ниже](#инструменты).
 
 ## Установка
 
