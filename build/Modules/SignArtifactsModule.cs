@@ -14,7 +14,6 @@ namespace Build.Modules;
 ///     Без ключа подписи не создаются, и публикация (PublishGithubModule) откажется выкладывать релиз.
 /// </summary>
 [DependsOn<CreatePluginArchiveModule>(Optional = true)]
-[DependsOn<CreateInstallerModule>(Optional = true)]
 public sealed class SignArtifactsModule(IOptions<BuildOptions> buildOptions, IOptions<PublishOptions> publishOptions) : Module
 {
     protected override Task ExecuteModuleAsync(IModuleContext context, CancellationToken cancellationToken)

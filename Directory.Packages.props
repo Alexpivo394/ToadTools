@@ -62,7 +62,6 @@
         <!-- UI -->
         <PackageVersion Include="Alexpivo394.ToadDesign" Version="1.0.0"/>
         <PackageVersion Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135"/>
-        <PackageVersion Include="H.NotifyIcon.Wpf" Version="2.3.0"/>
 
         <!-- Serialization & Office -->
         <PackageVersion Include="Newtonsoft.Json" Version="13.0.3"/>
@@ -90,10 +89,6 @@
         <PackageVersion Include="ModularPipelines.Slack" Version="3.2.8"/>
         <PackageVersion Include="Microsoft.VisualStudio.SolutionPersistence" Version="1.0.52"/>
         <PackageVersion Include="ILRepack" Version="2.0.45"/>
-        <PackageVersion Include="WixSharp.Core" Version="2.14.0"/>
-        <PackageVersion Include="WixSharp.Msi.Core" Version="2.14.0"/>
-        <PackageVersion Include="WixToolset.Dtf.WindowsInstaller" Version="4.0.4"/>
-        <PackageVersion Include="WixToolset.Dtf.CustomAction" Version="4.0.4"/>
 
         <!-- System Dependencies -->
         <PackageVersion Include="System.Text.Json" Version="10.0.9"/>

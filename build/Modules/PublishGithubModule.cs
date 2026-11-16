@@ -20,7 +20,6 @@ namespace Build.Modules;
 [SkipIfNoGitHubToken]
 [DependsOn<ResolveVersioningModule>]
 [DependsOn<GenerateGitHubChangelogModule>]
-[DependsOn<CreateInstallerModule>(Optional = true)]
 [DependsOn<SignArtifactsModule>(Optional = true)]
 public sealed class PublishGithubModule(IOptions<BuildOptions> buildOptions) : Module
 {

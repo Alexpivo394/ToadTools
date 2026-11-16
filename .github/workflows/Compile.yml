@@ -31,10 +31,6 @@ jobs:
       - name: Test ToadTools (net48)
         run: dotnet run --project source/ToadTools.Tests -c Release -f net48
 
-      # Программа ToadTools (трей-апдейтер): .NET Framework 4.8
-      - name: Test ToadTools program (net48)
-        run: dotnet run --project desktop/ToadTools.Desktop.Tests -c Release
-
       - name: Compile solution
         run: dotnet run -c Release
         working-directory: "build"
