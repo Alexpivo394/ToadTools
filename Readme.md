@@ -23,65 +23,65 @@ ToadTools — набор инструментов для Revit, который �
 
 Ссылки на страницу каждого инструмента — на [главной странице вики](https://github.com/Alexpivo394/ToadTools/wiki).
 
-## Установка
+## Как поставить
 
-Скачайте `ToadTools-App-*.msi` из [последнего релиза программы ToadTools](https://github.com/Alexpivo394/ToadTools.Desktop/releases/latest) и запустите. Права администратора не нужны.
+Плагин отдельно больше не ставится — за него это делает программа ToadTools. Скачайте `ToadTools-App-*.msi` со [страницы её релизов](https://github.com/Alexpivo394/ToadTools.Desktop/releases/latest) и запустите. Права администратора не нужны.
 
-Программа сидит в трее, сама скачивает плагин для найденных версий Revit и ставит новые версии, когда Revit закрыт. Частота проверки, версии Revit, автозапуск и уведомления настраиваются в её окне: щёлкните значок в трее. Подробно — [Установка и обновление](https://github.com/Alexpivo394/ToadTools/wiki/Install).
-Изменения по версиям — в [Changelog.md](Changelog.md).
+Дальше всё само: в трее появляется зелёная жаба, она находит Revit на компьютере, скачивает плагин и раскладывает его по нужным версиям. Вкладка **ToadTools** появится, когда вы в следующий раз откроете Revit.
 
-Панель «Коллизии» и отправка итогов ParamChecker в ToadFlow требуют сервера ToadFlow 2.0.0 и подключения: **ToadTools → Вход → Подключение к ToadFlow**.
+Когда выходит новая версия, программа скачивает её заранее и ждёт, пока вы закроете Revit, — работу не прерывает. Закрыли — через пару секунд плагин обновлён, а в углу экрана об этом сообщение. Как часто проверять обновления, в какие версии Revit ставить, запускаться ли вместе с Windows — это в окне программы, оно открывается щелчком по значку. Подробнее — на странице [«Установка и обновление»](https://github.com/Alexpivo394/ToadTools/wiki/Install).
 
-> [!NOTE]
-> Часть инструментов берёт семейства, шаблоны и таблицы Excel с сетевого диска компании. Вне корпоративной сети эти файлы нужно получить отдельно.
+Что поменялось от версии к версии — в [Changelog.md](Changelog.md).
 
-## Разработка
+Пара вещей, о которых стоит знать заранее:
 
-Нужны .NET 10 SDK и .NET Framework 4.8 Developer Pack; IDE — JetBrains Rider или Visual Studio.
+- панели «Коллизии» и отправке итогов ParamChecker нужен сервер ToadFlow 2.0.0 и вход в него: **ToadTools → Вход → Подключение к ToadFlow**;
+- часть инструментов берёт семейства, шаблоны и таблицы Excel с сетевого диска компании. Если вы не в корпоративной сети, эти файлы придётся раздобыть отдельно.
 
-Решение `ToadTools.slnx` собирается под каждую версию Revit своей конфигурацией: `Debug.R20`…`Debug.R27` и `Release.R20`…`Release.R27`.
-Debug-сборка раскладывает аддин в папку аддинов Revit этой версии.
+## Для разработчиков
 
-| Папка | Что там |
-|---|---|
-| `source/ToadTools` | Приложение Revit: лента и регистрация команд |
-| `source/<Инструмент>` | Проект каждого инструмента: команды, модели представления, окна |
-| `source/ToadTools.Connection` | Общее подключение к ToadFlow: вход, токен, клиент API, очередь итогов ParamChecker |
-| `source/ToadTools.UI` | Общие элементы интерфейса |
-| `source/ToadTools.Tests` | Тесты без Revit API |
-| `build` | Пайплайн сборки ModularPipelines |
-| `wiki` | Вики; публикуется в GitHub Wiki при изменении в `master` |
+Понадобятся .NET 10 SDK и .NET Framework 4.8 Developer Pack, а писать удобно в Rider или Visual Studio.
 
-Тесты:
+Revit каждого года — своя конфигурация решения `ToadTools.slnx`: от `Debug.R20` / `Release.R20` до `Debug.R27` / `Release.R27`. Debug-сборка сразу кладёт плагин в папку надстроек нужного Revit — собрали, открыли Revit, проверили. Если код отличается между версиями Revit, его разводят директивами вроде `#if REVIT2024_OR_GREATER`.
+
+Где что лежит:
+
+- `source/ToadTools` — сама надстройка: лента и регистрация команд;
+- `source/<Инструмент>` — по проекту на инструмент: команды, модели, окна;
+- `source/ToadTools.Connection` — подключение к ToadFlow, общее для всех инструментов;
+- `source/ToadTools.UI` — общие элементы интерфейса;
+- `source/ToadTools.Tests` — тесты, которым не нужен Revit;
+- `build` — сборка релиза;
+- `wiki` — вики; при изменениях в `master` она сама публикуется на GitHub.
+
+Тесты гоняются под оба рантайма, на которых живёт плагин:
 
 ```powershell
 dotnet run --project source/ToadTools.Tests -c Release -f net10.0-windows
 dotnet run --project source/ToadTools.Tests -c Release -f net48
 ```
 
-Архив плагина для всех версий Revit `ToadTools-X.Y.Z.zip` и его подпись `.zip.sig` — в папку `output`:
+### Как выходит новая версия
+
+1. Допишите сверху `Changelog.md` раздел `# X.Y.Z` — что поменялось.
+2. Поставьте тег `X.Y.Z` (или запустите **Actions → Publish release** с номером версии).
+
+GitHub соберёт плагин под все версии Revit, упакует в архив `ToadTools-X.Y.Z.zip`, подпишет его и выложит релиз с текстом из Changelog. Установленные программы ToadTools увидят его при следующей проверке и обновят плагин у всех сами.
+
+Собрать архив у себя можно так — он окажется в папке `output`:
 
 ```powershell
 cd build; dotnet run -c Release -- pack
 ```
 
-Архив ставит программа [ToadTools.Desktop](https://github.com/Alexpivo394/ToadTools.Desktop) — у неё свой репозиторий, свои релизы и своя версия. Внутри архива `{год}/ToadTools.addin` и `{год}/ToadTools/**`, как папка `publish` сборки: это договорённость с программой, менять её — только вместе с ней.
+Про подпись. Программа ставит только архив, подписанный нашим ключом, — так никто не сможет подсунуть пользователям чужие DLL под видом обновления. Ключ лежит в секретах репозитория (`SIGNING_KEY`), тот же самый — у ToadTools.Desktop. Без него релиз просто не опубликуется. Для локальной сборки ключ можно положить в user-secrets: `dotnet user-secrets set Publish:SigningKey <ключ>` в папке `build`.
 
-Архив подписывается ключом ECDSA P-256: приватный ключ — секрет `SIGNING_KEY` (тот же, что в ToadTools.Desktop; локально `dotnet user-secrets set Publish:SigningKey <ключ>` в `build`), публичный зашит в программу. Без подписи релиз не публикуется, а программа не ставит архив. Подписать файл вручную: `SIGNING_KEY=<ключ> dotnet run --project build -- sign <файл>`.
+И про формат архива: внутри лежат папки по годам, в каждой `ToadTools.addin` и папка `ToadTools` — ровно как после сборки в `publish`. Программа рассчитывает именно на такую раскладку, поэтому если захочется её поменять — меняйте вместе с [ToadTools.Desktop](https://github.com/Alexpivo394/ToadTools.Desktop).
 
-Код для отдельных версий Revit отделяют директивы `#if REVIT2024_OR_GREATER` и подобные.
+## Родственные проекты
 
-### Выпуск
-
-1. Раздел `# X.Y.Z` с изменениями в начале `Changelog.md`.
-2. Тег `X.Y.Z` или **Actions → Publish Release → Run workflow** с номером версии.
-
-Workflow собирает и подписывает архив плагина и создаёт релиз на GitHub с текстом раздела из `Changelog.md`; версию без тега определяет GitVersion по истории git.
-Каждый push проверяет `.github/workflows/Compile.yml`: тесты под `net10.0-windows` и `net48` и сборку под все версии Revit.
-
-## Связанные проекты
-
-- [ToadFlow](https://github.com/Alexpivo394/ToadFlow) — сервис автоматизации Revit по расписанию: выгрузка, проверка LOI, коллизии.
+- [ToadTools.Desktop](https://github.com/Alexpivo394/ToadTools.Desktop) — та самая программа в трее, которая ставит и обновляет плагин.
+- [ToadFlow](https://github.com/Alexpivo394/ToadFlow) — сервис, который по расписанию выгружает модели, проверяет LOI и ищет коллизии.
 - [ToadExport](https://github.com/Alexpivo394/ToadExport) — ядро выгрузки RVT и NWC, общее для ToadExporter и ToadFlow.
-- [ToadTools.Desktop](https://github.com/Alexpivo394/ToadTools.Desktop) — программа в трее, которая ставит и обновляет этот плагин.
 - [ToadParamCheck](https://github.com/Alexpivo394/ToadParamCheck) — ядро проверки LOI, общее для ParamChecker и ToadFlow.
+- [ToadDesign](https://github.com/Alexpivo394/ToadDesign) — оформление всех окон.
