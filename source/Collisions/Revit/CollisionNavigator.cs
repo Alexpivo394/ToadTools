@@ -23,16 +23,13 @@ public static class CollisionNavigator
     public static NavigateResult Show(UIDocument uiDocument, NavigateRequest request)
     {
         var document = uiDocument.Document;
-        // Точка и габариты — в общей системе координат; сюда (общая → внутренняя) переводит полное преобразование площадки.
-        var shared = document.ActiveProjectLocation.GetTotalTransform();
-
         var (own, other, link, sameModel) = Find(document, request);
-        var cube = CollisionBox.Around(request.PointMm);
+        var cube = CollisionBox.Around(InternalMm(document, request.PointMm));
 
-        var view = PrepareView(document, cube, shared);
+        var view = PrepareView(document, cube);
         uiDocument.ActiveView = view;
         if (uiDocument.GetOpenUIViews().FirstOrDefault(v => v.ViewId == view.Id) is { } uiView)
-            uiView.ZoomAndCenterRectangle(shared.OfPoint(Feet(cube.MinX, cube.MinY, cube.MinZ)), shared.OfPoint(Feet(cube.MaxX, cube.MaxY, cube.MaxZ)));
+            uiView.ZoomAndCenterRectangle(Feet(cube.MinX, cube.MinY, cube.MinZ), Feet(cube.MaxX, cube.MaxY, cube.MaxZ));
 
         Select(uiDocument, own, other, link);
 
@@ -66,6 +63,17 @@ public static class CollisionNavigator
         return SelectState.Selected;
     }
 
+    /// <summary>
+    ///     Точка коллизии из мм общей системы — в мм внутренней системы модели. Оси внутренней системы — север проекта: куб
+    ///     вдоль них стоит ровно по стенам и сторонам вида, а не повёрнут на угол истинного севера.
+    /// </summary>
+    private static (double X, double Y, double Z) InternalMm(Document document, (double X, double Y, double Z) sharedMm)
+    {
+        // Полное преобразование площадки переводит общую систему во внутреннюю.
+        var point = document.ActiveProjectLocation.GetTotalTransform().OfPoint(Feet(sharedMm.X, sharedMm.Y, sharedMm.Z)).Multiply(1 / FeetPerMm);
+        return (point.X, point.Y, point.Z);
+    }
+
     /// <summary>Оба элемента коллизии: свой — в открытой модели, второй — в ней же или в связи по имени файла.</summary>
     private static (Element? Own, Element? Other, RevitLinkInstance? Link, bool SameModel) Find(Document document, NavigateRequest request)
     {
@@ -80,12 +88,13 @@ public static class CollisionNavigator
     ///     Вид «ToadClash» с кубом; не больше одной транзакции, а если вид есть и куб уже нужный — ни одной. Вид создаётся при
     ///     первом переходе: изометрия, детализация «высокая», стиль «тонированный»; дальше его настройки — на усмотрение человека.
     /// </summary>
-    private static View3D PrepareView(Document document, Box3 cubeMm, Transform shared)
+    /// <param name="cubeMm">Куб в мм внутренней системы модели.</param>
+    private static View3D PrepareView(Document document, Box3 cubeMm)
     {
         var name = ViewName(document);
         var view = new FilteredElementCollector(document).OfClass(typeof(View3D)).Cast<View3D>()
             .FirstOrDefault(v => !v.IsTemplate && v.Name == name);
-        var plan = NavigationPlanner.Plan(new ViewState(view is not null, view is null ? null : SectionBoxMm(view, shared.Inverse)), cubeMm);
+        var plan = NavigationPlanner.Plan(new ViewState(view is not null, view is null ? null : SectionBoxMm(view)), cubeMm);
         if (!plan.NeedsTransaction) return view!;
 
         // В модели только для чтения вид не создать и куб не поставить — человеку объясняется причина.
@@ -106,10 +115,9 @@ public static class CollisionNavigator
             view.DisplayStyle = DisplayStyle.Shading;
         }
 
-        // Куб задан в общей системе (футы), его Transform переводит в модель.
+        // Куб — по осям внутренней системы (север проекта); прежний куб, повёрнутый по истинному северу, заменяется.
         view.SetSectionBox(new BoundingBoxXYZ
         {
-            Transform = shared,
             Min = Feet(cubeMm.MinX, cubeMm.MinY, cubeMm.MinZ),
             Max = Feet(cubeMm.MaxX, cubeMm.MaxY, cubeMm.MaxZ)
         });
@@ -120,11 +128,13 @@ public static class CollisionNavigator
         return view;
     }
 
-    /// <summary>Куб вида в мм общей системы; выключен — null.</summary>
-    private static Box3? SectionBoxMm(View3D view, Transform toShared)
+    /// <summary>Куб вида в мм внутренней системы; выключен или повёрнут относительно осей проекта — null: такой куб ставится заново.</summary>
+    private static Box3? SectionBoxMm(View3D view)
     {
         if (!view.IsSectionBoxActive) return null;
-        var corners = Corners(view.GetSectionBox(), toShared).ToList();
+        var box = view.GetSectionBox();
+        if (!box.Transform.BasisX.IsAlmostEqualTo(XYZ.BasisX) || !box.Transform.BasisY.IsAlmostEqualTo(XYZ.BasisY)) return null;
+        var corners = Corners(box).ToList();
         return new Box3(corners.Min(p => p.X), corners.Min(p => p.Y), corners.Min(p => p.Z), corners.Max(p => p.X), corners.Max(p => p.Y),
             corners.Max(p => p.Z));
     }
@@ -146,10 +156,10 @@ public static class CollisionNavigator
         uiDocument.Selection.SetElementIds(ids);
     }
 
-    /// <summary>Восемь углов габарита — в мм системы, куда ведёт <paramref name="transform" /> (габарит может быть повёрнут).</summary>
-    private static IEnumerable<XYZ> Corners(BoundingBoxXYZ box, Transform transform)
+    /// <summary>Восемь углов габарита — в мм внутренней системы.</summary>
+    private static IEnumerable<XYZ> Corners(BoundingBoxXYZ box)
     {
-        var toTarget = transform.Multiply(box.Transform);
+        var toTarget = box.Transform;
         foreach (var x in new[] { box.Min.X, box.Max.X })
         foreach (var y in new[] { box.Min.Y, box.Max.Y })
         foreach (var z in new[] { box.Min.Z, box.Max.Z })

@@ -131,3 +131,10 @@ public sealed record CollisionCardDto(CollisionRowDto Collision, IReadOnlyList<F
 /// <param name="Since"><c>unseen</c> — только новые для меня.</param>
 public sealed record CollisionQuery(string Status = "open", string Group = "all", string? Pair = null, string? Level = null, string? Search = null,
     string? Since = null);
+
+/// <summary>Коллизия, которую массовое действие не изменило, и почему — тот же текст, что у поштучного отказа.</summary>
+public sealed record BulkRefusal(int Number, string Reason);
+
+/// <summary>Итог массового действия <c>/api/clash/collisions/bulk</c>.</summary>
+/// <param name="Unchanged">Уже были такими, как просили: не изменены, но и не отказ.</param>
+public sealed record BulkResult(int Done, IReadOnlyList<BulkRefusal> Refused, int Unchanged = 0);

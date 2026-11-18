@@ -1,6 +1,6 @@
 namespace Collisions.Core;
 
-/// <summary>Вид «ToadClash» сейчас: есть ли он и его секущий куб в мм общей системы (null — куба нет или выключен).</summary>
+/// <summary>Вид «ToadClash» сейчас: есть ли он и его секущий куб в мм внутренней системы модели (null — куба нет, он выключен или повёрнут).</summary>
 public sealed record ViewState(bool Exists, Box3? SectionBoxMm);
 
 /// <summary>Что поменять в модели, чтобы показать коллизию; ничего — без транзакции, в журнале отмен ничего не появится.</summary>

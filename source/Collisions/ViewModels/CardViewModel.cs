@@ -18,6 +18,9 @@ public interface ICardDialogs
     /// <returns>null — человек передумал.</returns>
     PassChoice? AskPass(IReadOnlyList<SideOption> options);
 
+    /// <returns>true — человек согласился.</returns>
+    bool Confirm(string text);
+
     void OpenUrl(string url);
 }
 

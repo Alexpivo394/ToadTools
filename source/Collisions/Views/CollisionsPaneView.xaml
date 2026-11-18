@@ -87,14 +87,14 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="3*" MinHeight="160" />
                 <RowDefinition Height="Auto" />
-                <!-- Место карточки: пока коллизия не выбрана, список занимает всю высоту -->
+                <!-- Место карточки: пока коллизия не выбрана или выделено несколько, список занимает всю высоту -->
                 <RowDefinition>
                     <RowDefinition.Style>
                         <Style TargetType="RowDefinition">
                             <Setter Property="Height" Value="2*" />
                             <Setter Property="MinHeight" Value="120" />
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding Card}" Value="{x:Null}">
+                                <DataTrigger Binding="{Binding CardVisible}" Value="False">
                                     <Setter Property="Height" Value="0" />
                                     <Setter Property="MinHeight" Value="0" />
                                 </DataTrigger>
@@ -147,6 +147,23 @@
                            Visibility="{Binding Counters, Converter={views:TextVisibilityConverter}}" />
             </WrapPanel>
 
+            <!-- Выделено несколько строк (Ctrl/Shift+щелчок, Ctrl+A): действия над всеми, как в вебе; карточка скрыта -->
+            <Border DockPanel.Dock="Top" Margin="0,0,0,6" Padding="6,4,0,0" CornerRadius="4" Background="{DynamicResource Toad.Brush.Hover}"
+                    Visibility="{Binding IsMultiSelect, Converter={conv:BooleanCollapsedVisibilityConverter}}">
+                <WrapPanel>
+                    <TextBlock Text="{Binding SelectionText}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,6" />
+                    <toad:Button Content="Снять" Command="{Binding ClearSelectionCommand}" Margin="0,0,6,6" />
+                    <WrapPanel Visibility="{Binding CanBulkEdit, Converter={conv:BooleanCollapsedVisibilityConverter}}">
+                        <toad:Button Content="Беру" Command="{Binding BulkTakeCommand}" Margin="0,0,6,6" />
+                        <toad:Button Content="Передать…" Command="{Binding BulkPassCommand}" Margin="0,0,6,6" />
+                        <toad:Button Content="Исправлены" Command="{Binding BulkFixedCommand}" Margin="0,0,6,6"
+                                     ToolTip="Подтвердит следующий прогон: коллизии не будет — статус «исправлена»" />
+                        <toad:Button Content="Фиктивные…" Command="{Binding BulkFakeCommand}" Margin="0,0,6,6" />
+                        <toad:Button Content="Примечание…" Command="{Binding BulkNoteCommand}" Margin="0,0,6,6" />
+                    </WrapPanel>
+                </WrapPanel>
+            </Border>
+
             <TextBlock DockPanel.Dock="Top" Text="{Binding Status}" FontSize="11" Foreground="{DynamicResource Toad.Brush.Warning}"
                        TextWrapping="Wrap" Margin="0,0,0,6" Visibility="{Binding Status, Converter={views:TextVisibilityConverter}}" />
 
@@ -154,7 +171,7 @@
                        Command="{Binding LoadMoreCommand}" Visibility="{Binding HasMore, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
 
             <ListView x:Name="List" ItemsSource="{Binding Source={StaticResource GroupedItems}}" SelectedItem="{Binding SelectedItem}"
-                      SelectionMode="Single" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                      SelectionMode="Extended" SelectionChanged="OnListSelectionChanged" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                       VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.IsVirtualizingWhenGrouping="True"
                       VirtualizingPanel.VirtualizationMode="Recycling" VirtualizingPanel.ScrollUnit="Pixel"
                       PreviewKeyDown="OnListKeyDown">
@@ -205,8 +222,10 @@
             </ListView>
         </DockPanel>
             <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" Background="Transparent" ResizeDirection="Rows"
-                          Visibility="{Binding Card, Converter={views:NullVisibilityConverter}}" />
-            <views:CollisionCardView Grid.Row="2" DataContext="{Binding Card}" Visibility="{Binding Converter={views:NullVisibilityConverter}}" />
+                          Visibility="{Binding CardVisible, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
+            <!-- Видимость — по панели, а не по карточке: после перетаскивания разделителя высота строки уже не нулевая -->
+            <views:CollisionCardView Grid.Row="2" DataContext="{Binding Card}"
+                                     Visibility="{Binding DataContext.CardVisible, RelativeSource={RelativeSource AncestorType=views:CollisionsPaneView}, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
         </Grid>
     </Grid>
 </UserControl>

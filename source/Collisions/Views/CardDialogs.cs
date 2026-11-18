@@ -21,6 +21,9 @@ public sealed class CardDialogs(IntPtr owner) : ICardDialogs
         return Show(model) && model.Side is { } side ? new PassChoice(side, model.Text) : null;
     }
 
+    public bool Confirm(string text) =>
+        MessageBox.Show(text, "Коллизии ToadFlow", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
+
     public void OpenUrl(string url)
     {
         // Пустой адрес Process.Start принял бы за «открыть ничего» и бросил бы непонятную ошибку.

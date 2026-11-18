@@ -95,6 +95,24 @@ public class ClashApiTests
     }
 
     [Test]
+    public async Task Api_Bulk_PostsIdsAndReadsResult()
+    {
+        var (api, http, temp) = Create(_ => FakeHttp.Ok("""{"done":2,"refused":[{"number":7,"reason":"Нет прав"}],"unchanged":1}"""));
+        using var _ = temp;
+        var (part, a, b) = (Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
+
+        var result = await api.BulkAsync(part, "Assignee", [a, b], null, "SideB", CancellationToken.None);
+
+        http.Requests[0].Request.RequestUri!.AbsolutePath.ShouldBe("/api/clash/collisions/bulk");
+        var body = JObject.Parse(http.Requests[0].Body);
+        ((Guid?)body["partId"], (string?)body["action"], (string?)body["assignee"]).ShouldBe((part, "Assignee", "SideB"));
+        body["ids"]!.ToObject<Guid[]>().ShouldBe([a, b]);
+        result.Done.ShouldBe(2);
+        result.Unchanged.ShouldBe(1);
+        result.Refused.ShouldHaveSingleItem().ShouldBe(new BulkRefusal(7, "Нет прав"));
+    }
+
+    [Test]
     public async Task Api_Image()
     {
         var (api, http, temp) = Create(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent([1, 2, 3]) });

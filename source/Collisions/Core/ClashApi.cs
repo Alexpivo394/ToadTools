@@ -18,6 +18,12 @@ public interface IClashApi
     Task PassAsync(Guid id, string assignee, string? note, CancellationToken ct);
     Task SetStatusAsync(Guid id, string status, string? note, CancellationToken ct);
     Task NoteAsync(Guid id, string text, CancellationToken ct);
+
+    /// <summary>Массовое действие над коллизиями одной части: права и переходы — как поштучно, отказ по одной не мешает остальным.</summary>
+    /// <param name="action"><c>Take</c>, <c>Assignee</c>, <c>Fake</c>, <c>FixedPending</c>, <c>Note</c>.</param>
+    /// <param name="assignee">Для <c>Assignee</c>: <c>SideA</c>, <c>SideB</c>, <c>Both</c>.</param>
+    Task<BulkResult> BulkAsync(Guid partId, string action, IReadOnlyList<Guid> ids, string? note, string? assignee, CancellationToken ct);
+
     string ViewerUrl(Guid partId, Guid collisionId);
 }
 
@@ -62,6 +68,10 @@ public sealed class ClashApi(ToadFlowClient client) : IClashApi
         client.PostAsync<object>($"/api/clash/collisions/{id}/status", new { status, note }, ct);
 
     public Task NoteAsync(Guid id, string text, CancellationToken ct) => client.PostAsync<object>($"/api/clash/collisions/{id}/notes", new { text }, ct);
+
+    public async Task<BulkResult> BulkAsync(Guid partId, string action, IReadOnlyList<Guid> ids, string? note, string? assignee, CancellationToken ct) =>
+        await client.PostAsync<BulkResult>("/api/clash/collisions/bulk", new { partId, action, note, assignee, ids }, ct)
+        ?? throw new InvalidOperationException("ToadFlow не ответил, что изменилось");
 
     public string ViewerUrl(Guid partId, Guid collisionId) => client.WebUrl($"/clash/checks/{partId}?collision={collisionId}") ?? "";
 }

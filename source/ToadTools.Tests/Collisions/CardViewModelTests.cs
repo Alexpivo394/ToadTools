@@ -28,6 +28,17 @@ public sealed class FakeDialogs : ICardDialogs
     }
 
     public void OpenUrl(string url) => Opened.Add(url);
+
+    /// <summary>Ответ на подтверждение массового действия.</summary>
+    public bool Confirmed { get; set; } = true;
+
+    public List<string> Confirms { get; } = [];
+
+    public bool Confirm(string text)
+    {
+        Confirms.Add(text);
+        return Confirmed;
+    }
 }
 
 public class CardViewModelTests

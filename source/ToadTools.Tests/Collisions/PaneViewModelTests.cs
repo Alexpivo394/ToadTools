@@ -46,6 +46,7 @@ public class PaneViewModelTests
     private sealed record Setup(PaneViewModel Model, FakeClashApi Api, FakeRevit Revit, ConnectionStore Store, ModelChoices Choices, PaneSession Session,
         TempFolder Temp) : IDisposable
     {
+        public FakeDialogs Dialogs { get; init; } = new();
         public void Dispose() => Temp.Dispose();
     }
 
@@ -59,8 +60,9 @@ public class PaneViewModelTests
         var choices = new ModelChoices(temp.File("models.json"));
         session ??= new PaneSession();
         var thumbnails = new ThumbnailCache(temp.File("images"), api.ImageAsync);
-        var model = new PaneViewModel(api, revit, store, choices, thumbnails, session, () => false, new FakeDialogs());
-        return new Setup(model, api, revit, store, choices, session, temp);
+        var dialogs = new FakeDialogs();
+        var model = new PaneViewModel(api, revit, store, choices, thumbnails, session, () => false, dialogs);
+        return new Setup(model, api, revit, store, choices, session, temp) { Dialogs = dialogs };
     }
 
     [Test]

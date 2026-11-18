@@ -82,7 +82,7 @@ public sealed partial class PaneViewModel : ObservableObject
     [ObservableProperty] private bool _hasMore;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private CollisionItemViewModel? _selectedItem;
-    [ObservableProperty] private CardViewModel? _card;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CardVisible))] private CardViewModel? _card;
 
     [ObservableProperty] private IReadOnlyList<FilterOption> _statusOptions = [];
     [ObservableProperty] private IReadOnlyList<FilterOption> _pairOptions = [];
@@ -237,7 +237,7 @@ public sealed partial class PaneViewModel : ObservableObject
     partial void OnSelectedItemChanged(CollisionItemViewModel? value)
     {
         if (_state is { } state) state.Selected = value?.Row;
-        if (_quiet || value is null) return;
+        if (_quiet || value is null || InMultiSelection(value)) return;
         _ = OpenAsync(value);
     }
 
@@ -339,7 +339,7 @@ public sealed partial class PaneViewModel : ObservableObject
     {
         _version++;
         IsBusy = false;
-        (_state, Model, _documentPath, Card) = (null, null, null, null);
+        (_state, Model, _documentPath, Card, CheckedItems) = (null, null, null, null, []);
         _quiet = true;
         try
         {
@@ -551,6 +551,8 @@ public sealed partial class PaneViewModel : ObservableObject
         {
             if (rebuild)
             {
+                // Строки создаются заново — прежнее выделение к ним не относится.
+                CheckedItems = [];
                 Items.Clear();
                 foreach (var row in state.Items) Items.Add(new CollisionItemViewModel(row, _thumbnails));
             }

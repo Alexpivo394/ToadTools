@@ -77,6 +77,18 @@ internal sealed class FakeClashApi : IClashApi
 
     private Task Act(string action) => Run(() => Actions.Add(action));
 
+    /// <summary>Массовые действия: часть, действие, Id, примечание, сторона.</summary>
+    public List<(Guid Part, string Action, IReadOnlyList<Guid> Ids, string? Note, string? Assignee)> Bulks { get; } = [];
+
+    /// <summary>Ответ на массовое действие; по умолчанию — изменены все.</summary>
+    public Func<IReadOnlyList<Guid>, BulkResult>? BulkAnswer { get; set; }
+
+    public Task<BulkResult> BulkAsync(Guid partId, string action, IReadOnlyList<Guid> ids, string? note, string? assignee, CancellationToken ct) => Run(() =>
+    {
+        Bulks.Add((partId, action, ids, note, assignee));
+        return BulkAnswer?.Invoke(ids) ?? new BulkResult(ids.Count, []);
+    });
+
     private Task<T> Run<T>(Func<T> action) => Fail is { } fail ? Task.FromException<T>(fail) : Task.FromResult(action());
 
     private Task Run(Action action) => Run(() =>

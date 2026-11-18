@@ -19,7 +19,14 @@ public sealed partial class CollisionsPaneView
         PreviewKeyDown += OnPaneKeyDown;
     }
 
-    /// <summary>↑/↓ ведёт модель панели: ниже последней строки она догружает следующую страницу.</summary>
+    /// <summary>Выделение списка — в модель панели: несколько строк дают полосу массовых действий вместо карточки.</summary>
+    private void OnListSelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) =>
+        _viewModel.SetSelection(List.SelectedItems.Cast<CollisionItemViewModel>().ToList());
+
+    /// <summary>
+    ///     ↑/↓ ведёт модель панели: ниже последней строки она догружает следующую страницу. Shift/Ctrl+↑/↓ — обычное
+    ///     расширение выделения списка.
+    /// </summary>
     private async void OnListKeyDown(object sender, KeyEventArgs e)
     {
         var step = e.Key switch
@@ -28,7 +35,7 @@ public sealed partial class CollisionsPaneView
             Key.Up => -1,
             _ => 0
         };
-        if (step == 0) return;
+        if (step == 0 || (Keyboard.Modifiers & (ModifierKeys.Shift | ModifierKeys.Control)) != 0) return;
 
         e.Handled = true;
         // async void: исключение отсюда уронило бы Revit — показывается в панели
