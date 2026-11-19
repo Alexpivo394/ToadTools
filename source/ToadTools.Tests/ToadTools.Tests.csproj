@@ -18,6 +18,7 @@
         <PackageReference Include="Shouldly"/>
         <PackageReference Include="CommunityToolkit.Mvvm"/>
         <PackageReference Include="Newtonsoft.Json"/>
+        <PackageReference Include="EPPlus"/>
         <PackageReference Include="System.Security.Cryptography.ProtectedData"/>
     </ItemGroup>
 
@@ -31,6 +32,11 @@
         <Compile Include="..\ToadTools.Connection\ViewModels\**\*.cs" Link="Linked\ConnectionViewModels\%(RecursiveDir)%(Filename)%(Extension)"/>
         <Compile Include="..\Collisions\Core\**\*.cs" Link="Linked\Collisions\%(RecursiveDir)%(Filename)%(Extension)"/>
         <Compile Include="..\Collisions\ViewModels\**\*.cs" Link="Linked\CollisionsViewModels\%(RecursiveDir)%(Filename)%(Extension)"/>
+        <Compile Include="..\ClassifierCode\Engine\**\*.cs" Link="Linked\ClassifierCode\Engine\%(RecursiveDir)%(Filename)%(Extension)"/>
+        <Compile Include="..\ClassifierCode\Editor\**\*.cs" Link="Linked\ClassifierCode\Editor\%(RecursiveDir)%(Filename)%(Extension)"/>
+        <Compile Include="..\ClassifierCode\Models\RunScope.cs" Link="Linked\ClassifierCode\RunScope.cs"/>
+        <Compile Include="..\ClassifierCode.Check\CheckCli.cs" Link="Linked\ClassifierCode\Check\CheckCli.cs"/>
+        <Compile Include="..\ClassifierCode.Check\XlsxRows.cs" Link="Linked\ClassifierCode\Check\XlsxRows.cs"/>
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
@@ -41,6 +47,8 @@
     <!-- Ответы сервера ToadFlow (задача 3 этапа 7), снятые с живого маршрута -->
     <ItemGroup>
         <None Include="TestData\**\*.json" CopyToOutputDirectory="PreserveNewest"/>
+        <None Include="..\ClassifierCode\Profiles\Builtin\*.json" Link="TestData\ClassifierCode\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest"/>
+        <None Include="..\ClassifierCode\AiKit\*" Link="TestData\ClassifierCode\AiKit\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest"/>
     </ItemGroup>
 
 </Project>

@@ -14,11 +14,17 @@ public sealed partial class ClassifierReportViewModel : ObservableObject
 
     public event EventHandler? CloseRequested;
 
+    /// <summary>Открыть редактор профиля на вкладке «Проверка» с этими элементами.</summary>
+    public event EventHandler<IReadOnlyList<ElementId>>? InspectRequested;
+
+    [RelayCommand]
+    private void Inspect() => InspectRequested?.Invoke(this, _problemIds.Take(50).ToList());
+
     public ClassifierReportViewModel(ClassifierReport report)
     {
         _problemIds = report.ProblemIds;
         Summary = BuildSummary(report);
-        Mode = "Режим: " + report.Section.Mode;
+        Mode = "Профиль: " + report.ProfileName + " " + report.ProfileVersion + Environment.NewLine + "Режим: " + report.ReportMode;
         Details = BuildDetails(report);
     }
 
@@ -59,7 +65,7 @@ public sealed partial class ClassifierReportViewModel : ObservableObject
             rows.Add(new ReportRow("Пропущено (" + pair.Key + ")", pair.Value.ToString()));
         rows.Add(new ReportRow("Не классифицировано", report.Unclassified.Count.ToString()));
         if (report.MissingParameters.Count > 0)
-            rows.Add(new ReportRow("Нет параметров ADSK", report.MissingParameters.Count.ToString()));
+            rows.Add(new ReportRow("Нет параметров для записи", report.MissingParameters.Count.ToString()));
         if (report.Busy > 0)
             rows.Add(new ReportRow("Заняты другими пользователями", report.Busy.ToString()));
         if (report.TypeConflicts.Count > 0)

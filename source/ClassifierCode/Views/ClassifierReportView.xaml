@@ -77,6 +77,12 @@
         </Grid>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="20,14,20,18">
+            <toad:Button Content="Почему так?"
+                       Icon="ListCheck"
+                       ToolTip="Редактор профиля на вкладке «Проверка» с необработанными элементами (до 50)"
+                       Command="{Binding InspectCommand}"
+                       Visibility="{Binding HasProblems, Converter={uiConverters:BooleanCollapsedVisibilityConverter}}"
+                       Margin="10,0,0,0" />
             <toad:Button Content="{Binding SelectProblemsLabel}"
                        Icon="Click"
                        Command="{Binding SelectProblemsCommand}"

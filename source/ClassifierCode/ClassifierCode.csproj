@@ -2,10 +2,25 @@
 
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.Mvvm"/>
+        <PackageReference Include="Newtonsoft.Json"/>
+        <PackageReference Include="EPPlus"/>
+        <!-- Выгрузка для ИИ открывает модели с Revit Server и из папок так же, как ToadExporter -->
+        <PackageReference Include="Alexpivo394.Revit.Export"/>
+    </ItemGroup>
+
+    <!-- HttpClient для REST API Revit Server; на .NET входит в рантайм -->
+    <ItemGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))' == '.NETFramework'">
+        <Reference Include="System.Net.Http"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="Profiles\Builtin\*.classifier.json"/>
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\ToadTools.UI\ToadTools.UI.csproj"/>
+        <!-- Дерево моделей источника (Revit Server / папка) -->
+        <ProjectReference Include="..\ToadExporter\ToadExporter.csproj"/>
     </ItemGroup>
 
 </Project>

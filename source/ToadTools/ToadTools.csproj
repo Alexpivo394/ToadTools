@@ -18,6 +18,24 @@
       <Resource Include="Resources\Icons\*.png" />
     </ItemGroup>
 
+    <!-- Набор для ИИ-агента классификатора: инструкции и проверялка check.exe (net48, без Revit) → ToadTools\ClassifierCode\AiKit -->
+    <ItemGroup>
+      <Content Include="..\ClassifierCode\AiKit\**" PublishDirectory="ClassifierCode\AiKit" CopyToPublishDirectory="PreserveNewest" />
+    </ItemGroup>
+
+    <Target Name="BuildClassifierCheck" BeforeTargets="PublishAddin" Condition="'$(PublishAddin)' == 'true'">
+      <!-- Проект проверялки не собирается решением, поэтому и restore решения его не трогает: восстанавливаем сами.
+           Своё глобальное свойство — чтобы Build после Restore перечитал проект с восстановленными пакетами. -->
+      <MSBuild Projects="..\ClassifierCode.Check\ClassifierCode.Check.csproj" Targets="Restore" Properties="Configuration=Release;ClassifierCheckRestore=true" RemoveProperties="RevitVersion;TargetFramework" />
+      <MSBuild Projects="..\ClassifierCode.Check\ClassifierCode.Check.csproj" Targets="Build" Properties="Configuration=Release" RemoveProperties="RevitVersion;TargetFramework">
+        <Output TaskParameter="TargetOutputs" ItemName="_ClassifierCheckOutput" />
+      </MSBuild>
+      <ItemGroup>
+        <_ClassifierCheckFiles Include="%(_ClassifierCheckOutput.RootDir)%(_ClassifierCheckOutput.Directory)*.dll;%(_ClassifierCheckOutput.RootDir)%(_ClassifierCheckOutput.Directory)*.exe;%(_ClassifierCheckOutput.RootDir)%(_ClassifierCheckOutput.Directory)*.exe.config" />
+        <Content Include="@(_ClassifierCheckFiles)" PublishDirectory="ClassifierCode\AiKit\check" CopyToPublishDirectory="PreserveNewest" />
+      </ItemGroup>
+    </Target>
+
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
         <PackageReference Include="Microsoft.Extensions.Hosting"/>

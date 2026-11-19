@@ -1,0 +1,261 @@
+<toad:ToadWindow
+    x:Class="ClassifierCode.Views.AiExportView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:toad="urn:toaddesign"
+    xmlns:viewModels="clr-namespace:ClassifierCode.ViewModels"
+    xmlns:tree="clr-namespace:ToadExporter.ViewModels.Tree;assembly=ToadExporter"
+    xmlns:exporterViews="clr-namespace:ToadExporter.Views;assembly=ToadExporter"
+    xmlns:uiConverters="clr-namespace:ToadTools.UI.Converters;assembly=ToadTools.UI"
+    d:DataContext="{d:DesignInstance Type=viewModels:AiExportViewModel}"
+    mc:Ignorable="d"
+    Title="Выгрузка для ИИ"
+    WindowStartupLocation="CenterOwner"
+    Height="760"
+    Width="980"
+    MinHeight="560"
+    MinWidth="800"
+    TitleIcon="FileExport">
+
+    <toad:ToadWindow.Resources>
+        <Style x:Key="ModelTreeItem" TargetType="TreeViewItem">
+            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+            <Setter Property="Visibility" Value="{Binding IsVisible, Converter={uiConverters:BooleanCollapsedVisibilityConverter}}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TreeViewItem">
+                        <StackPanel>
+                            <Border x:Name="Row" Background="Transparent" CornerRadius="4" Padding="0,1"
+                                    TextElement.Foreground="{DynamicResource Toad.Brush.Text}">
+                                <ContentPresenter ContentSource="Header" />
+                            </Border>
+                            <ItemsPresenter x:Name="ItemsHost" Visibility="Collapsed" />
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsExpanded" Value="True">
+                                <Setter TargetName="ItemsHost" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                            <Trigger SourceName="Row" Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Row" Property="Background" Value="{DynamicResource Toad.Brush.Hover}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </toad:ToadWindow.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="1" Margin="16,4,16,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" Margin="4,0,0,10" Opacity="0.75" TextWrapping="Wrap"
+                       Text="Модели объекта выгружаются в рабочую папку вместе с набором для ИИ-агента. Модели открываются отсоединёнными без связей и закрываются без сохранения — исходники не меняются. Модель с сервера открывается несколько минут: большой объект удобно ставить утром." />
+
+            <!-- Источник -->
+            <toad:Card Grid.Row="1" Margin="0,0,0,10" Padding="12,8">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Источник" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,12,0" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,12,0">
+                        <RadioButton Content="Revit Server" IsChecked="{Binding IsServerMode}" VerticalAlignment="Center" />
+                        <RadioButton Content="Папка" IsChecked="{Binding IsFolderMode}" Margin="12,0,0,0" VerticalAlignment="Center" />
+                        <RadioButton Content="Открытая модель" IsChecked="{Binding IsCurrentMode}" Margin="12,0,0,0" VerticalAlignment="Center" />
+                    </StackPanel>
+
+                    <Grid Grid.Column="2" Visibility="{Binding IsServerMode, Converter={uiConverters:BooleanCollapsedVisibilityConverter}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ComboBox IsEditable="True" ItemsSource="{Binding Servers}"
+                                  Text="{Binding Server, UpdateSourceTrigger=LostFocus}"
+                                  ToolTip="Серверы из RSN.ini; имя можно вписать вручную" />
+                        <TextBlock Grid.Column="1" Text="{Binding ServerVersionText}" Opacity="0.7" VerticalAlignment="Center" Margin="10,0" />
+                        <toad:Button Grid.Column="2" Icon="Refresh" ToolTip="Обновить" VerticalAlignment="Stretch" Command="{Binding ReloadCommand}" />
+                    </Grid>
+
+                    <Grid Grid.Column="2" Visibility="{Binding IsFolderMode, Converter={uiConverters:BooleanCollapsedVisibilityConverter}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <toad:TextBox Placeholder="Папка с моделями" Text="{Binding SourceFolder, UpdateSourceTrigger=LostFocus}" />
+                        <toad:Button Grid.Column="1" Content="Обзор" Icon="FolderOpen" Margin="8,0,0,0" VerticalAlignment="Stretch"
+                                     Command="{Binding BrowseSourceCommand}" />
+                        <toad:Button Grid.Column="2" Icon="Refresh" Margin="8,0,0,0" VerticalAlignment="Stretch" ToolTip="Обновить"
+                                     Command="{Binding ReloadCommand}" />
+                    </Grid>
+
+                    <TextBlock Grid.Column="2" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                               Text="{Binding CurrentTitle}"
+                               Visibility="{Binding IsCurrentMode, Converter={uiConverters:BooleanCollapsedVisibilityConverter}}" />
+                </Grid>
+            </toad:Card>
+
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="340" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Модели -->
+                <Grid Grid.Column="0" Visibility="{Binding ShowsTree, Converter={uiConverters:BooleanCollapsedVisibilityConverter}}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0" Margin="10,0,0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Модели всех разделов объекта" FontWeight="Bold" VerticalAlignment="Center" />
+                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                            <toad:Button Content="Все" Variant="Subtle" Command="{Binding SelectAllCommand}" />
+                            <toad:Button Content="Снять все" Variant="Subtle" Command="{Binding ClearAllCommand}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <toad:Card Grid.Row="1" Padding="0" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <toad:TextBox Grid.Row="0" Margin="8" Placeholder="Поиск по имени модели" Icon="Search"
+                                          Text="{Binding Tree.SearchText, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <toad:Alert Grid.Row="1" Margin="8,0,8,8" Severity="Error" IsClosable="False"
+                                        Title="Не удалось загрузить" Content="{Binding Tree.Error}"
+                                        IsOpen="{Binding Tree.HasError, Mode=OneWay}" />
+
+                            <TreeView Grid.Row="2" Margin="4,2,0,4" Padding="0"
+                                      Background="Transparent" BorderThickness="0"
+                                      ItemsSource="{Binding Tree.Roots}"
+                                      ItemContainerStyle="{StaticResource ModelTreeItem}"
+                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                      VirtualizingPanel.IsVirtualizing="True">
+                                <TreeView.ItemTemplate>
+                                    <HierarchicalDataTemplate DataType="{x:Type tree:TreeNodeViewModel}"
+                                                              ItemsSource="{Binding Children}"
+                                                              ItemContainerStyle="{StaticResource ModelTreeItem}">
+                                        <Grid Margin="8,0,8,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="40" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Orientation="Horizontal"
+                                                        Margin="{Binding Depth, Converter={exporterViews:DepthIndentConverter}}">
+                                                <ToggleButton Width="22" Height="22" Padding="0" MinWidth="0"
+                                                              Background="Transparent" BorderThickness="0"
+                                                              IsChecked="{Binding IsExpanded}"
+                                                              Visibility="{Binding IsFolder, Converter={uiConverters:BooleanHiddenVisibilityConverter}}">
+                                                    <toad:Icon Width="12" Height="12">
+                                                        <toad:Icon.Style>
+                                                            <Style TargetType="toad:Icon">
+                                                                <Setter Property="Symbol" Value="ChevronRight" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsExpanded}" Value="True">
+                                                                        <Setter Property="Symbol" Value="ChevronDown" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </toad:Icon.Style>
+                                                    </toad:Icon>
+                                                </ToggleButton>
+                                                <toad:Icon Margin="2,0,6,0" Width="16" Height="16" Opacity="0.8">
+                                                    <toad:Icon.Style>
+                                                        <Style TargetType="toad:Icon">
+                                                            <Setter Property="Symbol" Value="Cube" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsFolder}" Value="True">
+                                                                    <Setter Property="Symbol" Value="Folder" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IsPlaceholder}" Value="True">
+                                                                    <Setter Property="Symbol" Value="Refresh" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </toad:Icon.Style>
+                                                </toad:Icon>
+                                                <TextBlock Text="{Binding Name}" ToolTip="{Binding Name}" VerticalAlignment="Center"
+                                                           TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                            <CheckBox Grid.Column="1" MinWidth="0" HorizontalAlignment="Center"
+                                                      IsThreeState="False" IsChecked="{Binding Rvt}"
+                                                      Visibility="{Binding IsPlaceholder, Converter={uiConverters:InverseBooleanHiddenVisibilityConverter}}" />
+                                        </Grid>
+                                    </HierarchicalDataTemplate>
+                                </TreeView.ItemTemplate>
+                            </TreeView>
+
+                            <StackPanel Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                        Visibility="{Binding HasModels, Converter={uiConverters:InverseBooleanCollapsedVisibilityConverter}}">
+                                <toad:Loader Width="28" Height="28" Margin="0,0,0,8"
+                                             Visibility="{Binding Tree.IsLoading, Converter={uiConverters:BooleanCollapsedVisibilityConverter}}" />
+                                <TextBlock Text="{Binding EmptyText}" Opacity="0.7" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Grid>
+                    </toad:Card>
+                </Grid>
+
+                <!-- Объект -->
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="Объект" FontWeight="Bold" Margin="10,0,0,5" />
+                    <toad:Card Padding="12,8" Margin="0,0,0,8">
+                        <StackPanel>
+                            <TextBlock Text="Название" Opacity="0.8" Margin="0,0,0,4" />
+                            <toad:TextBox Placeholder="Например: ЖК Новый" Text="{Binding ObjectName, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Text="Рабочая папка" Opacity="0.8" Margin="0,10,0,4" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <toad:TextBox Text="{Binding Folder, UpdateSourceTrigger=LostFocus}" />
+                                <toad:Button Grid.Column="1" Icon="FolderOpen" Margin="8,0,0,0" VerticalAlignment="Stretch"
+                                             ToolTip="Обзор" Command="{Binding BrowseFolderCommand}" />
+                            </Grid>
+                            <TextBlock Margin="0,6,0,0" Opacity="0.7" FontSize="12" TextWrapping="Wrap"
+                                       Text="Повторная выгрузка обновляет модели и набор, но не трогает работу агента (work, profile.classifier.json, REVIEW.md)" />
+                            <TextBlock Text="Профиль-основа" Opacity="0.8" Margin="0,10,0,4" />
+                            <ComboBox ItemsSource="{Binding Profiles}" SelectedItem="{Binding BaseProfile}" DisplayMemberPath="Title" />
+                            <TextBlock Margin="0,6,0,0" Opacity="0.7" FontSize="12" TextWrapping="Wrap"
+                                       Text="Агент собирает профиль объекта из этого: берёт его правила и меняет под модели и таблицу кодов заказчика" />
+                        </StackPanel>
+                    </toad:Card>
+                </StackPanel>
+            </Grid>
+        </Grid>
+
+        <!-- Подвал -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="16,14,16,16">
+            <toad:Button Content="Открыть папку" Icon="FolderOpen" Margin="0,0,8,0"
+                         IsEnabled="{Binding HasLastFolder}" Command="{Binding OpenLastFolderCommand}" />
+            <toad:Button Content="{Binding ExportText}" Icon="FileExport" Variant="Filled" Command="{Binding ExportCommand}" />
+        </StackPanel>
+    </Grid>
+</toad:ToadWindow>

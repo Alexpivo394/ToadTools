@@ -8,47 +8,96 @@
     xmlns:themes="clr-namespace:ToadTools.UI.Services;assembly=ToadTools.UI"
     xmlns:viewModels="clr-namespace:ClassifierCode.ViewModels"
     xmlns:models="clr-namespace:ClassifierCode.Models"
+    xmlns:profile="clr-namespace:ClassifierCode.Engine.Profile"
     xmlns:converters="clr-namespace:ClassifierCode.Converters"
     xmlns:uiConverters="clr-namespace:ToadTools.UI.Converters;assembly=ToadTools.UI"
     d:DataContext="{d:DesignInstance Type=viewModels:ClassifierCodeViewModel}"
     mc:Ignorable="d"
     Title="Код по классификатору"
     WindowStartupLocation="CenterScreen"
-    Height="680"
+    Height="700"
     Width="640"
-    MinHeight="560"
+    MinHeight="580"
     MinWidth="560"
     TitleIcon="Tag">
+
+    <toad:ToadWindow.Resources>
+        <Style x:Key="SectionHeader" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+        </Style>
+    </toad:ToadWindow.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <!-- Title Bar -->
 
         <!-- Content -->
-        <Grid Grid.Row="1" Margin="20,6,20,18">
+        <Grid Grid.Row="1" Margin="20,4,20,0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <TextBlock Grid.Row="0"
-                       Margin="10,0,0,10"
-                       Opacity="0.7"
-                       TextTrimming="CharacterEllipsis"
-                       Text="{Binding DocumentTitle, StringFormat=Документ: {0}}" />
-
-            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
-                <TextBlock Text="Раздел модели" FontWeight="Bold" />
-                <TextBlock Text=" (определён по имени файла)"
+            <!-- Документ и профиль -->
+            <StackPanel Grid.Row="0">
+                <TextBlock Margin="0,0,0,12"
                            Opacity="0.7"
+                           TextTrimming="CharacterEllipsis"
+                           Text="{Binding DocumentTitle, StringFormat=Документ: {0}}" />
+
+                <TextBlock Text="Профиль" Style="{StaticResource SectionHeader}" />
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ComboBox ItemsSource="{Binding Profiles}"
+                              SelectedItem="{Binding SelectedProfile, Mode=TwoWay}"
+                              DisplayMemberPath="Title"
+                              ToolTip="Классификатор и правила объекта" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <toad:Button Margin="8,0,0,0"
+                                     Content="Настроить…"
+                                     Icon="Settings"
+                                     Command="{Binding ConfigureCommand}" />
+                        <toad:Button Margin="4,0,0,0" Icon="FileImport" Variant="Subtle" ToolTip="Импорт профиля из файла"
+                                     Command="{Binding ImportCommand}" />
+                        <toad:Button Margin="2,0,0,0" Icon="Folder" Variant="Subtle" ToolTip="Общие папки профилей"
+                                     Command="{Binding FoldersCommand}" />
+                        <!-- Инструмент координатора — среди инструментов профиля, подальше от «Заполнить» -->
+                        <toad:Button Margin="2,0,0,0" Icon="Robot" Variant="Subtle"
+                                     ToolTip="Выгрузка для ИИ — для координатора: выгрузить модели объекта, чтобы ИИ-агент собрал профиль. Проектировщикам не нужна"
+                                     Command="{Binding AiExportCommand}" />
+                    </StackPanel>
+                </Grid>
+
+                <toad:Alert Margin="0,0,0,10"
+                            Severity="Warning"
+                            IsClosable="False"
+                            Content="{Binding Warning}"
+                            IsOpen="{Binding HasWarning, Mode=OneWay}" />
+
+                <toad:Button Margin="0,0,0,10"
+                             HorizontalAlignment="Left"
+                             Variant="Subtle"
+                             Icon="AlertTriangle"
+                             Content="{Binding IssuesLabel}"
+                             Command="{Binding OpenIssuesCommand}"
+                             Visibility="{Binding HasIssues, Converter={uiConverters:BooleanCollapsedVisibilityConverter}}" />
+            </StackPanel>
+
+            <!-- Раздел -->
+            <StackPanel Grid.Row="1" Orientation="Horizontal">
+                <TextBlock Text="Раздел модели" Style="{StaticResource SectionHeader}" />
+                <TextBlock Text=" — определён по имени файла"
+                           Opacity="0.7"
+                           Margin="0,0,0,6"
                            Visibility="{Binding IsSectionDetected, Converter={uiConverters:BooleanCollapsedVisibilityConverter}}" />
             </StackPanel>
 
@@ -57,48 +106,60 @@
                      SelectedItem="{Binding SelectedSection, Mode=TwoWay}"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                 <ListBox.ItemTemplate>
-                    <DataTemplate DataType="{x:Type models:SectionOption}">
-                        <StackPanel Margin="0,2">
+                    <DataTemplate DataType="{x:Type profile:ModeDef}">
+                        <StackPanel Margin="0,3">
                             <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
-                            <TextBlock Text="{Binding Hint}" FontSize="12" Opacity="0.7" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding Hint}" FontSize="12" Opacity="0.7" TextWrapping="Wrap" Margin="0,2,0,0" />
                         </StackPanel>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
 
-            <TextBlock Grid.Row="3" Text="Область" FontWeight="SemiBold" Margin="0,10,0,6" />
+            <!-- Область и запись -->
+            <Grid Grid.Row="3" Margin="0,14,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
 
-            <StackPanel Grid.Row="4" Margin="0,0,0,0">
-                <RadioButton GroupName="Scope"
-                             Content="Вся модель"
-                             IsChecked="{Binding Scope, Converter={converters:EnumRadioConverter}, ConverterParameter={x:Static models:RunScope.Model}}" />
-                <RadioButton GroupName="Scope"
-                             Content="Элементы на активном виде"
-                             IsChecked="{Binding Scope, Converter={converters:EnumRadioConverter}, ConverterParameter={x:Static models:RunScope.ActiveView}}" />
-                <RadioButton GroupName="Scope"
-                             Content="{Binding SelectionLabel}"
-                             IsEnabled="{Binding HasSelection}"
-                             IsChecked="{Binding Scope, Converter={converters:EnumRadioConverter}, ConverterParameter={x:Static models:RunScope.Selection}}" />
-            </StackPanel>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="Область" Style="{StaticResource SectionHeader}" Margin="0,0,0,8" />
+                    <RadioButton GroupName="Scope" Margin="0,0,0,8"
+                                 Content="Вся модель"
+                                 IsChecked="{Binding Scope, Converter={converters:EnumRadioConverter}, ConverterParameter={x:Static models:RunScope.Model}}" />
+                    <RadioButton GroupName="Scope" Margin="0,0,0,8"
+                                 Content="Элементы на активном виде"
+                                 IsChecked="{Binding Scope, Converter={converters:EnumRadioConverter}, ConverterParameter={x:Static models:RunScope.ActiveView}}" />
+                    <RadioButton GroupName="Scope"
+                                 Margin="0"
+                                 Content="{Binding SelectionLabel}"
+                                 IsEnabled="{Binding HasSelection}"
+                                 IsChecked="{Binding Scope, Converter={converters:EnumRadioConverter}, ConverterParameter={x:Static models:RunScope.Selection}}" />
+                </StackPanel>
 
-            <CheckBox Grid.Row="5"
-                      Margin="10,10,0,0"
-                      Content="Не перезаписывать уже заполненные значения"
-                      IsChecked="{Binding KeepExisting, Mode=TwoWay}" />
-
-            <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
-                <toad:Button Content="Заполнить"
-                           Icon="Rocket"
-                           Command="{Binding StartCommand}"
-                           Variant="Filled"
-                           Margin="10,0,0,0" />
-            </StackPanel>
+                <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                    <TextBlock Text="Запись" Style="{StaticResource SectionHeader}" Margin="0,0,0,8" />
+                    <CheckBox IsChecked="{Binding KeepExisting, Mode=TwoWay}" VerticalContentAlignment="Top"
+                              ToolTip="Элементы, у которых код уже есть, останутся как были">
+                        <TextBlock Text="Не перезаписывать уже заполненные значения" TextWrapping="Wrap" />
+                    </CheckBox>
+                </StackPanel>
+            </Grid>
         </Grid>
 
-        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Bottom"
-                    Margin="20,0,0,18" Height="{DynamicResource Toad.Size.Control}">
+        <!-- Подвал -->
+        <Grid Grid.Row="2" Margin="20,18,20,18">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
             <toad:Switch Content="Тёмная тема" VerticalAlignment="Center"
-                         IsChecked="{Binding IsDark, Source={x:Static themes:ThemePreference.Instance}}"/>
-        </StackPanel>
+                         IsChecked="{Binding IsDark, Source={x:Static themes:ThemePreference.Instance}}" />
+            <toad:Button Grid.Column="1"
+                         Content="Заполнить"
+                         Icon="Rocket"
+                         Command="{Binding StartCommand}"
+                         Variant="Filled" />
+        </Grid>
     </Grid>
 </toad:ToadWindow>

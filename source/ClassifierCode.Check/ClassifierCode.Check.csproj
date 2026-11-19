@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- Проверялка профилей для ИИ-агента: тот же движок, что в плагине, без Revit. .NET Framework 4.8 есть на любой Windows. -->
+    <PropertyGroup>
+        <TargetFramework>net48</TargetFramework>
+        <OutputType>Exe</OutputType>
+        <AssemblyName>check</AssemblyName>
+        <RootNamespace>ClassifierCode.Check</RootNamespace>
+        <UseWPF>false</UseWPF>
+        <RevitVersion>2027</RevitVersion>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Remove="Nice3point.Revit.Toolkit;Nice3point.Revit.Extensions;Nice3point.Revit.Api.RevitAPI;Nice3point.Revit.Api.RevitAPIUI"/>
+        <PackageReference Include="Newtonsoft.Json"/>
+        <PackageReference Include="EPPlus"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Include="..\ClassifierCode\Engine\**\*.cs" Link="Engine\%(RecursiveDir)%(Filename)%(Extension)"/>
+    </ItemGroup>
+
+</Project>

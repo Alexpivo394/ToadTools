@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 namespace ToadExporter.Services;
 
-internal static class FolderPicker
+public static class FolderPicker
 {
     private const int ErrorCancelled = unchecked((int)0x800704C7);
 

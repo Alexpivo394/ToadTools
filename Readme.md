@@ -56,7 +56,7 @@
 | | [Умные выноски](https://github.com/Alexpivo394/ToadTools/wiki/SmartTags) | Расставляет марки на виде без пересечений текста и выносок |
 | | [Запись количества](https://github.com/Alexpivo394/ToadTools/wiki/QuantityCheck) | Заполняет количество: штучным — 1, линейным — длину с запасом |
 | | [Запись прочерков](https://github.com/Alexpivo394/ToadTools/wiki/WriteDash) | Ставит прочерк в пустые параметры, чтобы в спецификации не было дыр |
-| | [Код классификатора](https://github.com/Alexpivo394/ToadTools/wiki/ClassifierCode) | Заполняет код и описание по классификатору у элементов инженерных систем |
+| | [Код классификатора](https://github.com/Alexpivo394/ToadTools/wiki/ClassifierCode) | Заполняет код и описание по классификатору у элементов инженерных систем. Классификатор, параметры и правила — в профиле объекта, который настраивается в редакторе |
 | | [Длина элементов](https://github.com/Alexpivo394/ToadTools/wiki/Length) | Показывает суммарную длину выделенного |
 | | [Создание пространств](https://github.com/Alexpivo394/ToadTools/wiki/CreateSpaces) | Создаёт пространства по помещениям из связи АР |
 | **Лотки** | [Кабельные лотки](https://github.com/Alexpivo394/ToadTools/wiki/CableTrays) | Пишет артикулы и наименования, красит лотки по типу, исполнению и крышкам |

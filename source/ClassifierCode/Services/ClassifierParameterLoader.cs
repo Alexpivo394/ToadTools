@@ -1,5 +1,5 @@
 using System.IO;
-using ClassifierCode.Models;
+using ClassifierCode.Engine.Profile;
 using Microsoft.Win32;
 using ToadTools.UI.Models;
 using ToadTools.UI.Services;
@@ -8,14 +8,16 @@ using RevitApplication = Autodesk.Revit.ApplicationServices.Application;
 namespace ClassifierCode.Services;
 
 /// <summary>
-///     Готовит в проекте параметры "ADSK_Код по классификатору" и "ADSK_Описание по классификатору"
-///     для всех категорий <see cref="ClassifierCategories" />:
+///     Готовит в проекте параметры записи профиля для всех его категорий:
 ///     отсутствующие параметры добавляет из ФОП, подключённого к Revit, а если там их нет — из ФОП,
 ///     выбранного пользователем (привязка экземпляра); к уже привязанным параметрам добавляет недостающие
 ///     категории, сохраняя тип привязки и уже привязанные категории.
+///     Параметр ищется по GUID общего параметра, если он задан в профиле, иначе по имени.
 /// </summary>
-public sealed class ClassifierParameterLoader(RevitApplication app, Document doc)
+public sealed class ClassifierParameterLoader(RevitApplication app, Document doc, IReadOnlyList<OutputField> outputs, IReadOnlyList<BuiltInCategory> categories)
 {
+    private readonly List<OutputField> _outputs = outputs.Where(o => !string.IsNullOrWhiteSpace(o.Parameter)).ToList();
+
     /// <summary>
     ///     true — параметры есть во всех категориях (или успешно добавлены), false — пользователь отменил
     ///     или добавить не удалось (причина уже показана). note — что было сделано, для отчёта.
@@ -25,7 +27,7 @@ public sealed class ClassifierParameterLoader(RevitApplication app, Document doc
         note = null;
         var notes = new List<string>();
 
-        var missing = ClassifierParameters.All.Where(name => FindBinding(name) == null).ToList();
+        var missing = _outputs.Where(output => FindBinding(output) == null).ToList();
         if (missing.Count > 0)
         {
             if (!AddMissingParameters(missing, out var addedNote))
@@ -50,8 +52,10 @@ public sealed class ClassifierParameterLoader(RevitApplication app, Document doc
         return true;
     }
 
+    private static string Names(IEnumerable<OutputField> outputs) => string.Join(", ", outputs.Select(o => "\"" + o.Parameter + "\""));
+
     /// <summary>Добавляет отсутствующие параметры из ФОП и привязывает их ко всем категориям.</summary>
-    private bool AddMissingParameters(List<string> missing, out string? note)
+    private bool AddMissingParameters(List<OutputField> missing, out string? note)
     {
         note = null;
         var originalFile = app.SharedParametersFilename;
@@ -62,9 +66,8 @@ public sealed class ClassifierParameterLoader(RevitApplication app, Document doc
             if (definitions == null)
                 return false;
 
-            Bind(definitions.Values);
-            note = "В проект добавлены параметры " + string.Join(", ", missing.Select(n => "\"" + n + "\"")) +
-                   " из ФОП: " + usedFile;
+            Bind(definitions);
+            note = "В проект добавлены параметры " + Names(missing) + " из ФОП: " + usedFile;
             return true;
         }
         catch (Exception ex)
@@ -86,9 +89,9 @@ public sealed class ClassifierParameterLoader(RevitApplication app, Document doc
     {
         var targetCategories = GetTargetCategories();
         var changes = new List<(Definition Definition, ElementBinding Binding, List<Category> Added)>();
-        foreach (var name in ClassifierParameters.All)
+        foreach (var output in _outputs)
         {
-            if (FindBinding(name) is not { Binding: ElementBinding binding } found)
+            if (FindBinding(output) is not { Binding: ElementBinding binding } found)
                 continue;
 
             var boundIds = new HashSet<ElementId>();
@@ -107,15 +110,15 @@ public sealed class ClassifierParameterLoader(RevitApplication app, Document doc
         transaction.Start();
         foreach (var change in changes)
         {
-            var categories = app.Create.NewCategorySet();
+            var categorySet = app.Create.NewCategorySet();
             foreach (Category category in change.Binding.Categories)
-                categories.Insert(category);
+                categorySet.Insert(category);
             foreach (var category in change.Added)
-                categories.Insert(category);
+                categorySet.Insert(category);
 
             ElementBinding extended = change.Binding is TypeBinding
-                ? app.Create.NewTypeBinding(categories)
-                : app.Create.NewInstanceBinding(categories);
+                ? app.Create.NewTypeBinding(categorySet)
+                : app.Create.NewInstanceBinding(categorySet);
             if (!doc.ParameterBindings.ReInsert(change.Definition, extended))
                 throw new InvalidOperationException("Revit не принял привязку параметра \"" + change.Definition.Name + "\".");
         }
@@ -130,23 +133,27 @@ public sealed class ClassifierParameterLoader(RevitApplication app, Document doc
         return "К параметрам классификатора добавлены категории: " + string.Join(", ", addedNames) + ".";
     }
 
-    /// <summary>Привязка параметра проекта по имени; null — параметра в проекте нет.</summary>
-    private (Definition Definition, Binding Binding)? FindBinding(string name)
+    /// <summary>Привязка параметра проекта; null — параметра в проекте нет.</summary>
+    private (Definition Definition, Binding Binding)? FindBinding(OutputField output)
     {
+        if (output.Guid is { } guid && SharedParameterElement.Lookup(doc, guid)?.GetDefinition() is { } shared &&
+            doc.ParameterBindings.get_Item(shared) is { } sharedBinding)
+            return (shared, sharedBinding);
+
         var iterator = doc.ParameterBindings.ForwardIterator();
         while (iterator.MoveNext())
         {
-            if (iterator.Key != null && iterator.Key.Name == name)
+            if (iterator.Key != null && iterator.Key.Name == output.Parameter)
                 return (iterator.Key, (Binding)iterator.Current);
         }
 
         return null;
     }
 
-    /// <summary>Категории плагина, которые есть в документе и допускают параметры проекта.</summary>
+    /// <summary>Категории профиля, которые есть в документе и допускают параметры проекта.</summary>
     private List<Category> GetTargetCategories()
     {
-        return ClassifierCategories.All
+        return categories
             .Select(builtIn => Category.GetCategory(doc, builtIn))
             .Where(category => category != null && category.AllowsBoundParameters)
             .ToList();
@@ -158,7 +165,7 @@ public sealed class ClassifierParameterLoader(RevitApplication app, Document doc
     }
 
     /// <summary>ФОП, подключённый в настройках Revit. null — файла нет или в нём нет нужных параметров.</summary>
-    private Dictionary<string, ExternalDefinition>? FindInConnectedFile(List<string> names, out string? usedFile)
+    private List<ExternalDefinition>? FindInConnectedFile(List<OutputField> missing, out string? usedFile)
     {
         usedFile = app.SharedParametersFilename;
         if (string.IsNullOrEmpty(usedFile) || !File.Exists(usedFile))
@@ -166,7 +173,7 @@ public sealed class ClassifierParameterLoader(RevitApplication app, Document doc
 
         try
         {
-            return FindDefinitions(app.OpenSharedParameterFile(), names);
+            return FindDefinitions(app.OpenSharedParameterFile(), missing);
         }
         catch (Autodesk.Revit.Exceptions.ApplicationException)
         {
@@ -175,7 +182,7 @@ public sealed class ClassifierParameterLoader(RevitApplication app, Document doc
     }
 
     /// <summary>Просит пользователя выбрать ФОП, пока не найдутся параметры или пользователь не откажется.</summary>
-    private Dictionary<string, ExternalDefinition>? FindInUserFile(List<string> names, string? connectedFile, out string? usedFile)
+    private List<ExternalDefinition>? FindInUserFile(List<OutputField> missing, string? connectedFile, out string? usedFile)
     {
         usedFile = null;
         var hasConnectedFile = !string.IsNullOrEmpty(connectedFile) && File.Exists(connectedFile);
@@ -186,9 +193,9 @@ public sealed class ClassifierParameterLoader(RevitApplication app, Document doc
         while (true)
         {
             var answer = ToadDialogService.Show(
-                "В проекте нет параметров классификатора",
+                "В проекте нет параметров для записи кода",
                 reason + Environment.NewLine + Environment.NewLine +
-                "Нужны: " + string.Join(", ", names.Select(n => "\"" + n + "\"")) + "." + Environment.NewLine +
+                "Нужны: " + Names(missing) + "." + Environment.NewLine +
                 "Нажмите OK, чтобы указать ФОП, в котором они есть.",
                 DialogButtons.OKCancel,
                 DialogIcon.Warning);
@@ -223,7 +230,7 @@ public sealed class ClassifierParameterLoader(RevitApplication app, Document doc
                 continue;
             }
 
-            var definitions = FindDefinitions(file, names);
+            var definitions = FindDefinitions(file, missing);
             if (definitions != null)
             {
                 usedFile = path;
@@ -235,35 +242,42 @@ public sealed class ClassifierParameterLoader(RevitApplication app, Document doc
     }
 
     /// <summary>Все запрошенные параметры из ФОП (по всем группам) или null, если хотя бы одного нет.</summary>
-    private static Dictionary<string, ExternalDefinition>? FindDefinitions(DefinitionFile? file, List<string> names)
+    private static List<ExternalDefinition>? FindDefinitions(DefinitionFile? file, List<OutputField> missing)
     {
         if (file == null)
             return null;
 
-        var found = new Dictionary<string, ExternalDefinition>();
+        var all = new List<ExternalDefinition>();
         foreach (DefinitionGroup group in file.Groups)
+        foreach (var definition in group.Definitions)
+            if (definition is ExternalDefinition external)
+                all.Add(external);
+
+        var found = new List<ExternalDefinition>();
+        foreach (var output in missing)
         {
-            foreach (var definition in group.Definitions)
-            {
-                if (definition is ExternalDefinition external && names.Contains(external.Name) && !found.ContainsKey(external.Name))
-                    found[external.Name] = external;
-            }
+            var definition = output.Guid is { } guid
+                ? all.FirstOrDefault(d => d.GUID == guid)
+                : all.FirstOrDefault(d => d.Name == output.Parameter);
+            if (definition == null)
+                return null;
+            found.Add(definition);
         }
 
-        return found.Count == names.Count ? found : null;
+        return found;
     }
 
     private void Bind(IEnumerable<ExternalDefinition> definitions)
     {
-        var categories = app.Create.NewCategorySet();
+        var categorySet = app.Create.NewCategorySet();
         foreach (var category in GetTargetCategories())
-            categories.Insert(category);
+            categorySet.Insert(category);
 
         using var transaction = new Transaction(doc, "Добавление параметров классификатора");
         transaction.Start();
         foreach (var definition in definitions)
         {
-            var binding = app.Create.NewInstanceBinding(categories);
+            var binding = app.Create.NewInstanceBinding(categorySet);
 #if REVIT2022_OR_GREATER
             var inserted = doc.ParameterBindings.Insert(definition, binding, GroupTypeId.IdentityData);
 #else

@@ -1,0 +1,216 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:toadtools:classifier-profile:1",
+  "title": "Профиль классификатора ToadTools",
+  "description": "Профиль объекта для «Код по классификатору». Описание полей и работы движка — FORMAT.md. Проверка — check.exe validate.",
+  "type": "object",
+  "required": ["schemaVersion", "id", "name", "outputs", "categories", "positions", "modes"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "type": "integer", "const": 1 },
+    "id": { "$ref": "#/definitions/guid", "description": "Уникален для профиля; у нового профиля объекта — новый" },
+    "name": { "type": "string", "minLength": 1 },
+    "description": { "type": "string" },
+    "author": { "type": "string" },
+    "version": { "type": "string", "description": "Например 1.0; при выдаче новой редакции — увеличить" },
+    "fileNamePatterns": { "type": "array", "items": { "$ref": "#/definitions/pattern" }, "description": "Шаблоны имени файла модели для автовыбора профиля" },
+    "outputs": { "type": "array", "items": { "$ref": "#/definitions/OutputField" }, "minItems": 1 },
+    "categories": { "type": "array", "items": { "type": "string", "pattern": "^OST_" }, "minItems": 1 },
+    "texts": { "type": "object", "additionalProperties": { "$ref": "#/definitions/TextSourceDef" } },
+    "patternSets": { "type": "object", "additionalProperties": { "type": "array", "items": { "$ref": "#/definitions/pattern" } } },
+    "positions": { "type": "array", "items": { "$ref": "#/definitions/Position" }, "minItems": 1 },
+    "disciplines": { "type": "array", "items": { "$ref": "#/definitions/KeyTitle" } },
+    "types": { "type": "array", "items": { "$ref": "#/definitions/KeyTitle" } },
+    "dictionaries": { "type": "object", "additionalProperties": { "$ref": "#/definitions/DictionaryDef" } },
+    "ruleSets": { "type": "object", "additionalProperties": { "type": "array", "items": { "$ref": "#/definitions/RuleDef" } } },
+    "tables": { "type": "object", "additionalProperties": { "$ref": "#/definitions/TableDef" } },
+    "modes": { "type": "array", "items": { "$ref": "#/definitions/ModeDef" }, "minItems": 1 },
+    "exceptions": { "type": "array", "items": { "$ref": "#/definitions/RuleDef" } }
+  },
+  "definitions": {
+    "guid": { "type": "string", "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" },
+    "pattern": { "type": "string", "minLength": 1, "description": "Шаблон: слово — с начала слова; *слово — где угодно; =слово — целиком; #В1 — шифр системы; re:… — регулярка; @набор" },
+    "key": { "type": "string", "minLength": 1 },
+    "keys": { "type": "array", "items": { "$ref": "#/definitions/key" }, "minItems": 1 },
+    "OutputField": {
+      "type": "object",
+      "required": ["field", "parameter"],
+      "additionalProperties": false,
+      "properties": {
+        "field": { "type": "string", "description": "code, description или имя доп. колонки позиции" },
+        "parameter": { "type": "string", "description": "Имя параметра Revit; пустое — поле не пишется" },
+        "guid": { "$ref": "#/definitions/guid" }
+      }
+    },
+    "Position": {
+      "type": "object",
+      "required": ["code", "description"],
+      "additionalProperties": false,
+      "properties": {
+        "code": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "extra": { "type": "object", "additionalProperties": { "type": "string" } }
+      }
+    },
+    "KeyTitle": {
+      "type": "object",
+      "required": ["key", "title"],
+      "additionalProperties": false,
+      "properties": {
+        "key": { "$ref": "#/definitions/key" },
+        "title": { "type": "string" },
+        "position": { "type": "string", "description": "Код позиции раздела — для отчёта и подсказок" }
+      }
+    },
+    "TextSourceDef": {
+      "type": "object",
+      "required": ["parts"],
+      "additionalProperties": false,
+      "properties": {
+        "parts": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^(instance\\.name|type\\.family|type\\.name|familyType|instance\\.comments|type\\.comments|systems|workset|document\\.title|(instance|type|instanceOrType|firstStringMatching|text):.+)$"
+          }
+        },
+        "lowercase": { "type": "boolean" },
+        "normalize": { "type": "boolean" },
+        "fallback": { "type": "string" }
+      }
+    },
+    "DictionaryDef": {
+      "type": "object",
+      "required": ["entries"],
+      "additionalProperties": false,
+      "properties": {
+        "mode": { "enum": ["first", "earliest", "lastToken"] },
+        "normalize": { "type": "boolean" },
+        "separators": { "type": "string", "description": "Регулярка разделителей токенов для lastToken" },
+        "entries": { "type": "array", "items": { "$ref": "#/definitions/DictionaryEntryDef" }, "minItems": 1 }
+      }
+    },
+    "DictionaryEntryDef": {
+      "type": "object",
+      "required": ["result", "patterns"],
+      "additionalProperties": false,
+      "properties": {
+        "result": { "$ref": "#/definitions/ResultDef" },
+        "patterns": { "type": "array", "items": { "$ref": "#/definitions/pattern" }, "minItems": 1 },
+        "when": { "type": "array", "items": { "$ref": "#/definitions/ConditionDef" } }
+      }
+    },
+    "ResultDef": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Ровно одно из discipline/type/position/skip, либо pipe и/или air",
+      "properties": {
+        "discipline": { "$ref": "#/definitions/key" },
+        "type": { "$ref": "#/definitions/key" },
+        "position": { "type": "string" },
+        "skip": { "type": "string", "description": "Причина пропуска; {match} — совпавший текст" },
+        "pipe": { "$ref": "#/definitions/ResultDef" },
+        "air": { "$ref": "#/definitions/ResultDef" }
+      }
+    },
+    "RuleDef": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "title": { "type": "string" },
+        "when": { "type": "array", "items": { "$ref": "#/definitions/ConditionDef" } },
+        "steps": { "type": "array", "items": { "$ref": "#/definitions/StepDef" } },
+        "allow": { "$ref": "#/definitions/AllowDef" },
+        "refine": { "type": "array", "items": { "$ref": "#/definitions/RefineDef" } },
+        "default": { "$ref": "#/definitions/ResultDef" },
+        "fallthrough": { "type": "boolean" }
+      }
+    },
+    "StepDef": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Один из: inherit, dictionary + source/sources, fixed",
+      "properties": {
+        "inherit": { "enum": ["parent", "host"] },
+        "onlyIf": { "type": "array", "items": { "$ref": "#/definitions/key" } },
+        "dictionary": { "type": "string" },
+        "source": { "type": "string" },
+        "sources": { "type": "array", "items": { "type": "string" } },
+        "refine": { "type": "array", "items": { "$ref": "#/definitions/RefineDef" } },
+        "fixed": { "$ref": "#/definitions/ResultDef" }
+      }
+    },
+    "ConditionDef": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Ровно один вид: category, domain, mode, type, source + matches, source + dictionary (+ gives / givesNothing)",
+      "properties": {
+        "not": { "type": "boolean" },
+        "category": { "type": "array", "items": { "type": "string", "pattern": "^OST_" }, "minItems": 1 },
+        "domain": { "enum": ["pipe", "air", "other"] },
+        "mode": { "$ref": "#/definitions/keys" },
+        "type": { "$ref": "#/definitions/keys" },
+        "source": { "type": "string" },
+        "matches": { "$ref": "#/definitions/pattern" },
+        "dictionary": { "type": "string" },
+        "gives": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "givesNothing": { "type": "boolean" }
+      }
+    },
+    "RefineDef": {
+      "type": "object",
+      "required": ["when", "to"],
+      "additionalProperties": false,
+      "properties": {
+        "when": { "type": "array", "items": { "$ref": "#/definitions/ConditionDef" }, "minItems": 1 },
+        "to": { "$ref": "#/definitions/ResultDef" }
+      }
+    },
+    "AllowDef": {
+      "type": "object",
+      "required": ["values"],
+      "additionalProperties": false,
+      "properties": {
+        "values": { "type": "array", "items": { "$ref": "#/definitions/key" }, "minItems": 1 },
+        "otherwise": { "type": "string", "description": "drop — шаг не дал ничего; иначе ключ замены" }
+      }
+    },
+    "TableDef": {
+      "type": "object",
+      "required": ["rows"],
+      "additionalProperties": false,
+      "properties": {
+        "rows": { "type": "array", "items": { "$ref": "#/definitions/TableRow" } },
+        "fallbacks": { "type": "object", "additionalProperties": { "type": "array", "items": { "$ref": "#/definitions/key" } } }
+      }
+    },
+    "TableRow": {
+      "type": "object",
+      "required": ["discipline", "type", "position"],
+      "additionalProperties": false,
+      "properties": {
+        "discipline": { "type": "string", "description": "Ключ раздела или * — любой раздел" },
+        "type": { "$ref": "#/definitions/key" },
+        "position": { "type": "string" }
+      }
+    },
+    "ModeDef": {
+      "type": "object",
+      "required": ["key", "title", "typeRules", "table"],
+      "additionalProperties": false,
+      "properties": {
+        "key": { "$ref": "#/definitions/key" },
+        "title": { "type": "string" },
+        "hint": { "type": "string" },
+        "reportMode": { "type": "string" },
+        "fileTokens": { "type": "array", "items": { "type": "string" } },
+        "unconnectedAsAir": { "type": "boolean" },
+        "typeRules": { "type": "string", "description": "Имя набора в ruleSets" },
+        "disciplineRules": { "type": "array", "items": { "$ref": "#/definitions/RuleDef" } },
+        "defaultDiscipline": { "$ref": "#/definitions/key" },
+        "table": { "type": "string", "description": "Имя таблицы в tables" }
+      }
+    }
+  }
+}

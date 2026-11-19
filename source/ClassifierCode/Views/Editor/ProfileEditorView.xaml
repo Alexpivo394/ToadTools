@@ -1,0 +1,109 @@
+<toad:ToadWindow
+    x:Class="ClassifierCode.Views.Editor.ProfileEditorView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:toad="urn:toaddesign"
+    xmlns:vm="clr-namespace:ClassifierCode.Editor.ViewModels"
+    xmlns:compile="clr-namespace:ClassifierCode.Engine.Compile"
+    xmlns:uiConverters="clr-namespace:ToadTools.UI.Converters;assembly=ToadTools.UI"
+    d:DataContext="{d:DesignInstance Type=vm:ProfileEditorViewModel}"
+    mc:Ignorable="d"
+    Title="{Binding Title}"
+    WindowStartupLocation="CenterOwner"
+    Height="820"
+    Width="1280"
+    MinHeight="560"
+    MinWidth="900"
+    TitleIcon="Settings">
+    <toad:ToadWindow.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="EditorTabs.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </toad:ToadWindow.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="1" Margin="16,6,16,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="190" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <toad:Alert Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,8" Severity="Info" IsClosable="False"
+                        Content="{Binding ReadOnlyHint}" IsOpen="{Binding IsReadOnly, Mode=OneWay}" />
+
+            <DockPanel Grid.Row="1" Margin="0,0,12,0">
+                <toad:Switch DockPanel.Dock="Bottom" Margin="4,10,0,0" Content="Все настройки"
+                             ToolTip="Показать также «Общее», «Классификатор», «Режимы» и «Логику»"
+                             IsChecked="{Binding ShowAll}" />
+                <ListBox ItemsSource="{Binding VisibleTabs}" SelectedItem="{Binding SelectedTab}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:EditorTab}">
+                            <StackPanel Orientation="Horizontal" Margin="0,4">
+                                <toad:Icon Symbol="{Binding Icon}" Width="18" Height="18" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding Title}" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+
+            <DockPanel Grid.Row="1" Grid.Column="1">
+                <TextBlock DockPanel.Dock="Top" Margin="2,0,0,8" Opacity="0.75" TextWrapping="Wrap" Text="{Binding SelectedTab.Hint}" />
+                <ContentControl Content="{Binding SelectedTab.Content}" />
+            </DockPanel>
+        </Grid>
+
+        <Grid Grid.Row="2" Margin="16,0,16,14">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Expander Header="{Binding IssuesLabel}" IsExpanded="{Binding HasIssues, Mode=OneWay}" Margin="0,0,0,8"
+                      Visibility="{Binding HasIssues, Converter={uiConverters:BooleanCollapsedVisibilityConverter}}">
+                <ItemsControl ItemsSource="{Binding Issues}" MaxHeight="120">
+                    <ItemsControl.Template>
+                        <ControlTemplate>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <ItemsPresenter />
+                            </ScrollViewer>
+                        </ControlTemplate>
+                    </ItemsControl.Template>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type compile:ProfileIssue}">
+                            <toad:Button HorizontalAlignment="Left" Variant="Subtle" Icon="AlertTriangle"
+                                         Content="{Binding}" ToolTip="Перейти"
+                                         Command="{Binding DataContext.OpenIssueCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                         CommandParameter="{Binding}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Expander>
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock VerticalAlignment="Center" Opacity="0.7" Text="{Binding Entry.Path}" TextTrimming="CharacterEllipsis" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <toad:Button Content="Экспорт…" Icon="FileExport" Variant="Subtle" Command="{Binding ExportCommand}" />
+                    <toad:Button Margin="8,0,0,0" Content="Сохранить копией" Icon="Copy" Command="{Binding SaveAsCopyCommand}" />
+                    <toad:Button Margin="8,0,0,0" Content="Сохранить" Icon="DeviceFloppy" Variant="Filled" Command="{Binding SaveCommand}" />
+                    <toad:Button Margin="8,0,0,0" Content="Закрыть" Click="OnCloseClick" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Grid>
+</toad:ToadWindow>

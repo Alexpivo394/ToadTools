@@ -1,14 +1,17 @@
+using ClassifierCode.Engine.Profile;
 using ClassifierCode.Models;
 
 namespace ClassifierCode.Services;
 
 /// <summary>
-///     Запись кода и описания в экземпляр, а если параметр типовой — в тип
+///     Запись полей позиции в параметры профиля: в экземпляр, а если у экземпляра таких параметров нет — в тип
 ///     (только когда все экземпляры типа получили один и тот же код).
 /// </summary>
-public sealed class ClassifierParameterWriter(Document doc, bool keepExisting, ClassifierReport report)
+public sealed class ClassifierParameterWriter(Document doc, bool keepExisting, ClassifierReport report, IReadOnlyList<OutputField> outputs)
 {
-    private readonly Dictionary<ElementId, List<ClassifierItem>> _typeRequests = new();
+    private readonly Dictionary<ElementId, List<Position>> _typeRequests = new();
+    private readonly List<OutputField> _outputs = outputs.Where(o => !string.IsNullOrWhiteSpace(o.Parameter)).ToList();
+    private readonly OutputField _code = outputs.First(o => o.Field == "code");
 
     private enum WriteResult
     {
@@ -17,11 +20,9 @@ public sealed class ClassifierParameterWriter(Document doc, bool keepExisting, C
         Failed
     }
 
-    public void Write(Element element, ClassifierItem item)
+    public void Write(Element element, Position position)
     {
-        var code = element.LookupParameter(ClassifierParameters.Code);
-        var description = element.LookupParameter(ClassifierParameters.Description);
-        if (code != null || description != null)
+        if (HasAnyOutput(element))
         {
             if (IsBusy(element.Id))
             {
@@ -29,11 +30,11 @@ public sealed class ClassifierParameterWriter(Document doc, bool keepExisting, C
                 return;
             }
 
-            switch (SetPair(code, description, item))
+            switch (SetAll(element, position))
             {
                 case WriteResult.Written:
                     report.WrittenInstances++;
-                    report.CountCode(item, 1);
+                    report.CountCode(position, 1);
                     break;
                 case WriteResult.Kept:
                     report.KeptExisting++;
@@ -48,8 +49,7 @@ public sealed class ClassifierParameterWriter(Document doc, bool keepExisting, C
 
         var typeId = element.GetTypeId();
         var type = doc.GetElement(typeId);
-        if (type == null || (type.LookupParameter(ClassifierParameters.Code) == null &&
-                             type.LookupParameter(ClassifierParameters.Description) == null))
+        if (type == null || !HasAnyOutput(type))
         {
             report.AddMissingParameters(element);
             return;
@@ -58,10 +58,10 @@ public sealed class ClassifierParameterWriter(Document doc, bool keepExisting, C
         if (!_typeRequests.TryGetValue(typeId, out var requests))
         {
             requests = [];
-            _typeRequests[typeId] = requests;   
+            _typeRequests[typeId] = requests;
         }
 
-        requests.Add(item);
+        requests.Add(position);
     }
 
     /// <summary>Записывает накопленные типовые параметры. Вызывать после обработки всех экземпляров.</summary>
@@ -70,7 +70,7 @@ public sealed class ClassifierParameterWriter(Document doc, bool keepExisting, C
         foreach (var pair in _typeRequests)
         {
             var type = doc.GetElement(pair.Key);
-            var codes = pair.Value.Select(i => i.Code).Distinct().ToList();
+            var codes = pair.Value.Select(p => p.Code).Distinct().ToList();
             if (codes.Count > 1)
             {
                 report.TypeConflicts.Add(ClassifierReport.Describe(type) + " : " + type.Name + " → " + string.Join(", ", codes));
@@ -83,14 +83,12 @@ public sealed class ClassifierParameterWriter(Document doc, bool keepExisting, C
                 continue;
             }
 
-            var item = pair.Value[0];
-            var code = type.LookupParameter(ClassifierParameters.Code);
-            var description = type.LookupParameter(ClassifierParameters.Description);
-            switch (SetPair(code, description, item))
+            var position = pair.Value[0];
+            switch (SetAll(type, position))
             {
                 case WriteResult.Written:
                     report.WrittenTypes++;
-                    report.CountCode(item, pair.Value.Count);
+                    report.CountCode(position, pair.Value.Count);
                     break;
                 case WriteResult.Kept:
                     report.KeptExisting++;
@@ -102,15 +100,31 @@ public sealed class ClassifierParameterWriter(Document doc, bool keepExisting, C
         }
     }
 
-    private WriteResult SetPair(Parameter? code, Parameter? description, ClassifierItem item)
+    public static Parameter? Find(Element element, OutputField output) => OutputParameters.Find(element, output);
+
+    private bool HasAnyOutput(Element element) => _outputs.Any(o => Find(element, o) != null);
+
+    private WriteResult SetAll(Element element, Position position)
     {
+        var code = Find(element, _code);
         if (keepExisting && code != null && !string.IsNullOrEmpty(code.AsString()))
             return WriteResult.Kept;
 
-        var ok = Set(code, item.Code);
-        ok &= Set(description, item.Description);
+        var ok = true;
+        foreach (var output in _outputs)
+        {
+            // Колонки, которой у позиции нет, не пишем: пустая строка затёрла бы значение, заполненное руками.
+            if (Value(position, output.Field) is { } value) ok &= Set(Find(element, output), value);
+        }
         return ok ? WriteResult.Written : WriteResult.Failed;
     }
+
+    private static string? Value(Position position, string field) => field switch
+    {
+        "code" => position.Code,
+        "description" => position.Description,
+        _ => position.Extra.TryGetValue(field, out var value) ? value : null
+    };
 
     private static bool Set(Parameter? parameter, string value)
     {

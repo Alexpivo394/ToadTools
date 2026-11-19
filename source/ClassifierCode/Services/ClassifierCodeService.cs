@@ -1,58 +1,33 @@
 using ToadDesign;
-using ClassifierCode.Dictionaries;
+using ClassifierCode.Engine.Compile;
+using ClassifierCode.Engine.Profile;
+using ClassifierCode.Engine.Running;
 using ClassifierCode.Models;
 using ToadTools.UI.Progress;
 
 namespace ClassifierCode.Services;
 
-/// <summary>
-///     Заполняет "ADSK_Код по классификатору" и "ADSK_Описание по классификатору" у элементов ИОС
-///     активного документа.
-/// </summary>
+/// <summary>Заполняет параметры профиля у элементов активного документа по выбранному режиму.</summary>
 public sealed class ClassifierCodeService(ElementCollector collector)
 {
-    /// <summary>Раздел, предлагаемый по шифру в имени файла (ПТ, КНД, ОВВ, ОВО, ВК...); None — не определён.</summary>
-    public static Discipline DetectSection(string? documentTitle)
-    {
-        switch (TextRules.MatchDocumentTitle(documentTitle))
-        {
-            case Discipline.Fire:
-            case Discipline.Gas:
-            case Discipline.Powder:
-                return Discipline.Fire;
-            case Discipline.Cooling:
-                return Discipline.Cooling;
-            case Discipline.Vent:
-            case Discipline.Smoke:
-                return Discipline.Vent;
-            case Discipline.Heating:
-            case Discipline.HeatSupply:
-                return Discipline.Heating;
-            case Discipline.Water:
-            case Discipline.Sewer:
-            case Discipline.Storm:
-                return Discipline.Water;
-            case Discipline.Electrical:
-                return Discipline.Electrical;
-            case Discipline.LowCurrent:
-                return Discipline.LowCurrent;
-            default:
-                return Discipline.None;
-        }
-    }
-
     /// <summary>
     ///     Запуск заполнения. null — пользователь отказался добавлять параметры в проект
     ///     (или добавить не удалось — причина уже показана). Report.Total == 0 — подходящих элементов нет.
     /// </summary>
-    public ClassifierReport? Run(SectionOption section, RunScope scope, bool keepExisting)
+    public ClassifierReport? Run(CompiledProfile profile, string modeKey, RunScope scope, bool keepExisting)
     {
         var uiDocument = RevitContext.ActiveUiDocument!;
         var document = uiDocument.Document;
         var selection = uiDocument.Selection.GetElementIds();
+        var source = profile.Source;
+        var mode = profile.Modes[modeKey].Source;
+        var codeOutput = source.Outputs.First(o => o.Field == "code");
 
-        // Нет параметров классификатора в проекте — добавляем из ФОП (подключённого или выбранного пользователем).
-        var loader = new ClassifierParameterLoader(document.Application, document);
+        var unknownCategories = new List<string>();
+        var categories = ElementCollector.Categories(source.Categories, unknownCategories);
+
+        // Нет параметров в проекте — добавляем из ФОП (подключённого или выбранного пользователем).
+        var loader = new ClassifierParameterLoader(document.Application, document, source.Outputs, categories);
         if (!loader.EnsureParameters(out var parametersNote))
             return null;
 
@@ -60,14 +35,17 @@ public sealed class ClassifierCodeService(ElementCollector collector)
             new ProgressOptions { Icon = Symbol.ListDetails });
         progress.Stage("Сбор элементов");
 
-        var targets = collector.Collect(document, document.ActiveView, scope, selection);
-        var report = new ClassifierReport(section, targets.Count);
+        var targets = collector.Collect(document, document.ActiveView, scope, selection, categories, codeOutput);
+        var report = new ClassifierReport(source.Name, source.Version, mode.Title, mode.ReportMode, targets.Count);
         if (parametersNote != null)
             report.Notes.Add(parametersNote);
+        if (unknownCategories.Count > 0)
+            report.Notes.Add("Категории профиля, которых нет в этой версии Revit: " + string.Join(", ", unknownCategories) + ".");
         if (targets.Count == 0)
             return report;
 
-        var classifier = new ElementClassifier(document, section.Section);
+        var engine = new ClassificationEngine(profile, modeKey);
+        var facts = new FactsBuilder(document);
 
         using var transaction = new Transaction(document, "Заполнение кода по классификатору");
         var options = transaction.GetFailureHandlingOptions();
@@ -75,54 +53,61 @@ public sealed class ClassifierCodeService(ElementCollector collector)
         transaction.SetFailureHandlingOptions(options);
         transaction.Start();
 
-        AllowVaryBetweenGroups(targets, report);
+        AllowVaryBetweenGroups(targets, source.Outputs, report);
 
-        var writer = new ClassifierParameterWriter(document, keepExisting, report);
+        var writer = new ClassifierParameterWriter(document, keepExisting, report, source.Outputs);
         foreach (var element in progress.Track(targets, "Классификация элементов"))
         {
-            var classification = classifier.Classify(element);
-            if (classification.Skip)
+            var result = engine.Classify(facts.Get(element));
+            switch (result.Status)
             {
-                report.AddSkipped(classification.Reason ?? string.Empty);
-                continue;
+                case EngineStatus.Skipped:
+                    report.AddSkipped(result.Reason ?? string.Empty);
+                    break;
+                case EngineStatus.Unclassified:
+                    report.AddUnclassified(element, result.Reason);
+                    break;
+                default:
+                    writer.Write(element, result.Position!);
+                    break;
             }
-
-            if (classification.Item == null)
-            {
-                report.AddUnclassified(element, classification.Reason);
-                continue;
-            }
-
-            writer.Write(element, classification.Item);
         }
+
+        foreach (var warning in engine.Warnings)
+            report.Notes.Add(warning);
 
         progress.Stage("Запись типов и сохранение");
         writer.FlushTypes();
-        transaction.Commit();
+        if (ProfileBinding.TryWrite(document, source, modeKey) is { } bindingNote)
+            report.Notes.Add(bindingNote);
+        var status = transaction.Commit();
+        if (status != TransactionStatus.Committed)
+            throw new InvalidOperationException($"Revit не принял изменения (статус транзакции: {status}) — в модель ничего не записано.");
 
         return report;
     }
 
     /// <summary>
-    ///     Элементы в группах: если ADSK-параметры не помечены "значения могут меняться по экземплярам групп",
-    ///     Revit не даёт их записать. Включаем этот признак для двух параметров классификатора.
+    ///     Элементы в группах: если параметры не помечены "значения могут меняться по экземплярам групп",
+    ///     Revit не даёт их записать. Включаем этот признак для параметров записи профиля.
     /// </summary>
-    private static void AllowVaryBetweenGroups(List<Element> targets, ClassifierReport report)
+    private static void AllowVaryBetweenGroups(List<Element> targets, IReadOnlyList<OutputField> outputs, ClassifierReport report)
     {
-        foreach (var name in ClassifierParameters.All)
+        foreach (var output in outputs.Where(o => !string.IsNullOrWhiteSpace(o.Parameter)))
         {
-            var grouped = targets.FirstOrDefault(e => e.GroupId != ElementId.InvalidElementId && e.LookupParameter(name) != null);
-            if (grouped?.LookupParameter(name).Definition is not InternalDefinition definition || definition.VariesAcrossGroups)
+            var grouped = targets.FirstOrDefault(e => e.GroupId != ElementId.InvalidElementId && ClassifierParameterWriter.Find(e, output) != null);
+            if (grouped == null || ClassifierParameterWriter.Find(grouped, output)!.Definition is not InternalDefinition definition ||
+                definition.VariesAcrossGroups)
                 continue;
 
             try
             {
                 definition.SetAllowVaryBetweenGroups(grouped.Document, true);
-                report.Notes.Add("Для параметра \"" + name + "\" включено \"Значения могут меняться по экземплярам групп\".");
+                report.Notes.Add("Для параметра \"" + output.Parameter + "\" включено \"Значения могут меняться по экземплярам групп\".");
             }
             catch (Autodesk.Revit.Exceptions.ApplicationException ex)
             {
-                report.Notes.Add("Не удалось разрешить различие по группам для \"" + name + "\": " + ex.Message);
+                report.Notes.Add("Не удалось разрешить различие по группам для \"" + output.Parameter + "\": " + ex.Message);
             }
         }
     }

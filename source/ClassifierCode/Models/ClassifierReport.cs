@@ -1,9 +1,16 @@
+using ClassifierCode.Engine.Profile;
+
 namespace ClassifierCode.Models;
 
 /// <summary>Итоги прогона.</summary>
-public sealed class ClassifierReport(SectionOption section, int total)
+public sealed class ClassifierReport(string profileName, string profileVersion, string modeTitle, string reportMode, int total)
 {
-    public SectionOption Section { get; } = section;
+    public string ProfileName { get; } = profileName;
+    public string ProfileVersion { get; } = profileVersion;
+    public string ModeTitle { get; } = modeTitle;
+
+    /// <summary>Описание режима для отчёта: какие коды получают элементы.</summary>
+    public string ReportMode { get; } = reportMode;
 
     /// <summary>Сколько элементов попало в обработку.</summary>
     public int Total { get; } = total;
@@ -50,9 +57,9 @@ public sealed class ClassifierReport(SectionOption section, int total)
         MissingParameters.Add(new KeyValuePair<ElementId, string>(element.Id, Describe(element)));
     }
 
-    public void CountCode(ClassifierItem item, int count)
+    public void CountCode(Position position, int count)
     {
-        var key = item.Code + " " + item.Description;
+        var key = position.Code + " " + position.Description;
         ByCode.TryGetValue(key, out var current);
         ByCode[key] = current + count;
     }
