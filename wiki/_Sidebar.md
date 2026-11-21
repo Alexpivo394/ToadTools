@@ -14,6 +14,7 @@
 
 **Общие**
 - [Коллизии](Collisions)
+- [Семейства](Families)
 - [Умные выноски](SmartTags)
 - [Запись количества](QuantityCheck)
 - [Запись прочерков](WriteDash)

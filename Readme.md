@@ -53,6 +53,7 @@
 | | [Копирование элементов](https://github.com/Alexpivo394/ToadTools/wiki/ModelTransplanter) | Переносит содержимое одной модели в другую с учётом координат |
 | | [Общие → необщие](https://github.com/Alexpivo394/ToadTools/wiki/ChangeSharedFamilies) | Делает вложенные общие семейства необщими |
 | **Общие** | [Коллизии](https://github.com/Alexpivo394/ToadTools/wiki/Collisions) | Панель с коллизиями открытой модели из ToadFlow: переход к месту, статусы, примечания |
+| | [Семейства](https://github.com/Alexpivo394/ToadTools/wiki/Families) | Библиотека семейств ToadFlow: поиск, загрузка с выбором типоразмеров, «В проекте», публикация |
 | | [Умные выноски](https://github.com/Alexpivo394/ToadTools/wiki/SmartTags) | Расставляет марки на виде без пересечений текста и выносок |
 | | [Запись количества](https://github.com/Alexpivo394/ToadTools/wiki/QuantityCheck) | Заполняет количество: штучным — 1, линейным — длину с запасом |
 | | [Запись прочерков](https://github.com/Alexpivo394/ToadTools/wiki/WriteDash) | Ставит прочерк в пустые параметры, чтобы в спецификации не было дыр |
