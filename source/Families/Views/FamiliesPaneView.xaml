@@ -14,6 +14,32 @@
     Foreground="{DynamicResource Toad.Brush.Text}"
     toad:Theme.IsRoot="True">
 
+    <UserControl.Resources>
+        <!-- Вкладки в теме ToadDesign: подпись и подсветка выбранной, без системной рамки -->
+        <Style TargetType="TabItem">
+            <Setter Property="Foreground" Value="{DynamicResource Toad.Brush.Text}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="Bd" Padding="10,4" Margin="0,0,4,0" CornerRadius="4" Background="Transparent" BorderThickness="0,0,0,2"
+                                BorderBrush="Transparent">
+                            <ContentPresenter ContentSource="Header" TextElement.Foreground="{TemplateBinding Foreground}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Toad.Brush.Hover}" />
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Toad.Brush.Accent}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.4" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
     <Grid Margin="8">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -25,7 +51,7 @@
 
         <!-- Шапка: заявки с новостями и «Обновить» -->
         <DockPanel Grid.Row="0" Margin="0,0,0,6">
-            <toad:Button DockPanel.Dock="Right" Content="Обновить" Command="{Binding RefreshCommand}" Margin="6,0,0,0" />
+            <toad:Button DockPanel.Dock="Right" Content="Обновить" Command="{Binding RefreshCommand}" Margin="6,0,0,0" VerticalAlignment="Top" />
             <toad:Loader DockPanel.Dock="Right" Width="18" Height="18" Visibility="{Binding IsBusy, Converter={views:ShownConverter}}" />
             <ItemsControl ItemsSource="{Binding RequestUpdates}" Visibility="{Binding RequestNews, Converter={views:ShownConverter}}">
                 <ItemsControl.Template>
@@ -153,8 +179,8 @@
             </TabItem>
 
             <!-- Публикация (координатор, в редакторе семейства) -->
-            <TabItem Header="Опубликовать" Visibility="{Binding CanPublish, Converter={views:ShownConverter}}" DataContext="{Binding Publish}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <TabItem Header="Опубликовать" Visibility="{Binding CanPublish, Converter={views:ShownConverter}}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" DataContext="{Binding Publish}">
                     <StackPanel Margin="0,6,0,0">
                         <TextBlock Text="{Binding YearWarning}" TextWrapping="Wrap" Foreground="{DynamicResource Toad.Brush.Warning}" Margin="0,0,0,6"
                                    Visibility="{Binding YearWarning, Converter={views:ShownConverter}}" />
