@@ -65,6 +65,7 @@
                 </ItemsControl.Template>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
+                        <StackPanel>
                         <toad:Button HorizontalContentAlignment="Left" Padding="6,2" Margin="0,2,0,0"
                                      Command="{Binding DataContext.OpenRequestCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
                             <TextBlock TextTrimming="CharacterEllipsis">
@@ -72,6 +73,13 @@
                                 <Run Text="{Binding CardName, StringFormat= → {0}, Mode=OneWay}" />
                             </TextBlock>
                         </toad:Button>
+                            <WrapPanel Margin="6,2,0,2" Visibility="{Binding State, Converter={views:ShownConverter}, ConverterParameter=Review}">
+                                <toad:Button Content="Подходит" Variant="Filled" Padding="8,1" Margin="0,0,6,0" CommandParameter="{Binding}"
+                                             Command="{Binding DataContext.AcceptRequestCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                <toad:Button Content="Не то…" Padding="8,1" CommandParameter="{Binding}" ToolTip="Написать, что не так, — в браузере"
+                                             Command="{Binding DataContext.DeclineRequestCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                            </WrapPanel>
+                        </StackPanel>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
@@ -264,8 +272,10 @@
                                  Command="{Binding DataContext.LoadCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                     <toad:Button Content="Путь" Margin="0,0,6,0" ToolTip="{Binding FullPath}"
                                  Command="{Binding DataContext.ShowInFolderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
-                    <toad:Button Content="В вебе"
+                    <toad:Button Content="В вебе" Margin="0,0,6,0"
                                  Command="{Binding DataContext.OpenInWebCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                    <toad:Button Content="Сообщить о проблеме" ToolTip="Заявка «исправить семейство» — откроется в браузере"
+                                 Command="{Binding DataContext.ReportProblemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                 </WrapPanel>
                 <Expander Header="История" Margin="0,6,0,0">
                     <ItemsControl ItemsSource="{Binding History}">

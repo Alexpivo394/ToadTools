@@ -62,6 +62,14 @@ internal sealed class FakeFamiliesApi : IFamiliesApi
 
     public Task<List<RequestItem>> OpenRequestsAsync(CancellationToken ct) => Task.FromResult(Open.ToList());
 
+    public List<Guid> Accepted { get; } = [];
+
+    public Task AcceptRequestAsync(Guid id, CancellationToken ct)
+    {
+        Accepted.Add(id);
+        return Task.CompletedTask;
+    }
+
     public Task MarkRequestSeenAsync(Guid id, CancellationToken ct)
     {
         Seen.Add(id);
@@ -312,7 +320,7 @@ public class FamiliesPaneTests
     }
 
     [Test]
-    public async Task NoMatch_RequestOpensWebFormWithSearchText()
+    public async Task NoMatch_RequestOpensWebFormWithSearchAndProjectContext()
     {
         using var setup = new Setup();
         await setup.Model.ActivateAsync();
@@ -322,7 +330,40 @@ public class FamiliesPaneTests
         setup.Model.RequestFamilyCommand.Execute(null);
 
         setup.Model.Found.ShouldContain("Ничего не нашлось");
-        setup.Dialogs.Urls.Single().ShouldBe("http://toadflow/families/requests/new?q=" + Uri.EscapeDataString("решётка АМН"));
+        setup.Dialogs.Urls.Single().ShouldBe("http://toadflow/families/requests/new?q=" + Uri.EscapeDataString("решётка АМН") + "&project=" + Uri.EscapeDataString("Дом") + "&revit=2022");
+    }
+
+    [Test]
+    public async Task ReviewRequest_AcceptedInPanel_DeclineOpensWeb()
+    {
+        using var setup = new Setup();
+        var review = new RequestItem(Guid.NewGuid(), 12, "Клапан DN50", "Review", "Петров", Guid.NewGuid(), "Клапан", true, DateTimeOffset.Now);
+        setup.Api.Updates.Add(review);
+
+        await setup.Model.ActivateAsync();
+        setup.Model.RequestNews.ShouldBe("Заявки: на приёмке 1 — подходит?");
+        await setup.Model.AcceptRequestCommand.ExecuteAsync(review);
+        setup.Model.DeclineRequestCommand.Execute(review);
+
+        setup.Api.Accepted.ShouldBe([review.Id]);
+        setup.Dialogs.Urls.Single().ShouldBe($"http://toadflow/families/requests/{review.Id}");
+        setup.Model.RequestUpdates.ShouldNotContain(review);
+    }
+
+    [Test]
+    public async Task Card_ReportProblemOpensFixForm()
+    {
+        using var setup = new Setup();
+        var hit = Hit("Клапан");
+        setup.Api.Hits.Add(hit);
+        setup.Api.Cards[hit.Id] = Card(hit);
+        await setup.Model.ActivateAsync();
+        await setup.Model.SearchTask;
+        await setup.Model.OpenCardAsync(hit.Id);
+
+        setup.Model.ReportProblemCommand.Execute(null);
+
+        setup.Dialogs.Urls.Single().ShouldBe($"http://toadflow/families/requests/new?kind=fix&card={hit.Id}");
     }
 
     [Test]

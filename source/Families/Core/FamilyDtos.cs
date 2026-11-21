@@ -89,7 +89,7 @@ public sealed record PublishRequest(string Path, string Hash, Guid? CardId, stri
 public sealed record PublishResult(Guid PublicationId, string RelativePath, bool ScanStarted);
 
 /// <summary>Заявка на семейство в списке.</summary>
-/// <param name="State"><c>New</c>, <c>InWork</c>, <c>Done</c>, <c>Exists</c>, <c>Rejected</c>.</param>
+/// <param name="State"><c>New</c>, <c>InWork</c>, <c>NeedInfo</c>, <c>Review</c>, <c>Done</c>, <c>Exists</c>, <c>Rejected</c>, <c>Withdrawn</c>.</param>
 /// <param name="Unread">Есть изменения, которых участник не видел.</param>
 public sealed record RequestItem(
     Guid Id,

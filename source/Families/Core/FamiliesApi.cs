@@ -23,6 +23,9 @@ public interface IFamiliesApi
 
     Task MarkRequestSeenAsync(Guid id, CancellationToken ct);
 
+    /// <summary>«Подходит» — принять заявку на приёмке (ToadFlow 3.1).</summary>
+    Task AcceptRequestAsync(Guid id, CancellationToken ct);
+
     /// <summary>Адрес страницы веба; пусто — подключения нет.</summary>
     string WebUrl(string relative);
 }
@@ -48,6 +51,7 @@ public sealed class FamiliesApi(ToadFlowClient client) : IFamiliesApi
         if (!string.IsNullOrWhiteSpace(search.Section)) parts.Add($"section={E(search.Section!)}");
         if (!string.IsNullOrWhiteSpace(search.Category)) parts.Add($"category={E(search.Category!)}");
         if (search.Unreviewed) parts.Add("unreviewed=true");
+        parts.Add("source=panel"); // поиск без результата сервер запишет в «Искали и не нашли» как поиск из Revit
         return client.GetAsync<FamilyPage>($"/api/families/search?{string.Join("&", parts)}", ct);
     }
 
@@ -72,9 +76,11 @@ public sealed class FamiliesApi(ToadFlowClient client) : IFamiliesApi
     public Task<List<RequestItem>> RequestUpdatesAsync(CancellationToken ct) => client.GetAsync<List<RequestItem>>("/api/families/requests/updates", ct);
 
     public async Task<List<RequestItem>> OpenRequestsAsync(CancellationToken ct) =>
-        (await client.GetAsync<RequestPage>("/api/families/requests?scope=all&state=New,InWork&pageSize=200", ct)).Items;
+        (await client.GetAsync<RequestPage>("/api/families/requests?scope=all&state=New,InWork,NeedInfo&pageSize=200", ct)).Items;
 
     public Task MarkRequestSeenAsync(Guid id, CancellationToken ct) => client.PostAsync<object>($"/api/families/requests/{id}/seen", null, ct);
+
+    public Task AcceptRequestAsync(Guid id, CancellationToken ct) => client.PostAsync<object>($"/api/families/requests/{id}/accept", null, ct);
 
     public string WebUrl(string relative) => client.WebUrl(relative) ?? "";
 }

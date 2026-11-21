@@ -328,10 +328,50 @@ public sealed partial class FamiliesPaneViewModel : ObservableObject
         if (Card is { } card) _dialogs.OpenUrl(_api.WebUrl($"/families/catalog?card={card.Card.Id}"));
     }
 
-    /// <summary>«Нет нужного» — форма заявки в вебе с текстом поиска.</summary>
+    /// <summary>
+    ///     «Нет нужного» — форма заявки в браузере с контекстом: текст поиска, проект (имя открытой модели), раздел фильтра и версия Revit —
+    ///     человеку остаётся описать и вставить скриншот.
+    /// </summary>
     [RelayCommand]
-    private void RequestFamily() =>
-        _dialogs.OpenUrl(_api.WebUrl("/families/requests/new" + (string.IsNullOrWhiteSpace(SearchText) ? "" : "?q=" + Uri.EscapeDataString(SearchText.Trim()))));
+    private void RequestFamily()
+    {
+        var parts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(SearchText)) parts.Add("q=" + Uri.EscapeDataString(SearchText.Trim()));
+        if (Document is { IsFamily: false, Title: { Length: > 0 } title }) parts.Add("project=" + Uri.EscapeDataString(System.IO.Path.GetFileNameWithoutExtension(title)));
+        if (!string.IsNullOrWhiteSpace(Section)) parts.Add("section=" + Uri.EscapeDataString(Section!));
+        parts.Add("revit=" + _revit.RevitYear);
+        _dialogs.OpenUrl(_api.WebUrl("/families/requests/new?" + string.Join("&", parts)));
+    }
+
+    /// <summary>«Сообщить о проблеме» в открытом семействе — форма заявки «исправить» в браузере.</summary>
+    [RelayCommand]
+    private void ReportProblem()
+    {
+        if (Card is { } card) _dialogs.OpenUrl(_api.WebUrl($"/families/requests/new?kind=fix&card={card.Card.Id}"));
+    }
+
+    /// <summary>«Подходит» — принять заявку на приёмке прямо из панели.</summary>
+    [RelayCommand]
+    private Task AcceptRequest(RequestItem? request) => request is null ? Task.CompletedTask : RunAsync(async _ =>
+    {
+        await _api.AcceptRequestAsync(request.Id, CancellationToken.None);
+        RemoveUpdate(request);
+        Status = $"Заявка № {request.Number} принята — спасибо!";
+    });
+
+    /// <summary>«Не то…» — объяснить, что не так, удобнее в браузере: страница заявки с перепиской и вложениями.</summary>
+    [RelayCommand]
+    private void DeclineRequest(RequestItem? request)
+    {
+        if (request is null) return;
+        _dialogs.OpenUrl(_api.WebUrl($"/families/requests/{request.Id}"));
+    }
+
+    private void RemoveUpdate(RequestItem request)
+    {
+        RequestUpdates.Remove(request);
+        if (RequestUpdates.Count == 0) RequestNews = "";
+    }
 
     private async Task RefreshRequestsAsync()
     {
@@ -347,9 +387,12 @@ public sealed partial class FamiliesPaneViewModel : ObservableObject
 
         RequestUpdates.Clear();
         foreach (var update in updates) RequestUpdates.Add(update);
+        var review = updates.Count(u => u.State == "Review");
         var ready = updates.Count(u => u.State is "Done" or "Exists");
+        var other = updates.Count - review - ready;
         RequestNews = updates.Count == 0 ? ""
-            : ready > 0 ? $"Заявки: готово {ready}" + (updates.Count > ready ? $", ещё изменений {updates.Count - ready}" : "")
+            : review > 0 ? $"Заявки: на приёмке {review} — подходит?" + (ready + other > 0 ? $", ещё изменений {ready + other}" : "")
+            : ready > 0 ? $"Заявки: готово {ready}" + (other > 0 ? $", ещё изменений {other}" : "")
             : $"Заявки: изменений {updates.Count}";
     }
 
@@ -360,7 +403,7 @@ public sealed partial class FamiliesPaneViewModel : ObservableObject
         await _api.MarkRequestSeenAsync(request.Id, CancellationToken.None);
         RequestUpdates.Remove(request);
         if (RequestUpdates.Count == 0) RequestNews = "";
-        if (request.CardId is { } cardId && request.State is "Done" or "Exists")
+        if (request.CardId is { } cardId && request.State is "Done" or "Exists" or "Review")
         {
             SelectedTab = 0;
             await OpenCardAsync(cardId);
