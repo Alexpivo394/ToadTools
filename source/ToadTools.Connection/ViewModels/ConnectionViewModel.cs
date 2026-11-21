@@ -20,6 +20,11 @@ public sealed partial class ConnectionViewModel : ObservableObject
 
     [ObservableProperty] private bool _isConnected;
 
+    /// <summary>Всплывающие уведомления ToadFlow в Revit; хранится на машине.</summary>
+    [ObservableProperty] private bool _showNotifications = NotificationSettings.Enabled;
+
+    partial void OnShowNotificationsChanged(bool value) => NotificationSettings.Enabled = value;
+
     /// <summary>Вход выполнен в этом окне — тот, кто открыл окно, может перечитать данные.</summary>
     public bool SignedIn { get; private set; }
     [ObservableProperty] private string? _status;

@@ -24,6 +24,7 @@ namespace ToadTools
             // Закрепляемую панель Revit принимает только во время запуска — до первого await.
             Collisions.CollisionsPane.Register(Application);
             Families.FamiliesPane.Register(Application);
+            NotificationWatcher.UiDispatcher = System.Windows.Threading.Dispatcher.CurrentDispatcher;
             await Host.StartAsync();
             CreateRibbon();
         }

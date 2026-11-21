@@ -46,6 +46,8 @@
 
             <!-- Кто вошёл -->
             <StackPanel Visibility="{Binding IsConnected, Converter={conv:BooleanCollapsedVisibilityConverter}}">
+                <CheckBox Content="Показывать уведомления ToadFlow в Revit" IsChecked="{Binding ShowNotifications}" Margin="0,8,0,0"
+                          ToolTip="Заявки на семейства, ошибки расписаний, новые коллизии — всплывающим окном справа внизу" />
                 <toad:Button Content="Выйти" HorizontalAlignment="Right" Margin="0,8,0,0" Command="{Binding SignOutCommand}" />
             </StackPanel>
 
