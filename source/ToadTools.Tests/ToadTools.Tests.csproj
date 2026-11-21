@@ -19,6 +19,8 @@
         <PackageReference Include="CommunityToolkit.Mvvm"/>
         <PackageReference Include="Newtonsoft.Json"/>
         <PackageReference Include="EPPlus"/>
+        <!-- Хеш файла семейства (FamilyHash) для панели «Семейства»: часть ядра без Revit -->
+        <PackageReference Include="Alexpivo394.Revit.Families.Files"/>
         <PackageReference Include="System.Security.Cryptography.ProtectedData"/>
     </ItemGroup>
 
@@ -32,6 +34,8 @@
         <Compile Include="..\ToadTools.Connection\ViewModels\**\*.cs" Link="Linked\ConnectionViewModels\%(RecursiveDir)%(Filename)%(Extension)"/>
         <Compile Include="..\Collisions\Core\**\*.cs" Link="Linked\Collisions\%(RecursiveDir)%(Filename)%(Extension)"/>
         <Compile Include="..\Collisions\ViewModels\**\*.cs" Link="Linked\CollisionsViewModels\%(RecursiveDir)%(Filename)%(Extension)"/>
+        <Compile Include="..\Families\Core\**\*.cs" Link="Linked\Families\%(RecursiveDir)%(Filename)%(Extension)"/>
+        <Compile Include="..\Families\ViewModels\**\*.cs" Link="Linked\FamiliesViewModels\%(RecursiveDir)%(Filename)%(Extension)"/>
         <Compile Include="..\ClassifierCode\Engine\**\*.cs" Link="Linked\ClassifierCode\Engine\%(RecursiveDir)%(Filename)%(Extension)"/>
         <Compile Include="..\ClassifierCode\Editor\**\*.cs" Link="Linked\ClassifierCode\Editor\%(RecursiveDir)%(Filename)%(Extension)"/>
         <Compile Include="..\ClassifierCode\Models\RunScope.cs" Link="Linked\ClassifierCode\RunScope.cs"/>

@@ -1,0 +1,466 @@
+using Families.Core;
+using Families.ViewModels;
+using Shouldly;
+using ToadTools.Connection;
+
+namespace ToadTools.Tests.Families;
+
+internal sealed class FakeFamiliesApi : IFamiliesApi
+{
+    public LibraryInfo Library { get; set; } = new(true, @"\\nas\Families", "_На проверке", false);
+    public UserInfo Me { get; set; } = new(Guid.NewGuid(), "ivanov", "Иванов", "Designer", []);
+    public List<FamilyHit> Hits { get; } = [];
+    public List<FamilySearch> Searches { get; } = [];
+    public Dictionary<Guid, FamilyCardDto> Cards { get; } = [];
+    public List<(Guid Id, string? Hash, string? Project)> Loads { get; } = [];
+    public List<ProjectFamilyStatus> Statuses { get; set; } = [];
+    public List<IReadOnlyList<ProjectFamilyDto>> StatusRequests { get; } = [];
+    public List<PublishRequest> Publications { get; } = [];
+    public List<RequestItem> Updates { get; } = [];
+    public List<RequestItem> Open { get; } = [];
+    public List<Guid> Seen { get; } = [];
+    public Exception? Fail { get; set; }
+
+    public Task<UserInfo> MeAsync(CancellationToken ct) => Fail is { } fail ? Task.FromException<UserInfo>(fail) : Task.FromResult(Me);
+
+    public Task<LibraryInfo> LibraryAsync(CancellationToken ct) => Task.FromResult(Library);
+
+    public Task<FamilyPage> SearchAsync(FamilySearch search, int page, CancellationToken ct)
+    {
+        Searches.Add(search);
+        var found = Hits.Where(h => string.IsNullOrWhiteSpace(search.Text) || h.Name.Contains(search.Text!.Trim(), StringComparison.OrdinalIgnoreCase)).ToList();
+        return Task.FromResult(new FamilyPage(found.Skip((page - 1) * FamiliesApi.PageSize).Take(FamiliesApi.PageSize).ToList(), found.Count));
+    }
+
+    public Task<FamilyFacets> FacetsAsync(bool unreviewed, CancellationToken ct) =>
+        Task.FromResult(new FamilyFacets([new FacetValue("ОВ", 3)], [new FacetValue("Арматура", 2)], [], []));
+
+    public Task<FamilyCardDto> CardAsync(Guid id, bool unreviewed, CancellationToken ct) => Task.FromResult(Cards[id]);
+
+    public Task<byte[]> PreviewAsync(Guid id, string hash, CancellationToken ct) => Task.FromResult(new byte[] { 1, 2, 3 });
+
+    public Task ReportLoadAsync(Guid id, string? hash, string? project, CancellationToken ct)
+    {
+        Loads.Add((id, hash, project));
+        return Task.CompletedTask;
+    }
+
+    public Task<List<ProjectFamilyStatus>> ProjectStatusAsync(IReadOnlyList<ProjectFamilyDto> families, bool unreviewed, CancellationToken ct)
+    {
+        StatusRequests.Add(families);
+        return Task.FromResult(families.Select(f => Statuses.FirstOrDefault(s => s.Name == f.Name) ?? new ProjectFamilyStatus(f.Name, "NotFromLibrary", null, null, null, null, null, null))
+            .ToList());
+    }
+
+    public Task<PublishResult> PublishAsync(PublishRequest request, CancellationToken ct)
+    {
+        Publications.Add(request);
+        return Task.FromResult(new PublishResult(Guid.NewGuid(), request.Path.Substring(Library.Root.Length + 1), true));
+    }
+
+    public Task<List<RequestItem>> RequestUpdatesAsync(CancellationToken ct) => Task.FromResult(Updates.ToList());
+
+    public Task<List<RequestItem>> OpenRequestsAsync(CancellationToken ct) => Task.FromResult(Open.ToList());
+
+    public Task MarkRequestSeenAsync(Guid id, CancellationToken ct)
+    {
+        Seen.Add(id);
+        return Task.CompletedTask;
+    }
+
+    public string WebUrl(string relative) => "http://toadflow" + relative;
+}
+
+internal sealed class FakeFamilyRevit : IFamilyBridge
+{
+    public int RevitYear { get; set; } = 2022;
+    public ActiveDocument? Document { get; set; } = new("Дом.rvt", false, @"C:\Проекты\Дом.rvt");
+    public List<LoadRequest> Loaded { get; } = [];
+    public List<ProjectFamily> Families { get; } = [];
+    public List<(string Path, bool Overwrite)> Saved { get; } = [];
+
+    public Task<ActiveDocument?> ActiveDocumentAsync() => Task.FromResult(Document);
+
+    public Task<LoadOutcome> LoadAsync(LoadRequest request)
+    {
+        Loaded.Add(request);
+        return Task.FromResult(new LoadOutcome(request.Types?.ToList() ?? ["A", "B", "C"], false));
+    }
+
+    public Task<IReadOnlyList<ProjectFamily>> ProjectFamiliesAsync() => Task.FromResult<IReadOnlyList<ProjectFamily>>(Families);
+
+    public Task SaveFamilyAsync(string path, bool overwrite)
+    {
+        Saved.Add((path, overwrite));
+        return Task.CompletedTask;
+    }
+}
+
+internal sealed class FakeFamilyDialogs : IFamilyDialogs
+{
+    public bool Answer { get; set; } = true;
+    public List<string> Asked { get; } = [];
+    public List<string> Urls { get; } = [];
+    public List<string> Explorer { get; } = [];
+
+    public bool Confirm(string text)
+    {
+        Asked.Add(text);
+        return Answer;
+    }
+
+    public void Info(string text) => Asked.Add(text);
+
+    public void OpenUrl(string url) => Urls.Add(url);
+
+    public void ShowInExplorer(string path) => Explorer.Add(path);
+}
+
+public class FamiliesPaneTests
+{
+    private const string HashA = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    private const string HashB = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+
+    private sealed class Setup : IDisposable
+    {
+        public TempFolder Temp { get; } = new();
+        public FakeFamiliesApi Api { get; } = new();
+        public FakeFamilyRevit Revit { get; } = new();
+        public FakeFamilyDialogs Dialogs { get; } = new();
+        public ConnectionStore Store { get; }
+        public Dictionary<string, string> FileHashes { get; } = [];
+        public FamiliesPaneViewModel Model { get; }
+
+        public Setup(bool connected = true)
+        {
+            Store = new ConnectionStore(Temp.File("toadflow.json"));
+            if (connected) Store.Save(new ToadFlowConnection("http://toadflow", "ivanov", "Иванов", "Designer", Guid.NewGuid(), "tf_x"));
+            Model = new FamiliesPaneViewModel(Api, Revit, Store, new PreviewCache(Temp.File("previews"), Api.PreviewAsync), () => true, Dialogs,
+                path => FileHashes.TryGetValue(path, out var hash) ? Task.FromResult(hash) : Task.FromException<string>(new IOException("нет файла")));
+        }
+
+        public void Dispose() => Temp.Dispose();
+    }
+
+    private static FamilyHit Hit(string name, int? year = 2022, string state = "Approved") =>
+        new(Guid.NewGuid(), name, "ОВ", $@"ОВ\{name}.rfa", "Арматура", year, 3, state, true, DateTimeOffset.Now, HashA, 0);
+
+    private static FamilyCardDto Card(FamilyHit hit, string hash = HashA, FamilyContentDto? content = null) =>
+        new(hit.Id, hit.Name, hit.RelativePath, $@"\\nas\Families\{hit.RelativePath}", "ОВ", hit.State, "Арматура", "OneLevelBased", hit.RevitYear, 3, null, null,
+            DateTimeOffset.Now,
+            content ?? new FamilyContentDto("Арматура", "OneLevelBased", 2022,
+                [new("DN50", new() { ["Ду"] = "50" }), new("DN80", new() { ["Ду"] = "80" }), new("DN100", new() { ["Ду"] = "100" })], false),
+            [new FamilyVersionDto(Guid.NewGuid(), hash, hit.RevitYear, "Approved", "", hit.RelativePath, DateTimeOffset.Now, true, "Петров", "первая")], 2, null);
+
+    [Test]
+    public async Task NotConnected_AsksToSignIn()
+    {
+        using var setup = new Setup(connected: false);
+
+        await setup.Model.ActivateAsync();
+
+        setup.Model.Screen.ShouldBe(PaneScreen.NotConnected);
+    }
+
+    [Test]
+    public async Task LibraryNotConfigured_SaysWhereToSetIt()
+    {
+        using var setup = new Setup();
+        setup.Api.Library = new LibraryInfo(false, "", "_На проверке", false);
+
+        await setup.Model.ActivateAsync();
+
+        setup.Model.Screen.ShouldBe(PaneScreen.NotConfigured);
+        setup.Model.Message.ShouldContain("Параметры");
+    }
+
+    [Test]
+    public async Task ServerDown_SaysFilesAreStillInTheFolder()
+    {
+        using var setup = new Setup();
+        setup.Api.Fail = new ToadFlowUnavailableException("Нет связи с ToadFlow");
+
+        await setup.Model.ActivateAsync();
+
+        setup.Model.Screen.ShouldBe(PaneScreen.Error);
+        setup.Model.Message.ShouldContain("проводником");
+    }
+
+    [Test]
+    public async Task Activate_ShowsFamiliesAndFilters_SearchTextNarrows()
+    {
+        using var setup = new Setup();
+        setup.Api.Hits.AddRange([Hit("Клапан обратный"), Hit("Кран шаровой"), Hit("Клапан R2024", 2024)]);
+
+        await setup.Model.ActivateAsync();
+        setup.Model.Items.Count.ShouldBe(3);
+        setup.Model.SectionOptions.Select(o => o.Label).ShouldBe(["Все разделы", "ОВ (3)"]);
+        setup.Model.Items.Single(i => i.Name == "Клапан R2024").TooNew.ShouldBeTrue();
+        setup.Model.SearchText = "клапан";
+        await setup.Model.SearchTask;
+
+        setup.Model.Items.Select(i => i.Name).ShouldBe(["Клапан обратный", "Клапан R2024"]);
+        setup.Model.Found.ShouldBe("Найдено: 2");
+    }
+
+    [Test]
+    public async Task Load_ChosenTypes_StampAndLoadReported()
+    {
+        using var setup = new Setup();
+        var hit = Hit("Клапан обратный");
+        setup.Api.Hits.Add(hit);
+        setup.Api.Cards[hit.Id] = Card(hit);
+        setup.FileHashes[$@"\\nas\Families\{hit.RelativePath}"] = HashA;
+        await setup.Model.ActivateAsync();
+
+        await setup.Model.OpenCardAsync(hit.Id);
+        setup.Model.Card!.Types[2].IsChosen = false;
+        await setup.Model.LoadCommand.ExecuteAsync(null);
+
+        var load = setup.Revit.Loaded.Single();
+        (load.Path, load.CardId, load.Hash).ShouldBe(($@"\\nas\Families\{hit.RelativePath}", hit.Id, HashA));
+        load.Types.ShouldBe(["DN50", "DN80"]);
+        setup.Api.Loads.ShouldBe([(hit.Id, (string?)HashA, (string?)"Дом.rvt")]);
+        setup.Model.Status.ShouldBe("«Клапан обратный» загружено: 2 типоразмера");
+        setup.Dialogs.Asked.ShouldBeEmpty();
+    }
+
+    [Test]
+    public async Task Load_AllTypesChosen_LoadsWholeFamily()
+    {
+        using var setup = new Setup();
+        var hit = Hit("Клапан");
+        setup.Api.Hits.Add(hit);
+        setup.Api.Cards[hit.Id] = Card(hit);
+        setup.FileHashes[$@"\\nas\Families\{hit.RelativePath}"] = HashA;
+        await setup.Model.ActivateAsync();
+        await setup.Model.OpenCardAsync(hit.Id);
+
+        await setup.Model.LoadCommand.ExecuteAsync(null);
+
+        setup.Revit.Loaded.Single().Types.ShouldBeNull();
+    }
+
+    [Test]
+    public async Task Load_FileChangedSinceScan_AsksAndRespectsNo()
+    {
+        using var setup = new Setup();
+        var hit = Hit("Клапан");
+        setup.Api.Hits.Add(hit);
+        setup.Api.Cards[hit.Id] = Card(hit);
+        setup.FileHashes[$@"\\nas\Families\{hit.RelativePath}"] = HashB;
+        setup.Dialogs.Answer = false;
+        await setup.Model.ActivateAsync();
+        await setup.Model.OpenCardAsync(hit.Id);
+
+        await setup.Model.LoadCommand.ExecuteAsync(null);
+
+        setup.Dialogs.Asked.Single().ShouldContain("изменился");
+        setup.Revit.Loaded.ShouldBeEmpty();
+        setup.Model.Status.ShouldBe("Загрузка отменена");
+    }
+
+    [Test]
+    public async Task Load_FileChanged_YesLoadsWhatIsInTheFolder()
+    {
+        using var setup = new Setup();
+        var hit = Hit("Клапан");
+        setup.Api.Hits.Add(hit);
+        setup.Api.Cards[hit.Id] = Card(hit);
+        setup.FileHashes[$@"\\nas\Families\{hit.RelativePath}"] = HashB;
+        await setup.Model.ActivateAsync();
+        await setup.Model.OpenCardAsync(hit.Id);
+
+        await setup.Model.LoadCommand.ExecuteAsync(null);
+
+        setup.Revit.Loaded.Single().Hash.ShouldBe(HashB);
+    }
+
+    [Test]
+    public async Task Load_FamilyOfNewerRevit_Blocked()
+    {
+        using var setup = new Setup();
+        var hit = Hit("Клапан", 2024);
+        setup.Api.Hits.Add(hit);
+        setup.Api.Cards[hit.Id] = Card(hit);
+        await setup.Model.ActivateAsync();
+        setup.Model.Items.Single().TooNew.ShouldBeTrue();
+
+        await setup.Model.OpenCardAsync(hit.Id);
+        await setup.Model.LoadCommand.ExecuteAsync(null);
+
+        setup.Model.Card!.CanLoad.ShouldBeFalse();
+        setup.Model.Card.BlockedReason.ShouldBe("Сохранено в Revit 2024 — загрузится только в Revit 2024 и новее");
+        setup.Revit.Loaded.ShouldBeEmpty();
+    }
+
+    [Test]
+    public async Task Load_NoProjectOpen_Refused()
+    {
+        using var setup = new Setup();
+        setup.Revit.Document = null;
+        var hit = Hit("Клапан");
+        setup.Api.Hits.Add(hit);
+        setup.Api.Cards[hit.Id] = Card(hit);
+        await setup.Model.ActivateAsync();
+        await setup.Model.OpenCardAsync(hit.Id);
+
+        await setup.Model.LoadCommand.ExecuteAsync(null);
+
+        setup.Model.Status.ShouldContain("Откройте модель проекта");
+        setup.Revit.Loaded.ShouldBeEmpty();
+    }
+
+    [Test]
+    public async Task NoMatch_RequestOpensWebFormWithSearchText()
+    {
+        using var setup = new Setup();
+        await setup.Model.ActivateAsync();
+        setup.Model.SearchText = "решётка АМН";
+        await setup.Model.SearchTask;
+
+        setup.Model.RequestFamilyCommand.Execute(null);
+
+        setup.Model.Found.ShouldContain("Ничего не нашлось");
+        setup.Dialogs.Urls.Single().ShouldBe("http://toadflow/families/requests/new?q=" + Uri.EscapeDataString("решётка АМН"));
+    }
+
+    [Test]
+    public async Task ReadyRequest_ShownAndOpensItsFamily()
+    {
+        using var setup = new Setup();
+        var hit = Hit("Клапан");
+        setup.Api.Hits.Add(hit);
+        setup.Api.Cards[hit.Id] = Card(hit);
+        var ready = new RequestItem(Guid.NewGuid(), 12, "Клапан DN50", "Done", "Петров", hit.Id, "Клапан", true, DateTimeOffset.Now);
+        setup.Api.Updates.Add(ready);
+
+        await setup.Model.ActivateAsync();
+        setup.Model.RequestNews.ShouldBe("Заявки: готово 1");
+        await setup.Model.OpenRequestCommand.ExecuteAsync(ready);
+
+        setup.Api.Seen.ShouldBe([ready.Id]);
+        setup.Model.Card!.Name.ShouldBe("Клапан");
+        setup.Model.RequestNews.ShouldBe("");
+    }
+
+    [Test]
+    public async Task InProject_StatusesAndUpdateKeepsProjectTypes()
+    {
+        using var setup = new Setup();
+        var card = Guid.NewGuid();
+        setup.Revit.Families.AddRange([
+            new ProjectFamily("Клапан", "Арматура", card, HashA, ["DN50", "DN80"]),
+            new ProjectFamily("Кран", "Арматура", Guid.NewGuid(), HashA, ["Ду15"]),
+            new ProjectFamily("Своё", "Обобщённые модели", null, null, ["Тип 1"])
+        ]);
+        setup.Api.Statuses =
+        [
+            new ProjectFamilyStatus("Клапан", "Outdated", card, "Клапан", HashB, 2022, @"\\nas\Families\ОВ\Клапан.rfa", DateTimeOffset.Now),
+            new ProjectFamilyStatus("Кран", "Current", Guid.NewGuid(), "Кран", HashA, 2022, @"\\nas\Families\ОВ\Кран.rfa", DateTimeOffset.Now)
+        ];
+        setup.FileHashes[@"\\nas\Families\ОВ\Клапан.rfa"] = HashB;
+        await setup.Model.ActivateAsync();
+
+        setup.Model.SelectedTab = 1;
+        await setup.Model.RefreshProjectCommand.ExecuteAsync(null);
+        setup.Model.ProjectItems.Select(i => (i.Name, i.StateText, i.IsChosen)).ShouldBe([
+            ("Клапан", "устарело — в библиотеке новее", true),
+            ("Своё", "не из библиотеки", false)
+        ]);
+        setup.Model.ProjectSummary.ShouldContain("устарели: 1");
+        await setup.Model.UpdateChosenCommand.ExecuteAsync(null);
+
+        var load = setup.Revit.Loaded.Single();
+        (load.Path, load.CardId, load.Hash).ShouldBe((@"\\nas\Families\ОВ\Клапан.rfa", card, HashB));
+        load.Types.ShouldBe(["DN50", "DN80"]);
+        setup.Model.Status.ShouldStartWith("Обновлено: 1");
+    }
+
+    [Test]
+    public async Task Publish_NewFamily_SavedToReviewFolderAndReported()
+    {
+        using var setup = new Setup();
+        setup.Api.Library = setup.Api.Library with { CanPublish = true };
+        setup.Revit.Document = new ActiveDocument("Задвижка клиновая.rfa", true, @"C:\Work\Задвижка клиновая.rfa");
+        setup.Api.Open.Add(new RequestItem(Guid.NewGuid(), 7, "Задвижка", "InWork", "Петров", null, null, false, DateTimeOffset.Now));
+        await setup.Model.ActivateAsync();
+        var publish = setup.Model.Publish;
+        setup.Model.CanPublish.ShouldBeTrue();
+        (publish.Name, publish.Folder).ShouldBe(("Задвижка клиновая", "_На проверке"));
+        publish.Comment = "по каталогу";
+        publish.Request = publish.Requests[1];
+        setup.FileHashes[@"\\nas\Families\_На проверке\Задвижка клиновая.rfa"] = HashA;
+
+        await publish.PublishCommand.ExecuteAsync(null);
+
+        setup.Revit.Saved.ShouldBe([(@"\\nas\Families\_На проверке\Задвижка клиновая.rfa", false)]);
+        var sent = setup.Api.Publications.Single();
+        (sent.Hash, sent.CardId, sent.Comment, sent.RequestId).ShouldBe((HashA, (Guid?)null, (string?)"по каталогу", setup.Api.Open[0].Id));
+        publish.Result.ShouldContain("Опубликовано");
+    }
+
+    [Test]
+    public async Task Publish_NameTaken_RefusedBeforeSaving()
+    {
+        using var setup = new Setup();
+        setup.Api.Library = setup.Api.Library with { CanPublish = true };
+        setup.Revit.Document = new ActiveDocument("Клапан.rfa", true, "");
+        setup.Api.Statuses = [new ProjectFamilyStatus("Клапан", "NotFromLibrary", Guid.NewGuid(), "Клапан", HashA, 2022, @"\\nas\Families\ОВ\Клапан.rfa", null)];
+        await setup.Model.ActivateAsync();
+
+        await setup.Model.Publish.PublishCommand.ExecuteAsync(null);
+
+        setup.Revit.Saved.ShouldBeEmpty();
+        setup.Model.Publish.Result.ShouldContain("уже занято");
+    }
+
+    [Test]
+    public async Task Publish_NewVersion_GoesToReviewFolderUnderCardName()
+    {
+        using var setup = new Setup();
+        setup.Api.Library = setup.Api.Library with { CanPublish = true };
+        setup.Revit.Document = new ActiveDocument("Клапан правка.rfa", true, "");
+        var hit = Hit("Клапан");
+        setup.Api.Hits.Add(hit);
+        await setup.Model.ActivateAsync();
+        var publish = setup.Model.Publish;
+        publish.IsNewVersion = true;
+        publish.ExistingQuery = "Клапан";
+        await publish.FindExistingCommand.ExecuteAsync(null);
+        setup.FileHashes[@"\\nas\Families\_На проверке\Клапан.rfa"] = HashB;
+
+        await publish.PublishCommand.ExecuteAsync(null);
+
+        setup.Revit.Saved.ShouldBe([(@"\\nas\Families\_На проверке\Клапан.rfa", true)]);
+        setup.Api.Publications.Single().CardId.ShouldBe(hit.Id);
+    }
+
+    [Test]
+    public async Task Publish_FromNewerRevit_WarnsAndCanBeCancelled()
+    {
+        using var setup = new Setup();
+        setup.Api.Library = setup.Api.Library with { CanPublish = true };
+        setup.Revit.RevitYear = 2024;
+        setup.Revit.Document = new ActiveDocument("Решётка.rfa", true, "");
+        setup.Dialogs.Answer = false;
+        await setup.Model.ActivateAsync();
+
+        await setup.Model.Publish.PublishCommand.ExecuteAsync(null);
+
+        setup.Model.Publish.YearWarning.ShouldContain("проекты в Revit 2022 его не получат");
+        setup.Dialogs.Asked.Single().ShouldContain("Всё равно опубликовать?");
+        setup.Revit.Saved.ShouldBeEmpty();
+    }
+
+    [Test]
+    public async Task Designer_CannotPublish()
+    {
+        using var setup = new Setup();
+        setup.Revit.Document = new ActiveDocument("Решётка.rfa", true, "");
+
+        await setup.Model.ActivateAsync();
+
+        setup.Model.CanPublish.ShouldBeFalse();
+    }
+}

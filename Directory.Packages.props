@@ -41,6 +41,10 @@
         <!-- Ядро ParamChecker (проверка LOI), общее с ToadFlow: https://github.com/Alexpivo394/ToadParamCheck -->
         <PackageVersion Include="Alexpivo394.Revit.ParamCheck" Version="$(RevitVersion).*" Condition="$(RevitVersion) != ''"/>
 
+        <!-- Ядро библиотеки семейств, общее с ToadFlow: https://github.com/Alexpivo394/ToadFamilyManager -->
+        <PackageVersion Include="Alexpivo394.Revit.Families.Revit" Version="[$(RevitVersion).0.2]" Condition="$(RevitVersion) != ''"/>
+        <PackageVersion Include="Alexpivo394.Revit.Families.Files" Version="0.2.0"/>
+
     </ItemGroup>
 
     <!-- Core Dependencies -->

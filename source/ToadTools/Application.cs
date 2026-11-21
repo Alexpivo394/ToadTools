@@ -23,6 +23,7 @@ namespace ToadTools
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ToadTools", "RevitServerCache");
             // Закрепляемую панель Revit принимает только во время запуска — до первого await.
             Collisions.CollisionsPane.Register(Application);
+            Families.FamiliesPane.Register(Application);
             await Host.StartAsync();
             CreateRibbon();
         }
@@ -92,6 +93,10 @@ namespace ToadTools
             panel.AddPushButton<Commands.CollisionsCommand>("Коллизии")
                 .WithIcon("Collisions")
                 .WithInfo("Панель с коллизиями открытой модели\nиз ToadFlow: список, миниатюры, фильтры.\nПовторное нажатие скрывает панель.", "Collisions");
+
+            panel.AddPushButton<Commands.FamiliesCommand>("Семейства")
+                .WithIcon("Families")
+                .WithInfo("Библиотека семейств ToadFlow: поиск, загрузка\nв проект с выбором типоразмеров, «В проекте»,\nпубликация из редактора семейств.\nПовторное нажатие скрывает панель.", "Families");
 
             // Маленькие кнопки с короткой подписью; после трёх стопка сама переносится в новый столбец
             var stack = panel.AddStackPanel();

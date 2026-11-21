@@ -1,0 +1,21 @@
+<Project Sdk="Nice3point.Revit.Sdk/6.2.2">
+
+    <!-- Плагин «Семейства»: закрепляемая панель библиотеки семейств из ToadFlow — поиск, загрузка в проект, «В проекте», публикация.
+         Core и ViewModels — без Revit API (их проверяет ToadTools.Tests), Revit — за IFamilyBridge. -->
+    <ItemGroup>
+        <PackageReference Include="CommunityToolkit.Mvvm"/>
+        <PackageReference Include="Newtonsoft.Json"/>
+        <PackageReference Include="Alexpivo394.Revit.Families.Revit"/>
+    </ItemGroup>
+
+    <!-- HttpClient; на .NET входит в рантайм -->
+    <ItemGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))' == '.NETFramework'">
+        <Reference Include="System.Net.Http"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\ToadTools.UI\ToadTools.UI.csproj"/>
+        <ProjectReference Include="..\ToadTools.Connection\ToadTools.Connection.csproj"/>
+    </ItemGroup>
+
+</Project>

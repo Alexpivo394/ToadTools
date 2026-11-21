@@ -15,6 +15,11 @@
         <PolyArgumentExceptions>true</PolyArgumentExceptions>
     </PropertyGroup>
 
+    <!-- Пакеты ядра семейств (ToadFamilyManager) до публикации на nuget.org берутся из соседней папки output, если она есть -->
+    <PropertyGroup Condition="Exists('$(MSBuildThisFileDirectory)..\ToadFamilyManager\output')">
+        <RestoreAdditionalProjectSources>$(RestoreAdditionalProjectSources);$(MSBuildThisFileDirectory)..\ToadFamilyManager\output</RestoreAdditionalProjectSources>
+    </PropertyGroup>
+
     <!-- Global usings -->
     <ItemGroup>
         <Using Include="JetBrains.Annotations"/>
