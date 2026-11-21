@@ -76,7 +76,7 @@
 
 ## Что стоит знать заранее
 
-**ToadFlow.** Панели «Коллизии» и отправке итогов ParamChecker нужен сервер [ToadFlow](https://github.com/Alexpivo394/ToadFlow) 2.0.0 и вход в него: **ToadTools → Вход → [Подключение к ToadFlow](https://github.com/Alexpivo394/ToadTools/wiki/ToadFlow)**. Остальные инструменты работают без сервера.
+**ToadFlow.** Панели «Коллизии» и отправке итогов ParamChecker нужен сервер [ToadFlow](https://github.com/Alexpivo394/ToadFlow) 2.0.0, панели «Семейства» — 3.0.0, и вход в него: **ToadTools → Вход → [Подключение к ToadFlow](https://github.com/Alexpivo394/ToadTools/wiki/ToadFlow)**. Остальные инструменты работают без сервера.
 
 **Сетевой диск.** Часть инструментов берёт семейства и таблицы Excel с диска `Y:` компании. Вне корпоративной сети возьмите эти файлы из папки [`assets`](assets).
 
@@ -132,9 +132,10 @@ cd build; dotnet run -c Release -- pack
 | Проект | Зачем он |
 |---|---|
 | [ToadTools.Desktop](https://github.com/Alexpivo394/ToadTools.Desktop) | Программа в трее, которая ставит и обновляет плагин |
-| [ToadFlow](https://github.com/Alexpivo394/ToadFlow) | Сервис: по расписанию выгружает модели, проверяет LOI и ищет коллизии |
+| [ToadFlow](https://github.com/Alexpivo394/ToadFlow) | Сервис: по расписанию выгружает модели, проверяет LOI, ищет коллизии и ведёт библиотеку семейств |
 | [ToadExport](https://github.com/Alexpivo394/ToadExport) | Ядро выгрузки RVT и NWC, общее для ToadExporter и ToadFlow |
 | [ToadParamCheck](https://github.com/Alexpivo394/ToadParamCheck) | Ядро проверки LOI, общее для ParamChecker и ToadFlow |
+| [ToadFamilyManager](https://github.com/Alexpivo394/ToadFamilyManager) | Ядро библиотеки семейств, общее для панели «Семейства» и ToadFlow |
 | [ToadDesign](https://github.com/Alexpivo394/ToadDesign) | Оформление всех окон |
 
 ## Лицензия
