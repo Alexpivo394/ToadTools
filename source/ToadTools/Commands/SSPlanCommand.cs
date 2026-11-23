@@ -13,9 +13,9 @@ namespace ToadTools.Commands;
 /// </summary>
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
-public class SSPlanCommand : ExternalCommand
+public class SSPlanCommand : ToadCommand
 {
-    public override void Execute()
+    protected override void Run()
     {
         var uiDoc = Application.ActiveUIDocument;
         var doc = Application.ActiveUIDocument.Document;

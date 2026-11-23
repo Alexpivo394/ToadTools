@@ -2,7 +2,8 @@
 using System;
 using System.ComponentModel;
 using System.IO;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using ToadDesign;
 
 namespace ToadTools.UI.Services;
@@ -56,12 +57,21 @@ public sealed class ThemePreference : INotifyPropertyChanged
     {
         try
         {
-            return !File.Exists(FilePath) || (bool?)JObject.Parse(File.ReadAllText(FilePath))["dark"] != false;
+            return !File.Exists(FilePath) || !IsLight(File.ReadAllText(FilePath));
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or Newtonsoft.Json.JsonException)
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
         {
             return true;
         }
+    }
+
+    /// <summary>Light only on an explicit <c>"dark": false</c>; anything else in the file keeps the dark theme.</summary>
+    private static bool IsLight(string json)
+    {
+        using var document = JsonDocument.Parse(json);
+        return document.RootElement.ValueKind == JsonValueKind.Object
+               && document.RootElement.TryGetProperty("dark", out var dark)
+               && dark.ValueKind == JsonValueKind.False;
     }
 
     private void Save()
@@ -69,7 +79,7 @@ public sealed class ThemePreference : INotifyPropertyChanged
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
-            File.WriteAllText(FilePath, new JObject { ["dark"] = _isDark }.ToString());
+            File.WriteAllText(FilePath, new JsonObject { ["dark"] = _isDark }.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {

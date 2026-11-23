@@ -6,7 +6,7 @@ using ClassifierCode.Engine.Import;
 using ClassifierCode.Engine.Kit;
 using ClassifierCode.Engine.Profile;
 using ClassifierCode.Engine.Running;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace ClassifierCode.Check;
 
@@ -16,6 +16,9 @@ namespace ClassifierCode.Check;
 /// </summary>
 public static class CheckCli
 {
+    /// <summary>modes.json пишет ИИ-агент или человек: комментарии и лишняя запятая допустимы.</summary>
+    private static readonly JsonSerializerOptions ModesJson = new() { ReadCommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true };
+
     public const string Usage = """
         Проверялка профилей классификатора (тот же движок, что «Заполнить» в Revit).
 
@@ -200,7 +203,7 @@ public static class CheckCli
     {
         var path = Full(folder, options.One("modes") ?? Path.Combine("work", "modes.json"));
         if (!File.Exists(path)) return null;
-        var modes = JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(path)) ?? new Dictionary<string, string>();
+        var modes = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(path), ModesJson) ?? new Dictionary<string, string>();
         foreach (var pair in modes.Where(p => !profile.Modes.ContainsKey(p.Value)))
             output.WriteLine($"Внимание: в {Path.GetFileName(path)} для «{pair.Key}» режим «{pair.Value}» — его нет в профиле (есть: {string.Join(", ", profile.Modes.Keys)})");
         return modes;

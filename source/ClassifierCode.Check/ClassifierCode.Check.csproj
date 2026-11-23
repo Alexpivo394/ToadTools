@@ -13,8 +13,8 @@
 
     <ItemGroup>
         <PackageReference Remove="Nice3point.Revit.Toolkit;Nice3point.Revit.Extensions;Nice3point.Revit.Api.RevitAPI;Nice3point.Revit.Api.RevitAPIUI"/>
-        <PackageReference Include="Newtonsoft.Json"/>
-        <PackageReference Include="EPPlus"/>
+        <PackageReference Include="System.Text.Json"/>
+        <PackageReference Include="ClosedXML"/>
     </ItemGroup>
 
     <ItemGroup>

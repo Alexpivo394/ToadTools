@@ -10,9 +10,9 @@ namespace ToadTools.Commands;
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
 [Regeneration(RegenerationOption.Manual)]
-public class WorksetCheckCommand : ExternalCommand
+public class WorksetCheckCommand : ToadCommand
 {
-    public override void Execute()
+    protected override void Run()
     {
         WorksetCheckLauncher.Run(Application);
     }

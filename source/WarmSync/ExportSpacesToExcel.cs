@@ -5,7 +5,7 @@ using System.IO;
 using Autodesk.Revit.DB.Mechanical;
 using Microsoft.Win32;
 using Nice3point.Revit.Toolkit;
-using OfficeOpenXml;
+using ClosedXML.Excel;
 using ToadTools.UI.Models;
 using ToadTools.UI.Progress;
 using ToadTools.UI.Services;
@@ -32,8 +32,6 @@ public class ExportSpacesToExcel
         
         if (dialog.ShowDialog() == true) excelPath = dialog.FileName;
 
-        ExcelPackage.License.SetNonCommercialPersonal("ToadTools");
-
         if (string.IsNullOrEmpty(excelPath)) return;
 
         try
@@ -42,19 +40,19 @@ public class ExportSpacesToExcel
 
             using (var progress = ToadProgress.Show("Выгрузка пространств",
                        new ProgressOptions { Icon = Symbol.TableExport }))
-            using (var package = new ExcelPackage())
+            using (var workbook = new XLWorkbook())
             {
-                var ws = package.Workbook.Worksheets.Add("Spaces");
+                var ws = workbook.Worksheets.Add("Spaces");
 
                 // Заголовки
-                ws.Cells[1, 1].Value = "ID элемента";
-                ws.Cells[1, 2].Value = "Уровень";
-                ws.Cells[1, 3].Value = "Номер";
-                ws.Cells[1, 4].Value = "Имя";
-                ws.Cells[1, 5].Value = "Площадь";
-                ws.Cells[1, 6].Value = "Объем";
-                ws.Cells[1, 7].Value = "ADSK_Температура в помещении";
-                ws.Cells[1, 8].Value = "ADSK_Теплопотери";
+                ws.Cell(1, 1).Value = "ID элемента";
+                ws.Cell(1, 2).Value = "Уровень";
+                ws.Cell(1, 3).Value = "Номер";
+                ws.Cell(1, 4).Value = "Имя";
+                ws.Cell(1, 5).Value = "Площадь";
+                ws.Cell(1, 6).Value = "Объем";
+                ws.Cell(1, 7).Value = "ADSK_Температура в помещении";
+                ws.Cell(1, 8).Value = "ADSK_Теплопотери";
 
                 int row = 2;
 
@@ -62,24 +60,24 @@ public class ExportSpacesToExcel
                 {
                     Debug.WriteLine($"Обрабатываю Space ID {sp.Id}");
 #if REVIT2024_OR_GREATER
-                    ws.Cells[row, 1].Value = sp.Id.Value;
+                    ws.Cell(row, 1).Value = sp.Id.Value;
 #else
-                    ws.Cells[row, 1].Value = sp.Id.IntegerValue;
+                    ws.Cell(row, 1).Value = sp.Id.IntegerValue;
 #endif
-                    ws.Cells[row, 2].Value = sp.Level?.Name ?? "";
-                    ws.Cells[row, 3].Value = sp.Number ?? "";
-                    ws.Cells[row, 4].Value = sp.Name ?? "";
+                    ws.Cell(row, 2).Value = sp.Level?.Name ?? "";
+                    ws.Cell(row, 3).Value = sp.Number ?? "";
+                    ws.Cell(row, 4).Value = sp.Name ?? "";
                     {
                         var p = sp.get_Parameter(BuiltInParameter.ROOM_AREA);
-                        ws.Cells[row, 5].Value = p != null ? p.AsValueString() : "";
+                        ws.Cell(row, 5).Value = p != null ? p.AsValueString() : "";
                     }
                     {
                         var p = sp.get_Parameter(BuiltInParameter.ROOM_VOLUME);
-                        ws.Cells[row, 6].Value = p != null ? p.AsValueString() : "";
+                        ws.Cell(row, 6).Value = p != null ? p.AsValueString() : "";
                     }
 
-                    ws.Cells[row, 7].Value = GetParamValue(sp, "ADSK_Температура в помещении");
-                    ws.Cells[row, 8].Value = GetParamValue(sp, "ADSK_Теплопотери");
+                    ws.Cell(row, 7).Value = XLCellValue.FromObject(GetParamValue(sp, "ADSK_Температура в помещении"));
+                    ws.Cell(row, 8).Value = XLCellValue.FromObject(GetParamValue(sp, "ADSK_Теплопотери"));
 
                     row++;
                 }
@@ -87,10 +85,9 @@ public class ExportSpacesToExcel
                 progress.Stage("Сохранение файла");
 
                 // автоширина, чтобы таблица не выглядела как жопа
-                ws.Cells[ws.Dimension.Address].AutoFitColumns();
+                ws.Columns().AdjustToContents();
 
-                FileInfo fi = new FileInfo(excelPath);
-                package.SaveAs(fi);
+                workbook.SaveAs(excelPath);
             }
             
             var dial = ToadDialogService.Show(
@@ -107,13 +104,14 @@ public class ExportSpacesToExcel
         }
         catch (Exception ex)
         {
-            var dial = ToadDialogService.Show(
-                "Ошибка",
-                ex.ToString(),
+            // Чаще всего файл открыт в Excel или в папку нельзя писать
+            ErrorReport.Log("Выгрузка пространств в Excel", ex);
+            ToadDialogService.Show(
+                "Файл не сохранён",
+                $"{excelPath}\n\n{ex.Message}",
                 DialogButtons.OK,
                 DialogIcon.Error
             );
-            throw;
         }
     }
 

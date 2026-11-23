@@ -15,12 +15,12 @@ namespace ToadTools.Commands;
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
 [Regeneration(RegenerationOption.Manual)]
-public class DoorSideCommand : ExternalCommand
+public class DoorSideCommand : ToadCommand
 {
     private const string SwingParameterName = "Открывание";
     private static readonly Guid SwingParameterGuid = new("0F098FD7-5959-4FF6-AE0D-44E9CC4B7237");
 
-    public override void Execute()
+    protected override void Run()
     {
         var doc = Application.ActiveUIDocument.Document;
 

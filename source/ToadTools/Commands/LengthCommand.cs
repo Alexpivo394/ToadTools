@@ -12,9 +12,9 @@ namespace ToadTools.Commands;
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
 [Regeneration(RegenerationOption.Manual)]
-public class LengthCommand : ExternalCommand
+public class LengthCommand : ToadCommand
 {
-    public override void Execute()
+    protected override void Run()
     {
         var uiDocument = Application.ActiveUIDocument;
         var selection = uiDocument.Selection.GetElementIds()

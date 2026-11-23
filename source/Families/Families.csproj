@@ -1,10 +1,9 @@
-<Project Sdk="Nice3point.Revit.Sdk/6.2.2">
+<Project Sdk="Nice3point.Revit.Sdk/6.3.2">
 
     <!-- Плагин «Семейства»: закрепляемая панель библиотеки семейств из ToadFlow — поиск, загрузка в проект, «В проекте», публикация.
          Core и ViewModels — без Revit API (их проверяет ToadTools.Tests), Revit — за IFamilyBridge. -->
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.Mvvm"/>
-        <PackageReference Include="Newtonsoft.Json"/>
         <PackageReference Include="Alexpivo394.Revit.Families.Revit"/>
     </ItemGroup>
 

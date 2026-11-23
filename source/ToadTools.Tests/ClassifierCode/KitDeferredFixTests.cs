@@ -3,7 +3,7 @@ using ClassifierCode.Check;
 using ClassifierCode.Engine.Facts;
 using ClassifierCode.Engine.Kit;
 using ClassifierCode.Engine.Profile;
-using OfficeOpenXml;
+using ClosedXML.Excel;
 using Shouldly;
 
 namespace ToadTools.Tests.ClassifierCode;
@@ -67,13 +67,12 @@ public class KitDeferredFixTests
     public void Xlsx_NumericCode_Invariant()
     {
         using var temp = new TempFolder();
-        ExcelPackage.License.SetNonCommercialPersonal("ToadTools");
-        using (var package = new ExcelPackage())
+        using (var workbook = new XLWorkbook())
         {
-            var sheet = package.Workbook.Worksheets.Add("Коды");
-            sheet.Cells["A1"].Value = 4.05;
-            sheet.Cells["B1"].Value = "Позиция";
-            package.SaveAs(new FileInfo(temp.File("c.xlsx")));
+            var sheet = workbook.Worksheets.Add("Коды");
+            sheet.Cell("A1").Value = 4.05;
+            sheet.Cell("B1").Value = "Позиция";
+            workbook.SaveAs(temp.File("c.xlsx"));
         }
 
         var culture = CultureInfo.CurrentCulture;

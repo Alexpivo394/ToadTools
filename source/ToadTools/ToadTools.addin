@@ -9,6 +9,6 @@
     </AddIn>
     <ManifestSettings>
         <UseRevitContext>False</UseRevitContext>
-        <ContextName>RevitLookup</ContextName>
+        <ContextName>ToadTools</ContextName>
     </ManifestSettings>
 </RevitAddIns>

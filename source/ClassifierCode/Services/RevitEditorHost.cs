@@ -5,7 +5,7 @@ using ClassifierCode.Engine.Library;
 using ClassifierCode.Engine.Profile;
 using ClassifierCode.Models;
 using Microsoft.Win32;
-using OfficeOpenXml;
+using ClosedXML.Excel;
 using ToadTools.UI.Models;
 using ToadTools.UI.Services;
 
@@ -104,27 +104,32 @@ public sealed class RevitEditorHost(Autodesk.Revit.UI.UIDocument uiDocument) : I
 
         try
         {
-            ExcelPackage.License.SetNonCommercialPersonal("ToadTools");
-            using var package = new ExcelPackage(new FileInfo(dialog.FileName));
-            var sheet = package.Workbook.Worksheets.FirstOrDefault(s => s.Dimension != null);
-            if (sheet == null) return [];
+            using var stream = new FileStream(dialog.FileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite); // книга может быть открыта в Excel
+            using var workbook = new XLWorkbook(stream);
+            var sheet = workbook.Worksheets.FirstOrDefault(s => !s.IsEmpty());
+            if (sheet?.RangeUsed() is not { } used) return [];
 
             var rows = new List<string[]>();
-            for (var r = sheet.Dimension.Start.Row; r <= sheet.Dimension.End.Row; r++)
+            var columns = used.LastColumn().ColumnNumber();
+            for (var r = used.FirstRow().RowNumber(); r <= used.LastRow().RowNumber(); r++)
             {
-                var row = new string[sheet.Dimension.End.Column];
-                for (var c = 1; c <= sheet.Dimension.End.Column; c++) row[c - 1] = sheet.Cells[r, c].Text ?? string.Empty;
+                var row = new string[columns];
+                for (var c = 1; c <= columns; c++) row[c - 1] = CellText(sheet.Cell(r, c));
                 rows.Add(row);
             }
 
             return rows;
         }
-        catch (Exception exception) when (exception is IOException or InvalidDataException or InvalidOperationException)
+        catch (Exception exception) // книга повреждена, не xlsx или занята — это «файл не прочитан», а не сбой плагина
         {
             ToadDialogService.Show("Файл не прочитан", exception.Message, DialogButtons.OK, DialogIcon.Error);
             return null;
         }
     }
+
+    /// <summary>Текст ячейки, как его показывает Excel; у формулы — сохранённый результат.</summary>
+    private static string CellText(IXLCell cell) =>
+        cell.HasFormula ? cell.CachedValue.ToString(System.Globalization.CultureInfo.CurrentCulture) : cell.GetFormattedString();
 
     public string? ClipboardText() => System.Windows.Clipboard.ContainsText() ? System.Windows.Clipboard.GetText() : null;
 

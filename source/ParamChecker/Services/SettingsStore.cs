@@ -1,8 +1,9 @@
 using System.IO;
 using System.Reflection;
 using Autodesk.Revit.DB;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
+using ToadTools.UI.Services;
 using Alexpivo394.Revit.ParamCheck.Profiles;
 
 namespace ParamChecker.Services;
@@ -19,6 +20,12 @@ public sealed class SettingsStore
     private readonly string _settingsPath = Path.Combine(Folder, "settings.json");
     private readonly string _profilesPath = Path.Combine(Folder, "profiles.json");
 
+    /// <summary>Как <see cref="SettingsJson.Options" />, но пустые поля переноса из прежних версий в файл не пишутся.</summary>
+    private static readonly JsonSerializerOptions Json = new(SettingsJson.Options)
+    {
+        TypeInfoResolver = new DefaultJsonTypeInfoResolver { Modifiers = { OmitEmptyLegacy } }
+    };
+
     /// <summary>Имя BuiltInCategory по числу — для профилей старого формата.</summary>
     public static string? CategoryName(int id) =>
         // Значение — само перечисление: с Revit 2024 его базовый тип long, до того — int, а IsDefined требует точный тип.
@@ -30,7 +37,7 @@ public sealed class SettingsStore
         try
         {
             if (File.Exists(_settingsPath))
-                return JsonConvert.DeserializeObject<CheckerSettings>(File.ReadAllText(_settingsPath)) ?? new CheckerSettings();
+                return Read(File.ReadAllText(_settingsPath)) ?? new CheckerSettings();
 
             return LegacySettings() ?? new CheckerSettings();
         }
@@ -40,7 +47,7 @@ public sealed class SettingsStore
         }
     }
 
-    public void SaveSettings(CheckerSettings settings) => Write(_settingsPath, JsonConvert.SerializeObject(settings, Formatting.Indented));
+    public void SaveSettings(CheckerSettings settings) => Write(_settingsPath, JsonSerializer.Serialize(settings, Json));
 
     /// <summary>Профили с прошлого раза; пусто — если их ещё не было или файл не читается.</summary>
     /// <param name="error">Почему файл профилей не прочитался — показать пользователю, чтобы он не потерял их молча.</param>
@@ -65,6 +72,16 @@ public sealed class SettingsStore
 
     public void SaveProfiles(ProfileSet set) => Write(_profilesPath, ProfileSerializer.Serialize(set));
 
+    private static CheckerSettings? Read(string json) => string.IsNullOrWhiteSpace(json) ? null : JsonSerializer.Deserialize<CheckerSettings>(json, Json);
+
+    private static void OmitEmptyLegacy(JsonTypeInfo type)
+    {
+        if (type.Type != typeof(CheckerSettings)) return;
+        foreach (var property in type.Properties)
+            if (property.Name is "ToadFlowUrl" or "ToadFlowTokenProtected")
+                property.ShouldSerialize = (_, value) => value is string { Length: > 0 };
+    }
+
     /// <summary>Настройки старых версий лежали в ParamCheckerSettings\config.json рядом с dll.</summary>
     private static CheckerSettings? LegacySettings()
     {
@@ -74,12 +91,16 @@ public sealed class SettingsStore
         var path = Path.Combine(Path.GetDirectoryName(location)!, "ParamCheckerSettings", "config.json");
         if (!File.Exists(path)) return null;
 
-        var json = JObject.Parse(File.ReadAllText(path));
+        using var document = JsonDocument.Parse(File.ReadAllText(path));
+        var json = document.RootElement;
+        if (json.ValueKind != JsonValueKind.Object) return null;
+
         var settings = new CheckerSettings
         {
-            SkipLinks = (bool?)json["SkipLinks"] ?? true
+            SkipLinks = !json.TryGetProperty("SkipLinks", out var skipLinks) || skipLinks.ValueKind != JsonValueKind.False
         };
-        if ((string?)json["ReportsPath"] is { Length: > 0 } reports) settings.ReportsFolder = reports;
+        if (json.TryGetProperty("ReportsPath", out var reportsPath) && reportsPath.ValueKind == JsonValueKind.String && reportsPath.GetString() is { Length: > 0 } reports)
+            settings.ReportsFolder = reports;
         return settings;
     }
 

@@ -1,7 +1,7 @@
 using ClassifierCode.Check;
 using ClassifierCode.Engine.Facts;
 using ClassifierCode.Engine.Profile;
-using OfficeOpenXml;
+using ClosedXML.Excel;
 using Shouldly;
 
 namespace ToadTools.Tests.ClassifierCode;
@@ -30,23 +30,21 @@ public class CheckCliTests
     public void Classifier_Pnr_ReadsCachedValues()
     {
         using var temp = new TempFolder();
-        ExcelPackage.License.SetNonCommercialPersonal("ToadTools");
-        using (var package = new ExcelPackage())
+        using (var workbook = new XLWorkbook())
         {
-            package.Workbook.Worksheets.Add("Кодификатор до 3-го уровня").Cells["A1"].Value = "Код статьи";
-            var sheet = package.Workbook.Worksheets.Add("Кодификатор концепция");
-            sheet.Cells["A1"].Value = "Код новый";
-            sheet.Cells["B1"].Value = "Наименование статей оборотов";
-            sheet.Cells["C1"].Value = "Ед. изм.";
-            sheet.Cells["A2"].Value = "04.01";
-            sheet.Cells["B2"].Value = "Общестроительные работы";
-            sheet.Cells["A3"].Value = "04.05.01.12";
-            sheet.Cells["B3"].Value = "ИТП/ЦТП";
-            sheet.Cells["A4"].Formula = "A3&\".01\"";
-            sheet.Cells["B4"].Value = "Оборудование";
-            sheet.Cells["C4"].Value = "шт.";
-            sheet.Calculate();
-            package.SaveAs(new FileInfo(temp.File("codes.xlsx")));
+            workbook.Worksheets.Add("Кодификатор до 3-го уровня").Cell("A1").Value = "Код статьи";
+            var sheet = workbook.Worksheets.Add("Кодификатор концепция");
+            sheet.Cell("A1").Value = "Код новый";
+            sheet.Cell("B1").Value = "Наименование статей оборотов";
+            sheet.Cell("C1").Value = "Ед. изм.";
+            sheet.Cell("A2").Value = "04.01";
+            sheet.Cell("B2").Value = "Общестроительные работы";
+            sheet.Cell("A3").Value = "04.05.01.12";
+            sheet.Cell("B3").Value = "ИТП/ЦТП";
+            sheet.Cell("A4").FormulaA1 = "A3&\".01\"";
+            sheet.Cell("B4").Value = "Оборудование";
+            sheet.Cell("C4").Value = "шт.";
+            workbook.SaveAs(temp.File("codes.xlsx"), new SaveOptions { EvaluateFormulasBeforeSaving = true });
         }
 
         var (code, output) = Run(temp.Path, "classifier", "codes.xlsx", "--sheet", "Кодификатор концепция", "--prefix", "04.05");

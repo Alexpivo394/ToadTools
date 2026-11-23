@@ -9,9 +9,9 @@ namespace ToadTools.Commands;
 /// </summary>
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
-public class ParamCheckerCommand : ExternalCommand
+public class ParamCheckerCommand : ToadCommand
 {
-    public override void Execute()
+    protected override void Run()
     {
         ParamCheckerLauncher.Run(Application);
     }

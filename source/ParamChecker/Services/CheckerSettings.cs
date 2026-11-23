@@ -2,7 +2,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace ParamChecker.Services;
 
@@ -34,17 +34,14 @@ public sealed partial class CheckerSettings : ObservableObject
 
     /// <summary>
     ///     Адрес ToadFlow из настроек прежних версий — только для переноса в общее подключение ToadTools
-    ///     (<see cref="ToadFlowSender.MigrateLegacy" />); после переноса стирается.
+    ///     (<see cref="ToadFlowSender.MigrateLegacy" />); после переноса стирается и в файл больше не пишется.
     /// </summary>
-    [JsonProperty("ToadFlowUrl")]
+    [JsonPropertyName("ToadFlowUrl")]
     public string LegacyToadFlowUrl { get; set; } = "";
 
     /// <summary>Токен ToadFlow из настроек прежних версий (DPAPI) — только для переноса; после переноса стирается.</summary>
-    [JsonProperty("ToadFlowTokenProtected")]
+    [JsonPropertyName("ToadFlowTokenProtected")]
     public string LegacyToadFlowTokenProtected { get; set; } = "";
-
-    public bool ShouldSerializeLegacyToadFlowUrl() => LegacyToadFlowUrl.Length > 0;
-    public bool ShouldSerializeLegacyToadFlowTokenProtected() => LegacyToadFlowTokenProtected.Length > 0;
 
     /// <summary>Расшифрованный старый токен; пусто — его нет или настройки с другого компьютера.</summary>
     public string LegacyToadFlowToken()

@@ -1,7 +1,9 @@
 using System.IO;
 using System.Text;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace ClassifierCode.Engine.Facts;
 
@@ -84,40 +86,48 @@ public sealed class ExportFacts : IElementFacts
 
 public static class ExportJson
 {
-    internal static readonly JsonSerializerSettings Settings = new()
+    /// <summary>camelCase, ключи словарей как есть, null не пишется; файл — UTF-8 без BOM, кириллица не экранируется.</summary>
+    internal static readonly JsonSerializerOptions Options = Create();
+
+    /// <summary>То же, но без типов и элементов: они пропускаются потоком, не попадая в память.</summary>
+    internal static readonly JsonSerializerOptions HeaderOptions = Create(HeaderOnly);
+
+    private static JsonSerializerOptions Create(params Action<JsonTypeInfo>[] modifiers)
     {
-        ContractResolver = new CamelCasePropertyNamesContractResolver { NamingStrategy = new CamelCaseNamingStrategy { ProcessDictionaryKeys = false } },
-        NullValueHandling = NullValueHandling.Ignore,
-        Converters = [new ExportParameterConverter()]
-    };
+        var resolver = new DefaultJsonTypeInfoResolver { Modifiers = { EngineJson.KeepDefaultsOnNull } };
+        foreach (var modifier in modifiers) resolver.Modifiers.Add(modifier);
+        return new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            PropertyNameCaseInsensitive = true,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            Converters = { new ExportParameterConverter() },
+            TypeInfoResolver = resolver
+        };
+    }
+
+    private static void HeaderOnly(JsonTypeInfo type)
+    {
+        if (type.Type != typeof(ExportModel)) return;
+        for (var i = type.Properties.Count - 1; i >= 0; i--)
+            if (type.Properties[i].Name is "types" or "elements")
+                type.Properties.RemoveAt(i);
+    }
 }
 
 /// <summary>Чтение выгрузки потоком (файлы бывают в сотни мегабайт).</summary>
 public static class ExportReader
 {
     /// <summary>Шапка выгрузки без типов и элементов — им проверяются категории, не разбирая сотни мегабайт.</summary>
-    public static ExportModel ReadHeader(string path)
-    {
-        using var stream = File.OpenText(path);
-        using var reader = new JsonTextReader(stream);
-        if (!reader.Read() || reader.TokenType != JsonToken.StartObject) throw NotExport(path);
-        var header = new Newtonsoft.Json.Linq.JObject();
-        while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
-        {
-            var name = (string)reader.Value!;
-            reader.Read();
-            if (name is "types" or "elements") reader.Skip();
-            else header[name] = Newtonsoft.Json.Linq.JToken.ReadFrom(reader);
-        }
+    public static ExportModel ReadHeader(string path) => Read(path, ExportJson.HeaderOptions);
 
-        return Check(header.ToObject<ExportModel>(JsonSerializer.Create(ExportJson.Settings)), path);
-    }
+    public static ExportModel Read(string path) => Read(path, ExportJson.Options);
 
-    public static ExportModel Read(string path)
+    private static ExportModel Read(string path, JsonSerializerOptions options)
     {
-        using var stream = File.OpenText(path);
-        using var reader = new JsonTextReader(stream);
-        return Check(JsonSerializer.Create(ExportJson.Settings).Deserialize<ExportModel>(reader), path);
+        using var stream = File.OpenRead(path);
+        return Check(JsonSerializer.Deserialize<ExportModel>(stream, options), path);
     }
 
     private static ExportModel Check(ExportModel? model, string path)
@@ -138,9 +148,8 @@ public static class ExportWriter
     public static void Write(ExportModel model, string path)
     {
         var temp = path + ".tmp";
-        using (var stream = new StreamWriter(temp, false, new UTF8Encoding(false)))
-        using (var writer = new JsonTextWriter(stream) { Formatting = Formatting.None })
-            JsonSerializer.Create(ExportJson.Settings).Serialize(writer, model);
+        using (var stream = new FileStream(temp, FileMode.Create, FileAccess.Write, FileShare.None))
+            JsonSerializer.Serialize(stream, model, ExportJson.Options);
         if (File.Exists(path)) File.Delete(path);
         File.Move(temp, path);
     }

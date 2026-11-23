@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using ClassifierCode.Check;
 using ClassifierCode.Engine.Profile;
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 using Shouldly;
 
 namespace ToadTools.Tests.ClassifierCode;
@@ -13,7 +13,7 @@ public class KitDocsTests
 {
     private static string Kit(string name) => Path.Combine(AppContext.BaseDirectory, "TestData", "ClassifierCode", "AiKit", name);
 
-    private static JObject Schema => JObject.Parse(File.ReadAllText(Kit("profile.schema.json")));
+    private static JsonObject Schema => JsonNode.Parse(File.ReadAllText(Kit("profile.schema.json")))!.AsObject();
 
     private static string CamelCase(string name) => char.ToLowerInvariant(name[0]) + name.Substring(1);
 
@@ -45,8 +45,8 @@ public class KitDocsTests
     private static IEnumerable<PropertyInfo> Properties(Type type) =>
         type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanWrite);
 
-    private static JObject Definition(JObject schema, Type type) =>
-        type == typeof(ClassifierProfile) ? schema : (JObject)schema["definitions"]![type.Name]!;
+    private static JsonObject Definition(JsonObject schema, Type type) =>
+        type == typeof(ClassifierProfile) ? schema : schema["definitions"]![type.Name]!.AsObject();
 
     [Test]
     public void Schema_CoversAllProfileProperties()
@@ -57,9 +57,9 @@ public class KitDocsTests
         {
             var definition = Definition(schema, type);
             var expected = Properties(type).Select(p => CamelCase(p.Name)).OrderBy(n => n).ToList();
-            var actual = ((JObject)definition["properties"]!).Properties().Select(p => p.Name).OrderBy(n => n).ToList();
+            var actual = definition["properties"]!.AsObject().Select(p => p.Key).OrderBy(n => n).ToList();
             actual.ShouldBe(expected, $"схема {type.Name}");
-            definition["additionalProperties"]!.Value<bool>().ShouldBeFalse(type.Name);
+            definition["additionalProperties"]!.GetValue<bool>().ShouldBeFalse(type.Name);
         }
     }
 
@@ -67,31 +67,31 @@ public class KitDocsTests
     public void Schema_AcceptsBuiltinKeys()
     {
         var schema = Schema;
-        var builtin = JObject.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "TestData", "ClassifierCode", "pioneer-donskoy.classifier.json")));
+        var builtin = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "TestData", "ClassifierCode", "pioneer-donskoy.classifier.json")))!;
         var unknown = new List<string>();
         Walk(schema, schema, builtin, "", unknown);
         unknown.ShouldBeEmpty();
     }
 
     /// <summary>Каждый ключ встроенного профиля описан в схеме (по $ref, items, additionalProperties).</summary>
-    private static void Walk(JObject root, JObject node, JToken value, string path, List<string> unknown)
+    private static void Walk(JsonObject root, JsonObject node, JsonNode? value, string path, List<string> unknown)
     {
         if (node["$ref"] is { } reference)
-            node = (JObject)root.SelectToken(reference.ToString().TrimStart('#', '/').Replace('/', '.'))!;
+            node = reference.ToString().TrimStart('#', '/').Split('/').Aggregate((JsonNode)root, (at, key) => at[key]!).AsObject();
         switch (value)
         {
-            case JObject obj when node["properties"] is JObject properties:
-                foreach (var property in obj.Properties())
+            case JsonObject obj when node["properties"] is JsonObject properties:
+                foreach (var property in obj)
                 {
-                    if (properties[property.Name] is JObject sub) Walk(root, sub, property.Value, path + "." + property.Name, unknown);
-                    else unknown.Add(path + "." + property.Name);
+                    if (properties[property.Key] is JsonObject sub) Walk(root, sub, property.Value, path + "." + property.Key, unknown);
+                    else unknown.Add(path + "." + property.Key);
                 }
 
                 break;
-            case JObject obj when node["additionalProperties"] is JObject map:
-                foreach (var property in obj.Properties()) Walk(root, map, property.Value, path + "." + property.Name, unknown);
+            case JsonObject obj when node["additionalProperties"] is JsonObject map:
+                foreach (var property in obj) Walk(root, map, property.Value, path + "." + property.Key, unknown);
                 break;
-            case JArray array when node["items"] is JObject items:
+            case JsonArray array when node["items"] is JsonObject items:
                 foreach (var item in array) Walk(root, items, item, path + "[]", unknown);
                 break;
         }

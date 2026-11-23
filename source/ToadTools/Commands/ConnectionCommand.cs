@@ -7,9 +7,9 @@ namespace ToadTools.Commands;
 /// <summary>Вход в ToadFlow для всех плагинов ToadTools: ParamChecker, «Коллизии» и других.</summary>
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
-public class ConnectionCommand : ExternalCommand
+public class ConnectionCommand : ToadCommand
 {
-    public override void Execute()
+    protected override void Run()
     {
         ConnectionDialog.Show(Application.MainWindowHandle);
     }

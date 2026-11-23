@@ -1,9 +1,7 @@
-<Project Sdk="Nice3point.Revit.Sdk/6.2.2">
+<Project Sdk="Nice3point.Revit.Sdk/6.3.2">
 
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.Mvvm"/>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"/>
-        <PackageReference Include="Newtonsoft.Json"/>
     </ItemGroup>
 
     <ItemGroup>

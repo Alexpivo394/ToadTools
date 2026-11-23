@@ -10,9 +10,9 @@ namespace ToadTools.Commands;
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
 [Regeneration(RegenerationOption.Manual)]
-public class SmartTagsCommand : ExternalCommand
+public class SmartTagsCommand : ToadCommand
 {
-    public override void Execute()
+    protected override void Run()
     {
         SmartTagsLauncher.Run(Application);
     }

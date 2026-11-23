@@ -11,9 +11,9 @@ namespace ToadTools.Commands;
 /// </summary>
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
-public class ChangeSharedFamiliesCommand : ExternalCommand
+public class ChangeSharedFamiliesCommand : ToadCommand
 {
-    public override void Execute()
+    protected override void Run()
     {
         var uiDoc = Application.ActiveUIDocument;
 

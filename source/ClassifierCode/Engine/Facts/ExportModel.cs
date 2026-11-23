@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using ClassifierCode.Engine.Library;
 using ClassifierCode.Engine.Profile;
 
@@ -86,29 +88,63 @@ public sealed class ExportParameter
 }
 
 /// <summary>Параметр в файле — массив ["имя", "значение"] или ["имя", "значение", флаги] (1 — строковый, 2 — победитель LookupParameter среди тёзок): их у элемента десятки.</summary>
-public sealed class ExportParameterConverter : Newtonsoft.Json.JsonConverter<ExportParameter>
+public sealed class ExportParameterConverter : JsonConverter<ExportParameter>
 {
-    public override void WriteJson(Newtonsoft.Json.JsonWriter writer, ExportParameter? value, Newtonsoft.Json.JsonSerializer serializer)
+    private const string Shape = "Параметр выгрузки: нужно [имя, значение]";
+
+    public override void Write(Utf8JsonWriter writer, ExportParameter value, JsonSerializerOptions options)
     {
         writer.WriteStartArray();
-        writer.WriteValue(value!.Name);
-        writer.WriteValue(value.Value);
+        writer.WriteStringValue(value.Name);
+        writer.WriteStringValue(value.Value);
         var flags = (value.IsString ? 1 : 0) | (value.Lookup ? 2 : 0); // 1 — строковый, 2 — его возвращает LookupParameter
-        if (flags != 0) writer.WriteValue(flags);
+        if (flags != 0) writer.WriteNumberValue(flags);
         writer.WriteEndArray();
     }
 
-    public override ExportParameter ReadJson(Newtonsoft.Json.JsonReader reader, Type objectType, ExportParameter? existingValue, bool hasExistingValue,
-        Newtonsoft.Json.JsonSerializer serializer)
+    public override ExportParameter Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        var array = Newtonsoft.Json.Linq.JArray.Load(reader);
-        if (array.Count < 2) throw new Newtonsoft.Json.JsonSerializationException("Параметр выгрузки: нужно [имя, значение]");
+        if (reader.TokenType != JsonTokenType.StartArray) throw new JsonException(Shape);
+        string? name = null, value = null;
+        var flags = 0;
+        var count = 0;
+        while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
+        {
+            switch (count++)
+            {
+                case 0:
+                    name = Text(ref reader);
+                    break;
+                case 1:
+                    value = Text(ref reader);
+                    break;
+                case 2:
+                    if (reader.TokenType != JsonTokenType.Number || !reader.TryGetInt32(out flags)) throw new JsonException(Shape);
+                    break;
+                default:
+                    reader.Skip();
+                    break;
+            }
+        }
+
+        if (count < 2) throw new JsonException(Shape);
         return new ExportParameter
         {
-            Name = string.Intern((string?)array[0] ?? string.Empty), // имён параметров сотни, а элементов — десятки тысяч
-            Value = (string?)array[1] ?? string.Empty,
-            IsString = array.Count > 2 && ((int)array[2] & 1) != 0,
-            Lookup = array.Count > 2 && ((int)array[2] & 2) != 0
+            Name = string.Intern(name ?? string.Empty), // имён параметров сотни, а элементов — десятки тысяч
+            Value = value ?? string.Empty,
+            IsString = (flags & 1) != 0,
+            Lookup = (flags & 2) != 0
         };
     }
+
+    /// <summary>Строка; число и логическое значение — их текстом, как раньше читал Newtonsoft.Json.</summary>
+    private static string? Text(ref Utf8JsonReader reader) => reader.TokenType switch
+    {
+        JsonTokenType.String => reader.GetString(),
+        JsonTokenType.Null => null,
+        JsonTokenType.Number => System.Text.Encoding.UTF8.GetString(reader.ValueSpan.ToArray()),
+        JsonTokenType.True => "true",
+        JsonTokenType.False => "false",
+        _ => throw new JsonException(Shape)
+    };
 }

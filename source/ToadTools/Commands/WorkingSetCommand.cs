@@ -9,9 +9,9 @@ namespace ToadTools.Commands;
 /// </summary>
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
-public class WorkingSetCommand : ExternalCommand
+public class WorkingSetCommand : ToadCommand
 {
-    public override void Execute()
+    protected override void Run()
     {
         var view = Host.CreateScope<WorkingSetView>();
         view.ShowDialog();

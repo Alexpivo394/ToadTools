@@ -7,9 +7,9 @@ namespace ToadTools.Commands;
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
 [Regeneration(RegenerationOption.Manual)]
-public class ClassifierCodeCommand : ExternalCommand
+public class ClassifierCodeCommand : ToadCommand
 {
-    public override void Execute()
+    protected override void Run()
     {
         var view = Host.CreateScope<ClassifierCodeView>();
         view.ShowDialog();

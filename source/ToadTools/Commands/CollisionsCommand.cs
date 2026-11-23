@@ -7,9 +7,9 @@ namespace ToadTools.Commands;
 /// <summary>Показывает или скрывает панель «Коллизии ToadFlow».</summary>
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
-public class CollisionsCommand : ExternalCommand
+public class CollisionsCommand : ToadCommand
 {
-    public override void Execute()
+    protected override void Run()
     {
         CollisionsPane.Toggle(Application);
     }

@@ -17,16 +17,15 @@
         <PackageReference Include="TUnit"/>
         <PackageReference Include="Shouldly"/>
         <PackageReference Include="CommunityToolkit.Mvvm"/>
-        <PackageReference Include="Newtonsoft.Json"/>
-        <PackageReference Include="EPPlus"/>
+        <PackageReference Include="ClosedXML"/>
         <!-- Хеш файла семейства (FamilyHash) для панели «Семейства»: часть ядра без Revit -->
         <PackageReference Include="Alexpivo394.Revit.Families.Files"/>
         <PackageReference Include="System.Security.Cryptography.ProtectedData"/>
     </ItemGroup>
 
-    <!-- Покрытие кода TUnit под net48 требует System.Text.Json не ниже 10.0.10; аддину хватает общей версии -->
+    <!-- На .NET входит в рантайм -->
     <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
-        <PackageReference Include="System.Text.Json" VersionOverride="10.0.10"/>
+        <PackageReference Include="System.Text.Json"/>
     </ItemGroup>
 
     <ItemGroup>

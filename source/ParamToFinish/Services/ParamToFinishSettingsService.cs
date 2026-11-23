@@ -1,16 +1,11 @@
 using System.IO;
-using Newtonsoft.Json;
+using ToadTools.UI.Services;
 
 namespace ParamToFinish.Services;
 
 public sealed class ParamToFinishSettingsService
 {
     private const string SettingsFileName = "settings.json";
-
-    private static readonly JsonSerializerSettings SerializerSettings = new()
-    {
-        Formatting = Formatting.Indented
-    };
 
     private readonly string _settingsPath;
 
@@ -36,7 +31,7 @@ public sealed class ParamToFinishSettingsService
             if (string.IsNullOrWhiteSpace(json))
                 return new ParamToFinishSettings();
 
-            return JsonConvert.DeserializeObject<ParamToFinishSettings>(json)
+            return SettingsJson.Read<ParamToFinishSettings>(json)
                    ?? new ParamToFinishSettings();
         }
         catch
@@ -54,7 +49,7 @@ public sealed class ParamToFinishSettingsService
             if (!string.IsNullOrWhiteSpace(settingsDirectory))
                 Directory.CreateDirectory(settingsDirectory);
 
-            var json = JsonConvert.SerializeObject(settings, SerializerSettings);
+            var json = SettingsJson.Write(settings);
 
             File.WriteAllText(_settingsPath, json);
         }

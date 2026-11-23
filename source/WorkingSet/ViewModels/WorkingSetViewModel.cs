@@ -15,6 +15,9 @@ public partial class WorkingSetViewModel : ObservableObject
 {
     private WorkingSetModel? _model;
 
+    /// <summary>Почему таблица не прочиталась (нет диска, файл занят или не xlsx); null — прочиталась.</summary>
+    private string? _readError;
+
     [ObservableProperty] private string? _selectedSection;
     [ObservableProperty] private List<string>? _sections;
     [ObservableProperty] private string? _excelFilePath;
@@ -22,6 +25,7 @@ public partial class WorkingSetViewModel : ObservableObject
 
     partial void OnExcelFilePathChanged(string? value)
     {
+        _readError = null;
         if (string.IsNullOrEmpty(value))
         {
             _model = null;
@@ -37,14 +41,36 @@ public partial class WorkingSetViewModel : ObservableObject
     public WorkingSetViewModel()
     {
     }
+    /// <summary>
+    ///     Листы таблицы — разделы. Таблица по умолчанию лежит на сетевом диске: вне сети, без доступа или с занятым файлом
+    ///     окно всё равно открывается, а причина показывается, когда таблица понадобится.
+    /// </summary>
     private void LoadSections()
     {
-        Sections = _model?.GetSections();
+        try
+        {
+            Sections = _model?.GetSections();
+        }
+        catch (Exception exception)
+        {
+            Sections = null;
+            _readError = ReadError(exception);
+        }
     }
+
+    private string ReadError(Exception exception) =>
+        $"Не удалось прочитать таблицу рабочих наборов:\n{ExcelFilePath}\n\n{exception.Message}\n\n" +
+        "Проверьте, что файл доступен и это книга Excel (.xlsx), или выберите другой файл.";
 
     [RelayCommand]
     private void CreateWorksets()
     {
+        if (_readError is not null)
+        {
+            ToadDialogService.Show("Таблица не прочитана", _readError, DialogButtons.OK, DialogIcon.Warning);
+            return;
+        }
+
         if (SelectedSection is not { Length: > 0 } section)
         {
             string? dial1 = ToadDialogService.Show(
@@ -80,7 +106,17 @@ public partial class WorkingSetViewModel : ObservableObject
             return;
         }
 
-        var names = _model.GetWorksetsFromSection(section);
+        List<string> names;
+        try
+        {
+            names = _model.GetWorksetsFromSection(section);
+        }
+        catch (Exception exception)
+        {
+            ToadDialogService.Show("Таблица не прочитана", ReadError(exception), DialogButtons.OK, DialogIcon.Warning);
+            return;
+        }
+
         var created = WorksetCreator.Create(doc, names);
 
         ToadDialogService.Show(
@@ -107,7 +143,11 @@ public partial class WorkingSetViewModel : ObservableObject
             RestoreDirectory = true
         };
 
-        if (openFileDialog.ShowDialog() == true) ExcelFilePath = openFileDialog.FileName;
+        if (openFileDialog.ShowDialog() != true) return;
+
+        ExcelFilePath = openFileDialog.FileName;
+        if (_readError is not null)
+            ToadDialogService.Show("Таблица не прочитана", _readError, DialogButtons.OK, DialogIcon.Warning);
     }
 
     public void LoadFromSettings(Settings settings)

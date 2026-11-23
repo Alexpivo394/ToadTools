@@ -9,9 +9,9 @@ namespace ToadTools.Commands;
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
 [Regeneration(RegenerationOption.Manual)]
-public class CableTrayArticulCommand : ExternalCommand
+public class CableTrayArticulCommand : ToadCommand
 {
-    public override void Execute() => new ArticulLotok.ArticulService().Run();
+    protected override void Run() => new ArticulLotok.ArticulService().Run();
 }
 
 /// <summary>
@@ -20,9 +20,9 @@ public class CableTrayArticulCommand : ExternalCommand
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
 [Regeneration(RegenerationOption.Manual)]
-public class CableTrayColorPerforationCommand : ExternalCommand
+public class CableTrayColorPerforationCommand : ToadCommand
 {
-    public override void Execute() => new LotkiColor.LotkiColorService().Run();
+    protected override void Run() => new LotkiColor.LotkiColorService().Run();
 }
 
 /// <summary>
@@ -31,9 +31,9 @@ public class CableTrayColorPerforationCommand : ExternalCommand
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
 [Regeneration(RegenerationOption.Manual)]
-public class CableTrayColorVariantCommand : ExternalCommand
+public class CableTrayColorVariantCommand : ToadCommand
 {
-    public override void Execute() => new LotkiColorIsp.LotkiColorIspService().Run();
+    protected override void Run() => new LotkiColorIsp.LotkiColorIspService().Run();
 }
 
 /// <summary>
@@ -42,7 +42,7 @@ public class CableTrayColorVariantCommand : ExternalCommand
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
 [Regeneration(RegenerationOption.Manual)]
-public class CableTrayColorCoverCommand : ExternalCommand
+public class CableTrayColorCoverCommand : ToadCommand
 {
-    public override void Execute() => new LotkiColorKrshka.LotkiColorKrshkaService().Run();
+    protected override void Run() => new LotkiColorKrshka.LotkiColorKrshkaService().Run();
 }

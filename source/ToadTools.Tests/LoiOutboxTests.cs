@@ -1,4 +1,4 @@
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 using Shouldly;
 using ToadTools.Connection;
 
@@ -8,10 +8,10 @@ public class LoiOutboxTests
 {
     private sealed class Server
     {
-        public List<JObject> Posted { get; } = [];
+        public List<JsonObject> Posted { get; } = [];
         public Exception? Fail { get; set; }
 
-        public Task Post(JObject body, CancellationToken ct)
+        public Task Post(JsonObject body, CancellationToken ct)
         {
             if (Fail is { } fail) return Task.FromException(fail);
             Posted.Add(body);
@@ -19,7 +19,7 @@ public class LoiOutboxTests
         }
     }
 
-    private static string Body(Guid id) => new JObject { ["id"] = id.ToString(), ["summary"] = new JObject() }.ToString();
+    private static string Body(Guid id) => new JsonObject { ["id"] = id.ToString(), ["summary"] = new JsonObject() }.ToJsonString();
 
     [Test]
     public void Enqueue_NotConnectedYet_Queued()

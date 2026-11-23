@@ -10,9 +10,9 @@ namespace ToadTools.Commands;
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
 [Regeneration(RegenerationOption.Manual)]
-public class ParamToFinishCommand : ExternalCommand
+public class ParamToFinishCommand : ToadCommand
 {
-    public override void Execute()
+    protected override void Run()
     {
         var view = Host.CreateScope<ParamToFinishView>();
         view.ShowDialog();

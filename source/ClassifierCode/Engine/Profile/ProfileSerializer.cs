@@ -1,8 +1,8 @@
 using System.Collections;
-using System.Reflection;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace ClassifierCode.Engine.Profile;
 
@@ -12,31 +12,29 @@ public sealed class ProfileReadException(string message, Exception? inner = null
 /// <summary>JSON профиля: camelCase, пустые и null-поля не пишутся, чтобы файл читался глазами.</summary>
 public static class ProfileSerializer
 {
-    private static readonly JsonSerializerSettings Settings = new()
-    {
-        ContractResolver = new CompactResolver(),
-        NullValueHandling = NullValueHandling.Ignore,
-        Formatting = Formatting.Indented
-    };
+    private static readonly JsonSerializerOptions Options = Create(JsonUnmappedMemberHandling.Skip);
+
+    /// <summary>Профили пишут и руками, и ИИ-агент: комментарии и лишняя запятая — не ошибка.</summary>
+    private static readonly JsonDocumentOptions DocumentOptions = new() { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true };
 
     private const string ReadError = "Не удалось прочитать профиль: ";
 
     public static ClassifierProfile Read(string json)
     {
-        JObject root;
+        int schema;
         try
         {
-            root = JObject.Parse(json);
+            using var document = JsonDocument.Parse(json, DocumentOptions);
+            var root = document.RootElement;
+            if (root.ValueKind != JsonValueKind.Object) throw new ProfileReadException(ReadError + "это не профиль классификатора (ожидался объект JSON).");
+            if (!root.TryGetProperty("schemaVersion", out var schemaToken) || schemaToken.ValueKind != JsonValueKind.Number || !schemaToken.TryGetInt32(out schema))
+                throw new ProfileReadException(ReadError + "это не профиль классификатора (нет числового поля schemaVersion).");
         }
         catch (JsonException exception)
         {
             throw new ProfileReadException(ReadError + exception.Message, exception);
         }
 
-        var schemaToken = root["schemaVersion"];
-        if (schemaToken == null || schemaToken.Type != JTokenType.Integer)
-            throw new ProfileReadException(ReadError + "это не профиль классификатора (нет числового поля schemaVersion).");
-        var schema = schemaToken.Value<int>();
         if (schema > ClassifierProfile.CurrentSchemaVersion)
             throw new ProfileReadException(
                 $"Профиль сделан в версии плагина новее текущей (формат {schema}, поддерживается {ClassifierProfile.CurrentSchemaVersion}). Обновите ToadTools.");
@@ -44,9 +42,9 @@ public static class ProfileSerializer
         ClassifierProfile profile;
         try
         {
-            profile = root.ToObject<ClassifierProfile>(JsonSerializer.Create(Settings)) ?? new ClassifierProfile();
+            profile = JsonSerializer.Deserialize<ClassifierProfile>(json, Options) ?? new ClassifierProfile();
         }
-        catch (Exception exception) when (exception is JsonException or ArgumentException or FormatException or InvalidCastException)
+        catch (Exception exception) when (IsReadFailure(exception))
         {
             throw new ProfileReadException(ReadError + exception.Message, exception);
         }
@@ -55,10 +53,10 @@ public static class ProfileSerializer
         return profile;
     }
 
-    public static string Write(ClassifierProfile profile) => JsonConvert.SerializeObject(profile, Settings);
+    public static string Write(ClassifierProfile profile) => JsonSerializer.Serialize(profile, Options);
 
     /// <summary>Часть профиля (правило, режим, набор правил) в том же формате, что и файл.</summary>
-    public static string WriteFragment(object value) => JsonConvert.SerializeObject(value, Settings);
+    public static string WriteFragment(object value) => JsonSerializer.Serialize(value, value.GetType(), Options);
 
     /// <summary>
     ///     Часть профиля, набранная руками (вкладка «Логика»). Неизвестное поле — ошибка: опечатка «fallthrought»
@@ -70,9 +68,9 @@ public static class ProfileSerializer
         T value;
         try
         {
-            value = JsonConvert.DeserializeObject<T>(json, StrictSettings) ?? throw new ProfileReadException(error + "пустой текст");
+            value = (string.IsNullOrWhiteSpace(json) ? null : JsonSerializer.Deserialize<T>(json, StrictOptions)) ?? throw new ProfileReadException(error + "пустой текст");
         }
-        catch (Exception exception) when (exception is JsonException or ArgumentException or FormatException or InvalidCastException)
+        catch (Exception exception) when (IsReadFailure(exception))
         {
             throw new ProfileReadException(error + exception.Message, exception);
         }
@@ -81,12 +79,37 @@ public static class ProfileSerializer
         return value;
     }
 
-    private static readonly JsonSerializerSettings StrictSettings = new()
+    private static readonly JsonSerializerOptions StrictOptions = Create(JsonUnmappedMemberHandling.Disallow);
+
+    private static bool IsReadFailure(Exception exception) =>
+        exception is JsonException or ArgumentException or FormatException or InvalidCastException or InvalidOperationException or NotSupportedException;
+
+    private static JsonSerializerOptions Create(JsonUnmappedMemberHandling unmapped) => new()
     {
-        ContractResolver = new CompactResolver(),
-        NullValueHandling = NullValueHandling.Ignore,
-        MissingMemberHandling = MissingMemberHandling.Error
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        WriteIndented = true,
+        ReadCommentHandling = JsonCommentHandling.Skip,
+        AllowTrailingCommas = true,
+        UnmappedMemberHandling = unmapped,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        // Ключи словарей — это ключи профиля (имена источников, разделов): политики имён для них нет, регистр не трогаем.
+        TypeInfoResolver = new DefaultJsonTypeInfoResolver { Modifiers = { EngineJson.KeepDefaultsOnNull, Compact } }
     };
+
+    /// <summary>Пустые списки и словари и <c>false</c> в файл не пишутся.</summary>
+    private static void Compact(JsonTypeInfo type)
+    {
+        if (type.Kind != JsonTypeInfoKind.Object) return;
+        foreach (var property in type.Properties)
+        {
+            if (typeof(ICollection).IsAssignableFrom(property.PropertyType))
+                property.ShouldSerialize = (_, value) => value is ICollection { Count: > 0 };
+            else if (property.PropertyType == typeof(bool))
+                property.ShouldSerialize = (_, value) => value is true;
+        }
+    }
 
     /// <summary>Пустые элементы списков и словарей («modes»: [null]) — ошибка чтения, а не падение дальше.</summary>
     private static void RejectNulls(object value, string path, string error)
@@ -126,30 +149,4 @@ public static class ProfileSerializer
 
     /// <summary>Глубокая копия через JSON — для рабочей копии в редакторе.</summary>
     public static ClassifierProfile Clone(ClassifierProfile profile) => Read(Write(profile));
-
-    private sealed class CompactResolver : CamelCasePropertyNamesContractResolver
-    {
-        public CompactResolver()
-        {
-            // Ключи словарей — это ключи профиля (имена источников, разделов), их регистр не трогаем.
-            NamingStrategy = new CamelCaseNamingStrategy { ProcessDictionaryKeys = false };
-        }
-
-        protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
-        {
-            var property = base.CreateProperty(member, memberSerialization);
-            if (typeof(ICollection).IsAssignableFrom(property.PropertyType))
-            {
-                var getter = property.ValueProvider;
-                property.ShouldSerialize = owner => getter?.GetValue(owner) is ICollection { Count: > 0 };
-            }
-            else if (property.PropertyType == typeof(bool))
-            {
-                var getter = property.ValueProvider;
-                property.ShouldSerialize = owner => getter?.GetValue(owner) is true;
-            }
-
-            return property;
-        }
-    }
 }

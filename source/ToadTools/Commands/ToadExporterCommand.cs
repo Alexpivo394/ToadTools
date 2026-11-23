@@ -9,9 +9,9 @@ namespace ToadTools.Commands;
 /// </summary>
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
-public class ToadExporterCommand : ExternalCommand
+public class ToadExporterCommand : ToadCommand
 {
-    public override void Execute()
+    protected override void Run()
     {
         ToadExporterLauncher.Run(Application);
     }

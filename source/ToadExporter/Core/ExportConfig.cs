@@ -1,6 +1,8 @@
 using System.IO;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 
 namespace ToadExporter.Core;
 
@@ -16,10 +18,19 @@ public static class ExportConfig
     private const string SettingsKey = "Settings";
     private const string ModelsKey = "Models";
 
-    private static readonly JsonSerializer Serializer = JsonSerializer.Create(new JsonSerializerSettings
+    /// <summary>Перечисления пишутся именем, читаются и именем, и числом (так их писали настройки окна).</summary>
+    private static readonly JsonSerializerOptions Json = new()
     {
-        Converters = [new Newtonsoft.Json.Converters.StringEnumConverter()]
-    });
+        WriteIndented = true,
+        PropertyNameCaseInsensitive = true,
+        ReadCommentHandling = JsonCommentHandling.Skip,
+        AllowTrailingCommas = true,
+        NumberHandling = JsonNumberHandling.AllowReadingFromString,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        Converters = { new JsonStringEnumConverter() }
+    };
+
+    private static readonly JsonDocumentOptions DocumentOptions = new() { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true };
 
     private static readonly string[] WindowKeys =
     [
@@ -31,12 +42,12 @@ public static class ExportConfig
 
     public static void Save(string path, ExportSettings settings, IReadOnlyList<CheckedModel> models)
     {
-        var root = new JObject
+        var root = new JsonObject
         {
-            [SettingsKey] = WithoutWindowState(JObject.FromObject(settings, Serializer)),
-            [ModelsKey] = JArray.FromObject(models, Serializer)
+            [SettingsKey] = WithoutWindowState(JsonSerializer.SerializeToNode(settings, Json)!.AsObject()),
+            [ModelsKey] = JsonSerializer.SerializeToNode(models, Json)
         };
-        File.WriteAllText(path, root.ToString(Formatting.Indented));
+        File.WriteAllText(path, root.ToJsonString(Json));
     }
 
     /// <summary>
@@ -50,24 +61,29 @@ public static class ExportConfig
         List<CheckedModel> models;
         try
         {
-            if (JToken.Parse(File.ReadAllText(path)) is not JObject root
-                || root[SettingsKey] is not JObject settings
-                || root[ModelsKey] is not JArray modelArray)
+            if (JsonNode.Parse(File.ReadAllText(path), null, DocumentOptions) is not JsonObject root
+                || root[SettingsKey] is not JsonObject settings
+                || root[ModelsKey] is not JsonArray modelArray)
                 throw new InvalidDataException("Файл не является конфигурацией ToadExporter.");
 
-            loaded = settings.ToObject<ExportSettings>() ?? new ExportSettings();
-            models = modelArray.ToObject<List<CheckedModel>>() ?? [];
+            loaded = settings.Deserialize<ExportSettings>(Json) ?? new ExportSettings();
+            models = modelArray.Deserialize<List<CheckedModel>>(Json) ?? [];
         }
-        catch (JsonException exception)
+        catch (Exception exception) when (exception is JsonException or ArgumentException or InvalidOperationException)
         {
             throw new InvalidDataException($"Файл не является конфигурацией ToadExporter: {exception.Message}", exception);
         }
 
-        JsonConvert.PopulateObject(WithoutWindowState(JObject.FromObject(loaded)).ToString(), target);
+        foreach (var property in typeof(ExportSettings).GetProperties())
+        {
+            if (!property.CanRead || !property.CanWrite || Array.IndexOf(WindowKeys, property.Name) >= 0) continue;
+            property.SetValue(target, property.GetValue(loaded));
+        }
+
         return models;
     }
 
-    private static JObject WithoutWindowState(JObject settings)
+    private static JsonObject WithoutWindowState(JsonObject settings)
     {
         foreach (var key in WindowKeys) settings.Remove(key);
         return settings;

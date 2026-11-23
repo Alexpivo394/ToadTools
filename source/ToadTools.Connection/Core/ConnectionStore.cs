@@ -1,7 +1,8 @@
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace ToadTools.Connection;
 
@@ -15,6 +16,13 @@ public sealed class ConnectionStore(string path)
     public static string DefaultPath { get; } =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ToadTools", "toadflow.json");
 
+    private static readonly JsonSerializerOptions Json = new()
+    {
+        WriteIndented = true,
+        PropertyNameCaseInsensitive = true,
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
+
     /// <summary>Хранилище всех плагинов ToadTools.</summary>
     public static ConnectionStore Shared { get; } = new(DefaultPath);
 
@@ -26,7 +34,7 @@ public sealed class ConnectionStore(string path)
         try
         {
             if (!File.Exists(path)) return null;
-            var file = JsonConvert.DeserializeObject<StoredConnection>(File.ReadAllText(path));
+            var file = JsonSerializer.Deserialize<StoredConnection>(File.ReadAllText(path), Json);
             if (file is null || string.IsNullOrWhiteSpace(file.Url) || string.IsNullOrWhiteSpace(file.TokenProtected)) return null;
             var token = Encoding.UTF8.GetString(ProtectedData.Unprotect(Convert.FromBase64String(file.TokenProtected), null, DataProtectionScope.CurrentUser));
             return new ToadFlowConnection(file.Url, file.Login ?? "", file.DisplayName ?? "", file.Role ?? "", file.TokenId, token);
@@ -51,7 +59,7 @@ public sealed class ConnectionStore(string path)
         };
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         var temp = path + ".tmp";
-        File.WriteAllText(temp, JsonConvert.SerializeObject(file, Formatting.Indented), new UTF8Encoding(false));
+        File.WriteAllText(temp, JsonSerializer.Serialize(file, Json), new UTF8Encoding(false));
         // Замена одним шагом: другой плагин, читающий файл в этот момент, видит старое подключение или новое, но не пустоту.
         if (File.Exists(path)) File.Replace(temp, path, null);
         else File.Move(temp, path);
@@ -66,11 +74,11 @@ public sealed class ConnectionStore(string path)
 
     private sealed class StoredConnection
     {
-        [JsonProperty("url")] public string Url { get; set; } = "";
-        [JsonProperty("login")] public string? Login { get; set; }
-        [JsonProperty("displayName")] public string? DisplayName { get; set; }
-        [JsonProperty("role")] public string? Role { get; set; }
-        [JsonProperty("tokenId")] public Guid TokenId { get; set; }
-        [JsonProperty("tokenProtected")] public string TokenProtected { get; set; } = "";
+        [JsonPropertyName("url")] public string Url { get; set; } = "";
+        [JsonPropertyName("login")] public string? Login { get; set; }
+        [JsonPropertyName("displayName")] public string? DisplayName { get; set; }
+        [JsonPropertyName("role")] public string? Role { get; set; }
+        [JsonPropertyName("tokenId")] public Guid TokenId { get; set; }
+        [JsonPropertyName("tokenProtected")] public string TokenProtected { get; set; } = "";
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using OfficeOpenXml;
+using ClosedXML.Excel;
 
 namespace WorkingSet.Models;
 
@@ -17,17 +17,8 @@ public class WorkingSetModel
     // Получение списка разделов из Excel
     public List<string> GetSections()
     {
-        ExcelPackage.License.SetNonCommercialPersonal("ToadTools");
-
-        var sections = new List<string>();
-        using (var package = new ExcelPackage(new FileInfo(_excelFilePath)))
-        {
-            foreach (var worksheet in package.Workbook.Worksheets)
-            {
-                sections.Add(worksheet.Name);
-            }
-        }
-        return sections;
+        using var workbook = Open();
+        return workbook.Worksheets.Select(worksheet => worksheet.Name).ToList();
     }
 
     // Получение рабочих наборов из конкретного раздела
@@ -35,25 +26,26 @@ public class WorkingSetModel
     {
         var worksets = new List<string>();
 
-        ExcelPackage.License.SetNonCommercialPersonal("ToadTools");
+        using var workbook = Open();
+        if (!workbook.Worksheets.TryGetWorksheet(sectionName, out var worksheet)) return worksets;
 
-        using (var package = new ExcelPackage(new FileInfo(_excelFilePath)))
+        var row = 1;
+        while (true)
         {
-            var worksheet = package.Workbook.Worksheets[sectionName];
+            var worksetName = worksheet.Cell(row, 1).GetFormattedString();
+            if (string.IsNullOrEmpty(worksetName)) break;
 
-            if (worksheet == null) return worksets;
-
-            var row = 1;
-            while (true)
-            {
-                var worksetName = worksheet.Cells[row, 1].Text;
-                if (string.IsNullOrEmpty(worksetName)) break;
-
-                worksets.Add(worksetName);
-                row++;
-            }
+            worksets.Add(worksetName);
+            row++;
         }
 
         return worksets;
+    }
+
+    // Файл общий, лежит на сетевом диске: читаем, даже если он открыт у кого-то в Excel
+    private XLWorkbook Open()
+    {
+        using var stream = new FileStream(_excelFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        return new XLWorkbook(stream);
     }
 }

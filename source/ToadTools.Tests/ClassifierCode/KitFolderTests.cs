@@ -17,7 +17,7 @@ public class KitFolderTests
         File.WriteAllText(kit.File("README_КООРДИНАТОРУ.txt"), "читать");
         Directory.CreateDirectory(kit.File("check"));
         File.WriteAllText(kit.File("check\\check.exe"), "exe");
-        File.WriteAllText(kit.File("check\\EPPlus.dll"), "dll");
+        File.WriteAllText(kit.File("check\\ClosedXML.dll"), "dll");
         return kit;
     }
 
@@ -34,7 +34,7 @@ public class KitFolderTests
         File.Exists(work.File("kit\\FORMAT.md")).ShouldBeTrue();
         File.Exists(work.File("kit\\profile.schema.json")).ShouldBeTrue();
         File.Exists(work.File("kit\\check\\check.exe")).ShouldBeTrue();
-        File.Exists(work.File("kit\\check\\EPPlus.dll")).ShouldBeTrue();
+        File.Exists(work.File("kit\\check\\ClosedXML.dll")).ShouldBeTrue();
         Directory.Exists(work.File("exports")).ShouldBeTrue();
         ProfileSerializer.Read(File.ReadAllText(work.File("kit\\base.classifier.json"))).Id.ShouldBe(Donskoy.Profile.Source.Id);
         File.Exists(work.File("kit\\filled-by.classifier.json")).ShouldBeTrue();

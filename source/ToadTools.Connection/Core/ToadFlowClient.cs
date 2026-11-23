@@ -4,9 +4,10 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 
 namespace ToadTools.Connection;
 
@@ -26,11 +27,17 @@ public sealed class ToadFlowClient
     /// <summary>Одновременных запросов к серверу ToadFlow: миниатюры (до 4) не должны занимать все соединения.</summary>
     private const int ParallelRequests = 8;
 
-    public static readonly JsonSerializerSettings Json = new()
+    /// <summary>
+    ///     JSON сервера ToadFlow: camelCase, перечисления строкой. Читается терпимо, как прежде Newtonsoft.Json: регистр имён
+    ///     не важен, число на месте строки и строка на месте числа — не ошибка.
+    /// </summary>
+    public static readonly JsonSerializerOptions Json = new()
     {
-        ContractResolver = new CamelCasePropertyNamesContractResolver(),
-        Converters = { new TolerantEnumConverter() },
-        NullValueHandling = NullValueHandling.Include
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true,
+        NumberHandling = JsonNumberHandling.AllowReadingFromString,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        Converters = { new TolerantEnumConverter(), new LenientStringConverter() }
     };
 
     private static readonly Lazy<ToadFlowClient> SharedClient = new(() => new ToadFlowClient(ConnectionStore.Shared));
@@ -68,7 +75,7 @@ public sealed class ToadFlowClient
         var root = NormalizeUrl(url);
         if (root.Length == 0) throw new SignInException("Укажите адрес ToadFlow");
 
-        JObject signedIn;
+        JsonObject signedIn;
         try
         {
             using var request = new HttpRequestMessage(HttpMethod.Post, Address(root, "/api/auth/login")) { Content = Body(new { login = login.Trim(), password }) };
@@ -77,7 +84,7 @@ public sealed class ToadFlowClient
             if (response.StatusCode == HttpStatusCode.Unauthorized) throw new SignInException("Неверный логин или пароль");
             if (response.StatusCode == HttpStatusCode.Forbidden)
                 throw new SignInException(ErrorOf(text) ?? "ToadFlow не пустил этого пользователя");
-            if (!response.IsSuccessStatusCode || Parse(text) is not { } parsed || parsed["token"] is null || parsed["user"] is not JObject)
+            if (!response.IsSuccessStatusCode || Parse(text) is not { } parsed || parsed["token"] is null || parsed["user"] is not JsonObject)
                 throw new SignInException(response.StatusCode != HttpStatusCode.NotFound && ErrorOf(text) is { } error ? error : "По этому адресу нет ToadFlow");
             signedIn = parsed;
         }
@@ -90,9 +97,9 @@ public sealed class ToadFlowClient
             throw new SignInException("Неверный адрес ToadFlow", exception);
         }
 
-        var jwt = (string)signedIn["token"]!;
-        var user = (JObject)signedIn["user"]!;
-        JObject created;
+        var jwt = Text(signedIn["token"])!;
+        var user = (JsonObject)signedIn["user"]!;
+        JsonObject created;
         try
         {
             using var request = new HttpRequestMessage(HttpMethod.Post, Address(root, "/api/auth/tokens"))
@@ -111,8 +118,8 @@ public sealed class ToadFlowClient
             throw new SignInException(exception.Message, exception);
         }
 
-        var connection = new ToadFlowConnection(root, (string?)user["login"] ?? login.Trim(), (string?)user["displayName"] ?? login.Trim(),
-            (string?)user["role"] ?? "", Guid.TryParse((string?)created["view"]?["id"], out var id) ? id : Guid.Empty, (string)created["token"]!);
+        var connection = new ToadFlowConnection(root, Text(user["login"]) ?? login.Trim(), Text(user["displayName"]) ?? login.Trim(),
+            Text(user["role"]) ?? "", Guid.TryParse(Text((created["view"] as JsonObject)?["id"]), out var id) ? id : Guid.Empty, Text(created["token"])!);
         try
         {
             _store.Save(connection);
@@ -188,7 +195,7 @@ public sealed class ToadFlowClient
             using var request = Request(probe, HttpMethod.Get, "/api/auth/me");
             using var response = await SendRawAsync(request, ct).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode) return null;
-            return JsonConvert.DeserializeObject<UserInfo>(await ReadAsync(response).ConfigureAwait(false), Json);
+            return JsonSerializer.Deserialize<UserInfo>(await ReadAsync(response).ConfigureAwait(false), Json);
         }
         catch (Exception exception) when (exception is ToadFlowUnavailableException or UriFormatException or JsonException)
         {
@@ -266,7 +273,7 @@ public sealed class ToadFlowClient
 
     private static Uri Address(string root, string path) => new(root + "/" + path.TrimStart('/'));
 
-    private static StringContent Body(object body) => new(JsonConvert.SerializeObject(body, Json), Encoding.UTF8, "application/json");
+    private static StringContent Body(object body) => new(JsonSerializer.Serialize(body, body.GetType(), Json), Encoding.UTF8, "application/json");
 
     private static async Task<string> ReadAsync(HttpResponseMessage response) =>
         response.Content is null ? "" : await response.Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -276,27 +283,34 @@ public sealed class ToadFlowClient
     {
         try
         {
-            return JsonConvert.DeserializeObject<T>(text, Json);
+            return text.Trim().Length == 0 ? default : JsonSerializer.Deserialize<T>(text, Json);
         }
-        catch (JsonException exception)
+        catch (Exception exception) when (exception is JsonException or NotSupportedException)
         {
             throw new ToadFlowRequestException(200, "ToadFlow прислал непонятный ответ", exception);
         }
     }
 
-    private static JObject? Parse(string text)
+    private static JsonObject? Parse(string text)
     {
         try
         {
-            return text.TrimStart().StartsWith("{", StringComparison.Ordinal) ? JObject.Parse(text) : null;
+            if (!text.TrimStart().StartsWith("{", StringComparison.Ordinal)) return null;
+            var parsed = JsonNode.Parse(text) as JsonObject;
+            // Объект разбирается при первом обращении: повторяющееся имя поля должно стать «не разобрать» здесь, а не сбоем дальше.
+            _ = parsed?.Count;
+            return parsed;
         }
-        catch (JsonException)
+        catch (Exception exception) when (exception is JsonException or ArgumentException)
         {
             return null;
         }
     }
 
-    private static string? ErrorOf(string text) => Parse(text)?["error"]?.Type == JTokenType.String ? (string?)Parse(text)!["error"] : null;
+    private static string? ErrorOf(string text) => Parse(text)?["error"] is JsonValue error && error.TryGetValue<string>(out var message) ? message : null;
+
+    /// <summary>Значение строкой; число — его текстом.</summary>
+    private static string? Text(JsonNode? node) => node is JsonValue value && value.TryGetValue<string>(out var text) ? text : node?.ToString();
 
     private static Exception Root(Exception exception) => exception.InnerException is { } inner ? Root(inner) : exception;
 }

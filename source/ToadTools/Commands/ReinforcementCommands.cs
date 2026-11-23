@@ -10,9 +10,9 @@ namespace ToadTools.Commands;
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
 [Regeneration(RegenerationOption.Manual)]
-public class RSHPLeftRightCommand : ExternalCommand
+public class RSHPLeftRightCommand : ToadCommand
 {
-    public override void Execute() => new RSHPLeftRight().Run();
+    protected override void Run() => new RSHPLeftRight().Run();
 }
 
 /// <summary>
@@ -21,9 +21,9 @@ public class RSHPLeftRightCommand : ExternalCommand
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
 [Regeneration(RegenerationOption.Manual)]
-public class RSHPUpDownCommand : ExternalCommand
+public class RSHPUpDownCommand : ToadCommand
 {
-    public override void Execute() => new RSHPUpDown().Run();
+    protected override void Run() => new RSHPUpDown().Run();
 }
 
 /// <summary>
@@ -32,9 +32,9 @@ public class RSHPUpDownCommand : ExternalCommand
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
 [Regeneration(RegenerationOption.Manual)]
-public class RSUMLeftRightCommand : ExternalCommand
+public class RSUMLeftRightCommand : ToadCommand
 {
-    public override void Execute() => new RSUMLeftRight().Run();
+    protected override void Run() => new RSUMLeftRight().Run();
 }
 
 /// <summary>
@@ -43,7 +43,7 @@ public class RSUMLeftRightCommand : ExternalCommand
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
 [Regeneration(RegenerationOption.Manual)]
-public class RSUMUpDownCommand : ExternalCommand
+public class RSUMUpDownCommand : ToadCommand
 {
-    public override void Execute() => new RSUMUpDown().Run();
+    protected override void Run() => new RSUMUpDown().Run();
 }

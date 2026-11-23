@@ -10,9 +10,9 @@ namespace ToadTools.Commands;
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
 [Regeneration(RegenerationOption.Manual)]
-public class CreateSpacesCommand : ExternalCommand
+public class CreateSpacesCommand : ToadCommand
 {
-    public override void Execute()
+    protected override void Run()
     {
         var view = Host.CreateScope<CreateSpacesView>();
         view.ShowDialog();

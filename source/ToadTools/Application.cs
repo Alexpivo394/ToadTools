@@ -10,28 +10,43 @@ namespace ToadTools
     ///     Application entry point
     /// </summary>
     [UsedImplicitly]
-    public class Application : AsyncExternalApplication
+    public class Application : ExternalApplication
     {
         private const string TabName = "ToadTools";
         /// <summary>Вики плагина: страница справки открывается по F1 на кнопке ленты.</summary>
         internal const string WikiUrl = "https://github.com/Alexpivo394/ToadTools/wiki/";
 
-        public override async Task OnStartupAsync()
+        public override void OnStartup()
         {
             // Кэш каталогов Revit Server — в прежней папке ToadTools, а не в папке пакета по умолчанию.
             Alexpivo394.Revit.Export.Sources.ServerCatalog.CacheRoot = System.IO.Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ToadTools", "RevitServerCache");
-            // Закрепляемую панель Revit принимает только во время запуска — до первого await.
+            // Закрепляемую панель Revit принимает только во время запуска.
             Collisions.CollisionsPane.Register(Application);
             Families.FamiliesPane.Register(Application);
             NotificationWatcher.UiDispatcher = System.Windows.Threading.Dispatcher.CurrentDispatcher;
-            await Host.StartAsync();
-            CreateRibbon();
+            try
+            {
+                Host.Start();
+                CreateRibbon();
+            }
+            catch (Exception exception)
+            {
+                // Сбой запуска не уходит в Revit: его окно причины не называет. Лента может остаться неполной.
+                ToadTools.UI.Services.ErrorReport.Show("Запуск ToadTools", exception);
+            }
         }
 
-        public override async Task OnShutdownAsync()
+        public override void OnShutdown()
         {
-            await Host.StopAsync();
+            try
+            {
+                Host.Stop();
+            }
+            catch (Exception exception)
+            {
+                ToadTools.UI.Services.ErrorReport.Log("Завершение ToadTools", exception);
+            }
         }
 
         /// <summary>

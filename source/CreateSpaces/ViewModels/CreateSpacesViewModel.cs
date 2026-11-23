@@ -9,7 +9,6 @@ using Nice3point.Revit.Toolkit;
 using ToadTools.UI.Models;
 using ToadTools.UI.Services;
 using Microsoft.Win32;
-using Newtonsoft.Json;
 
 namespace CreateSpaces.ViewModels;
 
@@ -128,7 +127,7 @@ public partial class CreateSpacesViewModel : ObservableObject
         if (dialog.ShowDialog() != true)
             return;
 
-        var json = JsonConvert.SerializeObject(config, Formatting.Indented);
+        var json = SettingsJson.Write(config);
 
         File.WriteAllText(dialog.FileName, json);
     }
@@ -152,7 +151,7 @@ public partial class CreateSpacesViewModel : ObservableObject
         try
         {
             var json = File.ReadAllText(dialog.FileName);
-            config = JsonConvert.DeserializeObject<ParameterMappingConfig>(json);
+            config = SettingsJson.Read<ParameterMappingConfig>(json);
         }
         catch
         {

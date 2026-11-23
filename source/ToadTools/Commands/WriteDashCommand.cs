@@ -10,9 +10,9 @@ namespace ToadTools.Commands;
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
 [Regeneration(RegenerationOption.Manual)]
-public class WriteDashCommand : ExternalCommand
+public class WriteDashCommand : ToadCommand
 {
-    public override void Execute()
+    protected override void Run()
     {
         var view = Host.CreateScope<WriteDashView>();
         view.ShowDialog();

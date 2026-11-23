@@ -1,10 +1,11 @@
-<Project Sdk="Nice3point.Revit.Sdk/6.2.2">
+<Project Sdk="Nice3point.Revit.Sdk/6.3.2">
 
     <!-- Shared UI library: a plain class library (no repack). Its dependencies ship as loose DLLs
          and each add-in loads them in its isolated context (EnableDynamicLoading). -->
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.Mvvm"/>
-        <PackageReference Include="Newtonsoft.Json"/>
+        <!-- На .NET входит в рантайм -->
+        <PackageReference Include="System.Text.Json" Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))' == '.NETFramework'"/>
         <PackageReference Include="Alexpivo394.ToadDesign"/>
     </ItemGroup>
 

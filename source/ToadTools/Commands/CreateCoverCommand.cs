@@ -16,14 +16,14 @@ namespace ToadTools.Commands;
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
 [Regeneration(RegenerationOption.Manual)]
-public class CreateCoverCommand : ExternalCommand
+public class CreateCoverCommand : ToadCommand
 {
     private const string FamilyName = "RP_Крышка";
 
     private const string FamilyPath =
         @"Y:\12-BIM\Стандарт\Общие семейства и мануалы ко всем шаблонам\Семейства ЭОМ, СС\Соединители лотка\RP_Крышка.rfa";
 
-    public override void Execute()
+    protected override void Run()
     {
         try
         {

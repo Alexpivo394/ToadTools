@@ -1,5 +1,6 @@
 using System.Net;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Shouldly;
 using ToadTools.Connection;
 
@@ -45,13 +46,13 @@ public class ToadFlowClientTests
         http.Requests.Count.ShouldBe(2);
         var (login, loginBody) = http.Requests[0];
         (login.Method, login.RequestUri!.ToString()).ShouldBe((HttpMethod.Post, "http://toadflow:8080/api/auth/login"));
-        var sent = JObject.Parse(loginBody);
+        var sent = JsonNode.Parse(loginBody)!;
         ((string?)sent["login"], (string?)sent["password"]).ShouldBe(("ivanov", "secret-password"));
 
         var (token, tokenBody) = http.Requests[1];
         (token.Method, token.RequestUri!.ToString()).ShouldBe((HttpMethod.Post, "http://toadflow:8080/api/auth/tokens"));
         token.Headers.Authorization!.ToString().ShouldBe("Bearer jwt-123");
-        ((string?)JObject.Parse(tokenBody)["name"]).ShouldBe($"ToadTools — {Environment.MachineName}");
+        ((string?)JsonNode.Parse(tokenBody)!["name"]).ShouldBe($"ToadTools — {Environment.MachineName}");
 
         connection.ShouldBe(new ToadFlowConnection("http://toadflow:8080", "ivanov", "Иванов И. И.", "Designer",
             Guid.Parse("7b1d3c55-3f0e-4c4a-9a52-2f1f1a0c0002"), "tf_abcdef-full"));
@@ -131,7 +132,7 @@ public class ToadFlowClientTests
         var (client, _, http, temp) = Create((_, _) => FakeHttp.Ok("""{ "value": 5 }"""), Connected());
         using var _ = temp;
 
-        var result = await client.GetAsync<JObject>("/api/clash/my/summary", CancellationToken.None);
+        var result = await client.GetAsync<JsonObject>("/api/clash/my/summary", CancellationToken.None);
 
         ((int)result["value"]!).ShouldBe(5);
         var request = http.Requests.ShouldHaveSingleItem().Request;
@@ -147,8 +148,8 @@ public class ToadFlowClientTests
         var (client, store, _, temp) = Create((_, _) => new HttpResponseMessage(HttpStatusCode.Unauthorized), connection);
         using var _ = temp;
 
-        await Should.ThrowAsync<ToadFlowAuthRequiredException>(() => client.GetAsync<JObject>("/api/auth/me", CancellationToken.None));
-        await Should.ThrowAsync<ToadFlowAuthRequiredException>(() => client.PostAsync<JObject>("/api/loi/checks", new { }, CancellationToken.None));
+        await Should.ThrowAsync<ToadFlowAuthRequiredException>(() => client.GetAsync<JsonObject>("/api/auth/me", CancellationToken.None));
+        await Should.ThrowAsync<ToadFlowAuthRequiredException>(() => client.PostAsync<JsonObject>("/api/loi/checks", new { }, CancellationToken.None));
 
         store.Load().ShouldBe(connection);
     }
@@ -159,7 +160,7 @@ public class ToadFlowClientTests
         var (client, _, _, temp) = Create((_, _) => FakeHttp.Json(HttpStatusCode.Forbidden, """{ "error": "Коллизия не вашего раздела" }"""), Connected());
         using var _ = temp;
 
-        var error = await Should.ThrowAsync<ToadFlowRequestException>(() => client.PostAsync<JObject>("/api/clash/collisions/x/take", null, CancellationToken.None));
+        var error = await Should.ThrowAsync<ToadFlowRequestException>(() => client.PostAsync<JsonObject>("/api/clash/collisions/x/take", null, CancellationToken.None));
 
         (error.Status, error.Message).ShouldBe((403, "Коллизия не вашего раздела"));
     }
@@ -171,7 +172,7 @@ public class ToadFlowClientTests
         var (client, store, _, temp) = Create((_, _) => new HttpResponseMessage(HttpStatusCode.Forbidden), connection);
         using var _ = temp;
 
-        var error = await Should.ThrowAsync<ToadFlowRequestException>(() => client.PostAsync<JObject>("/api/loi/checks", new { }, CancellationToken.None));
+        var error = await Should.ThrowAsync<ToadFlowRequestException>(() => client.PostAsync<JsonObject>("/api/loi/checks", new { }, CancellationToken.None));
 
         error.Status.ShouldBe(403);
         error.Message.ShouldStartWith("Недостаточно прав");
@@ -184,7 +185,7 @@ public class ToadFlowClientTests
         var (client, _, http, temp) = Create((_, _) => FakeHttp.Ok("{}"));
         using var _ = temp;
 
-        await Should.ThrowAsync<ToadFlowAuthRequiredException>(() => client.GetAsync<JObject>("/api/auth/me", CancellationToken.None));
+        await Should.ThrowAsync<ToadFlowAuthRequiredException>(() => client.GetAsync<JsonObject>("/api/auth/me", CancellationToken.None));
         http.Requests.ShouldBeEmpty();
         client.WebUrl("clash").ShouldBeNull();
     }
@@ -207,10 +208,10 @@ public class ToadFlowClientTests
         var (client, _, http, temp) = Create((_, _) => new HttpResponseMessage(HttpStatusCode.NoContent), Connected());
         using var _ = temp;
 
-        var result = await client.PostAsync<JObject>("/api/clash/collisions/1/status", new { Status = "Fake", Note = "Гильза" }, CancellationToken.None);
+        var result = await client.PostAsync<JsonObject>("/api/clash/collisions/1/status", new { Status = "Fake", Note = "Гильза" }, CancellationToken.None);
 
         result.ShouldBeNull();
-        var body = JObject.Parse(http.Requests.Single().Body);
+        var body = JsonNode.Parse(http.Requests.Single().Body)!;
         ((string?)body["status"], (string?)body["note"]).ShouldBe(("Fake", "Гильза"));
     }
 
@@ -284,7 +285,7 @@ public class ToadFlowClientTests
         using var _ = temp;
 
         (await Should.ThrowAsync<ToadFlowRequestException>(() => client.MeAsync(CancellationToken.None))).Message.ShouldBe("ToadFlow прислал непонятный ответ");
-        (await Should.ThrowAsync<ToadFlowRequestException>(() => client.PostAsync<JToken>("/api/x", null, CancellationToken.None))).Message
+        (await Should.ThrowAsync<ToadFlowRequestException>(() => client.PostAsync<JsonNode>("/api/x", null, CancellationToken.None))).Message
             .ShouldBe("ToadFlow прислал непонятный ответ");
     }
 
@@ -300,11 +301,24 @@ public class ToadFlowClientTests
     [Test]
     public void Json_UnknownEnumValue_ToUnknown()
     {
-        var painted = Newtonsoft.Json.JsonConvert.DeserializeObject<Painted>("""{ "shade": "Ultraviolet", "maybe": "Infrared" }""", ToadFlowClient.Json)!;
+        var painted = JsonSerializer.Deserialize<Painted>("""{ "shade": "Ultraviolet", "maybe": "Infrared" }""", ToadFlowClient.Json)!;
 
         (painted.Shade, painted.Maybe).ShouldBe((Shade.Unknown, Shade.Unknown));
-        Newtonsoft.Json.JsonConvert.DeserializeObject<Painted>("""{ "shade": "Dark", "maybe": null }""", ToadFlowClient.Json)
+        JsonSerializer.Deserialize<Painted>("""{ "shade": "Dark", "maybe": null }""", ToadFlowClient.Json)
             .ShouldBe(new Painted(Shade.Dark, null));
+    }
+
+    /// <summary>Ответ с повторяющимся полем — «по этому адресу нет ToadFlow», а не сбой плагина.</summary>
+    [Test]
+    public async Task SignIn_DuplicateFieldInAnswer_Message()
+    {
+        using var temp = new TempFolder();
+        var client = new ToadFlowClient(new ConnectionStore(temp.File("toadflow.json")),
+            new FakeHttp((_, _) => FakeHttp.Ok("""{ "token": "a", "token": "b", "user": {} }""")));
+
+        var exception = await Should.ThrowAsync<SignInException>(() => client.SignInAsync("http://toadflow", "ivanov", "p", CancellationToken.None));
+
+        exception.Message.ShouldBe("По этому адресу нет ToadFlow");
     }
 
     [Test]

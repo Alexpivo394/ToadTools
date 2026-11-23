@@ -4,7 +4,7 @@ using System.Globalization;
 using System.IO;
 using Microsoft.Win32;
 using Nice3point.Revit.Toolkit;
-using OfficeOpenXml;
+using ClosedXML.Excel;
 using ToadTools.UI.Models;
 using ToadTools.UI.Progress;
 using ToadTools.UI.Services;
@@ -41,8 +41,6 @@ public class WriteFromExcel
 
         logger.Log($"Выбран файл: {excelPath}");
 
-        ExcelPackage.License.SetNonCommercialPersonal("ToadTools");
-
         int updated = 0;
         int errors = 0;
 
@@ -50,11 +48,12 @@ public class WriteFromExcel
         {
             using (var progress = ToadProgress.Show("Теплопотери из Excel",
                        new ProgressOptions { Icon = Symbol.TableExport }))
-            using (var package = new ExcelPackage(new FileInfo(excelPath)))
+            using (var stream = new FileStream(excelPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) // книга может быть открыта в Excel
+            using (var workbook = new XLWorkbook(stream))
             {
                 progress.Stage("Чтение Excel");
-                var ws = package.Workbook.Worksheets[0];
-                int rowCount = ws.Dimension.Rows;
+                var ws = workbook.Worksheet(1);
+                int rowCount = ws.LastRowUsed()?.RowNumber() ?? 0;
 
                 using (Transaction t = new Transaction(doc, "Запись параметров"))
                 {
@@ -68,9 +67,9 @@ public class WriteFromExcel
 
                         try
                         {
-                            var idVal = ws.Cells[row, 1].Value;
-                            var tempVal = ws.Cells[row, 7].Value;
-                            var heatVal = ws.Cells[row, 8].Value;
+                            var idVal = CellValue(ws.Cell(row, 1));
+                            var tempVal = CellValue(ws.Cell(row, 7));
+                            var heatVal = CellValue(ws.Cell(row, 8));
 
                             if (idVal == null)
                             {
@@ -122,9 +121,31 @@ public class WriteFromExcel
                 DialogButtons.OK, DialogIcon.Info);
             return;
         }
+        catch (Exception ex)
+        {
+            // Книга занята, повреждена или это не xlsx: транзакция откатилась вместе с using
+            logger.LogError("Файл не прочитан", ex);
+            ToadDialogService.Show("Файл не прочитан", $"{excelPath}\n\n{ex.Message}\n\nИзменения в модели откачены.",
+                DialogButtons.OK, DialogIcon.Error);
+            return;
+        }
 
         var dial = ToadDialogService.Show("Результат", $"Обновлено: {updated}\nОшибок: {errors}\n\nЛог:\n{logPath}",
             DialogButtons.OK, DialogIcon.Info);
+    }
+
+    /// <summary>Значение ячейки: число, текст или null у пустой; у формулы — сохранённый результат.</summary>
+    private static object? CellValue(IXLCell cell)
+    {
+        var value = cell.CachedValue;
+        return value.Type switch
+        {
+            XLDataType.Blank => null,
+            XLDataType.Number => value.GetNumber(),
+            XLDataType.Text => value.GetText(),
+            XLDataType.Boolean => value.GetBoolean(),
+            _ => value.ToString(CultureInfo.InvariantCulture)
+        };
     }
 
     private bool SetParam(Element el, string paramName, object? value, int row, Logger logger)
@@ -143,14 +164,15 @@ public class WriteFromExcel
         return true;
     }
 
-    string stringVal = value.ToString()!;
+    // Число из ячейки — с точкой при любой локали Windows; текст «21,5» читается как 21.5, а не как 215
+    string stringVal = Convert.ToString(value, CultureInfo.InvariantCulture)!;
 
     try
     {
         switch (p.StorageType)
         {
             case StorageType.Double:
-                if (!double.TryParse(stringVal, NumberStyles.Any, CultureInfo.InvariantCulture, out double dbl))
+                if (!double.TryParse(stringVal.Trim().Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out double dbl))
                 {
                     logger.Log($"Строка {row}: '{paramName}' не число: '{stringVal}'");
                     return false;

@@ -1,9 +1,8 @@
 using System.IO;
 using Alexpivo394.Revit.ParamCheck.Core;
 using Alexpivo394.Revit.ParamCheck.Profiles;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using ToadTools.Connection;
 
 namespace ParamChecker.Services;
@@ -19,14 +18,12 @@ public sealed class ToadFlowSender
     private static readonly string Folder =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ToadTools", "ParamChecker", "outbox");
 
-    private static readonly JsonSerializerSettings Json = new() { ContractResolver = new CamelCasePropertyNamesContractResolver() };
-
     private readonly LoiOutbox _outbox;
 
     public ToadFlowSender(CheckerSettings settings)
     {
         _outbox = new LoiOutbox(Folder, () => settings.ToadFlowEnabled, () => ConnectionStore.Shared.Load() is not null,
-            (body, ct) => ToadFlowClient.Shared.PostAsync<JToken>("/api/loi/checks", body, ct));
+            (body, ct) => ToadFlowClient.Shared.PostAsync<JsonNode>("/api/loi/checks", body, ct));
     }
 
     /// <summary>Сколько итогов ждут отправки.</summary>
@@ -59,7 +56,7 @@ public sealed class ToadFlowSender
     {
         if (outcome.Status != ModelStatus.Checked) return;
         var id = Guid.NewGuid();
-        _outbox.Enqueue(id, JsonConvert.SerializeObject(new { id, summary = CheckSummaries.From(outcome, ProfileSerializer.Fingerprint(profile)) }, Json));
+        _outbox.Enqueue(id, JsonSerializer.Serialize(new { id, summary = CheckSummaries.From(outcome, ProfileSerializer.Fingerprint(profile)) }, ToadFlowClient.Json));
     }
 
     /// <summary>Отправляет очередь, если есть подключение; без него говорит, что итоги ждут.</summary>

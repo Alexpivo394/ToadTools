@@ -7,9 +7,9 @@ namespace ToadTools.Commands;
 /// <summary>Показывает или скрывает панель «Семейства ToadFlow».</summary>
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
-public class FamiliesCommand : ExternalCommand
+public class FamiliesCommand : ToadCommand
 {
-    public override void Execute()
+    protected override void Run()
     {
         FamiliesPane.Toggle(Application);
     }

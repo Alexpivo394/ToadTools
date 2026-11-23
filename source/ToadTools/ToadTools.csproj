@@ -1,4 +1,4 @@
-﻿<Project Sdk="Nice3point.Revit.Sdk/6.2.2">
+﻿<Project Sdk="Nice3point.Revit.Sdk/6.3.2">
 
   <PropertyGroup>
     <PublishAddin>true</PublishAddin>
@@ -38,7 +38,6 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
-        <PackageReference Include="Microsoft.Extensions.Hosting"/>
         <PackageReference Include="ILRepack" PrivateAssets="all"/>
     </ItemGroup>
 

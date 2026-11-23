@@ -1,9 +1,10 @@
-<Project Sdk="Nice3point.Revit.Sdk/6.2.2">
+<Project Sdk="Nice3point.Revit.Sdk/6.3.2">
 
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.Mvvm"/>
-        <PackageReference Include="Newtonsoft.Json"/>
-        <PackageReference Include="EPPlus"/>
+        <!-- На .NET входит в рантайм -->
+        <PackageReference Include="System.Text.Json" Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))' == '.NETFramework'"/>
+        <PackageReference Include="ClosedXML"/>
         <!-- Выгрузка для ИИ открывает модели с Revit Server и из папок так же, как ToadExporter -->
         <PackageReference Include="Alexpivo394.Revit.Export"/>
     </ItemGroup>

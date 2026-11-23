@@ -1,47 +1,39 @@
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 namespace ToadTools;
 
 /// <summary>
-///     Provides a host for the application's services and manages their lifetimes
+///     Provides the application's services and manages their lifetimes
 /// </summary>
 public static class Host
 {
-    private static IHost? _host;
+    private static ServiceProvider? _services;
+    private static NotificationWatcher? _notifications;
 
     /// <summary>
-    ///     Starts the host and configures the application's services
+    ///     Builds the service container and starts the background work
     /// </summary>
-    public static async Task StartAsync()
+    public static void Start()
     {
-        var builder = new HostApplicationBuilder(new HostApplicationBuilderSettings
-        {
-            DisableDefaults = true
-        });
+        var services = new ServiceCollection();
+        services.RegisterServices();
+        _services = services.BuildServiceProvider();
 
-        //Logging
-        builder.Logging.ClearProviders();
-
-        //Application services (views, view models, services)
-        builder.Services.RegisterServices();
-
-        _host = builder.Build();
-        await _host.StartAsync();
+        _notifications = new NotificationWatcher();
+        _notifications.Start();
     }
 
     /// <summary>
-    ///     Stops the host and handles <see cref="IHostedService"/> services
+    ///     Stops the background work and disposes the services
     /// </summary>
-    public static async Task StopAsync()
+    public static void Stop()
     {
-        if (_host is null) return;
+        _notifications?.Dispose();
+        _notifications = null;
 
-        await _host.StopAsync();
-        _host.Dispose();
-        _host = null;
+        _services?.Dispose();
+        _services = null;
     }
 
     /// <summary>
@@ -51,7 +43,7 @@ public static class Host
     /// <exception cref="System.InvalidOperationException">There is no service of type <typeparamref name="T"/></exception>
     public static T GetService<T>() where T : class
     {
-        return _host!.Services.GetRequiredService<T>();
+        return _services!.GetRequiredService<T>();
     }
 
     /// <summary>
@@ -66,7 +58,7 @@ public static class Host
     /// <exception cref="System.InvalidOperationException">There is no service of type <typeparamref name="T"/></exception>
     public static T CreateScope<T>() where T : FrameworkElement
     {
-        var scopeFactory = _host!.Services.GetRequiredService<IServiceScopeFactory>();
+        var scopeFactory = _services!.GetRequiredService<IServiceScopeFactory>();
         var scope = scopeFactory.CreateScope();
 
         var element = scope.ServiceProvider.GetRequiredService<T>();

@@ -1,10 +1,11 @@
-<Project Sdk="Nice3point.Revit.Sdk/6.2.2">
+<Project Sdk="Nice3point.Revit.Sdk/6.3.2">
 
     <!-- Общее подключение плагинов ToadTools к ToadFlow: хранилище личного токена, HTTP-клиент и окно входа.
          Обычная библиотека без Revit API, как ToadTools.UI. -->
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.Mvvm"/>
-        <PackageReference Include="Newtonsoft.Json"/>
+        <!-- На .NET входит в рантайм -->
+        <PackageReference Include="System.Text.Json" Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))' == '.NETFramework'"/>
     </ItemGroup>
 
     <!-- DPAPI для токена; с .NET 10 (Revit 2027) входит в Windows Desktop -->

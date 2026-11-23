@@ -17,7 +17,6 @@
         <PackageReference Include="TUnit"/>
         <PackageReference Include="Shouldly"/>
         <PackageReference Include="CommunityToolkit.Mvvm"/>
-        <PackageReference Include="Newtonsoft.Json"/>
         <PackageReference Include="Alexpivo394.Revit.Export"/>
         <PackageReference Include="Alexpivo394.Revit.Export.Sources"/>
     </ItemGroup>

@@ -1,11 +1,21 @@
 using System.IO;
-using Newtonsoft.Json;
+using System.Text.Encodings.Web;
+using System.Text.Json;
 
 namespace ClassifierCode.Engine.Library;
 
 /// <summary>Настройки пользователя: общие папки профилей и последний выбранный профиль. Ошибка чтения — умолчания.</summary>
 public sealed class ClassifierSettings
 {
+    private static readonly JsonSerializerOptions Json = new()
+    {
+        WriteIndented = true,
+        PropertyNameCaseInsensitive = true,
+        ReadCommentHandling = JsonCommentHandling.Skip,
+        AllowTrailingCommas = true,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
+
     public List<string> SharedFolders { get; set; } = [];
     public Guid? LastProfileId { get; set; }
 
@@ -22,7 +32,7 @@ public sealed class ClassifierSettings
     {
         try
         {
-            return File.Exists(path) ? JsonConvert.DeserializeObject<ClassifierSettings>(File.ReadAllText(path)) ?? new ClassifierSettings() : new ClassifierSettings();
+            return File.Exists(path) ? JsonSerializer.Deserialize<ClassifierSettings>(File.ReadAllText(path), Json) ?? new ClassifierSettings() : new ClassifierSettings();
         }
         catch (Exception exception) when (exception is JsonException or IOException or UnauthorizedAccessException)
         {
@@ -35,7 +45,7 @@ public sealed class ClassifierSettings
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-            File.WriteAllText(path, JsonConvert.SerializeObject(this, Formatting.Indented));
+            File.WriteAllText(path, JsonSerializer.Serialize(this, Json));
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {

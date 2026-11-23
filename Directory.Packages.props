@@ -16,23 +16,23 @@
         <PackageVersion Include="Nice3point.Revit.Api.UIFramework" Version="$(RevitVersion).*-*" Condition="$(RevitVersion) != ''"/>
         <PackageVersion Include="Nice3point.Revit.Api.UIFrameworkServices" Version="$(RevitVersion).*-*" Condition="$(RevitVersion) != ''"/>
 
-	<PackageVersion Include="Nice3point.Revit.Toolkit" Version="2020.4.0" Condition="$(RevitVersion) == '2020'"/>
-        <PackageVersion Include="Nice3point.Revit.Toolkit" Version="2021.4.0" Condition="$(RevitVersion) == '2021'"/>
-        <PackageVersion Include="Nice3point.Revit.Toolkit" Version="2022.4.0" Condition="$(RevitVersion) == '2022'"/>
-        <PackageVersion Include="Nice3point.Revit.Toolkit" Version="2023.4.0" Condition="$(RevitVersion) == '2023'"/>
-        <PackageVersion Include="Nice3point.Revit.Toolkit" Version="2024.3.0" Condition="$(RevitVersion) == '2024'"/>
-        <PackageVersion Include="Nice3point.Revit.Toolkit" Version="2025.2.0" Condition="$(RevitVersion) == '2025'"/>
-        <PackageVersion Include="Nice3point.Revit.Toolkit" Version="2026.1.0" Condition="$(RevitVersion) == '2026'"/>
-        <PackageVersion Include="Nice3point.Revit.Toolkit" Version="2027.0.0" Condition="$(RevitVersion) == '2027'"/>
+        <PackageVersion Include="Nice3point.Revit.Toolkit" Version="2020.4.5" Condition="$(RevitVersion) == '2020'"/>
+        <PackageVersion Include="Nice3point.Revit.Toolkit" Version="2021.4.5" Condition="$(RevitVersion) == '2021'"/>
+        <PackageVersion Include="Nice3point.Revit.Toolkit" Version="2022.4.5" Condition="$(RevitVersion) == '2022'"/>
+        <PackageVersion Include="Nice3point.Revit.Toolkit" Version="2023.4.5" Condition="$(RevitVersion) == '2023'"/>
+        <PackageVersion Include="Nice3point.Revit.Toolkit" Version="2024.3.5" Condition="$(RevitVersion) == '2024'"/>
+        <PackageVersion Include="Nice3point.Revit.Toolkit" Version="2025.2.5" Condition="$(RevitVersion) == '2025'"/>
+        <PackageVersion Include="Nice3point.Revit.Toolkit" Version="2026.1.5" Condition="$(RevitVersion) == '2026'"/>
+        <PackageVersion Include="Nice3point.Revit.Toolkit" Version="2027.0.5" Condition="$(RevitVersion) == '2027'"/>
 
-	<PackageVersion Include="Nice3point.Revit.Extensions" Version="2020.5.2" Condition="$(RevitVersion) == '2020'"/>        
-	<PackageVersion Include="Nice3point.Revit.Extensions" Version="2021.5.2" Condition="$(RevitVersion) == '2021'"/>
-        <PackageVersion Include="Nice3point.Revit.Extensions" Version="2022.5.2" Condition="$(RevitVersion) == '2022'"/>
-        <PackageVersion Include="Nice3point.Revit.Extensions" Version="2023.5.2" Condition="$(RevitVersion) == '2023'"/>
-        <PackageVersion Include="Nice3point.Revit.Extensions" Version="2024.3.2" Condition="$(RevitVersion) == '2024'"/>
-        <PackageVersion Include="Nice3point.Revit.Extensions" Version="2025.2.2" Condition="$(RevitVersion) == '2025'"/>
-        <PackageVersion Include="Nice3point.Revit.Extensions" Version="2026.1.2" Condition="$(RevitVersion) == '2026'"/>
-        <PackageVersion Include="Nice3point.Revit.Extensions" Version="2027.0.2" Condition="$(RevitVersion) == '2027'"/>
+        <PackageVersion Include="Nice3point.Revit.Extensions" Version="2020.5.6" Condition="$(RevitVersion) == '2020'"/>
+        <PackageVersion Include="Nice3point.Revit.Extensions" Version="2021.5.6" Condition="$(RevitVersion) == '2021'"/>
+        <PackageVersion Include="Nice3point.Revit.Extensions" Version="2022.5.6" Condition="$(RevitVersion) == '2022'"/>
+        <PackageVersion Include="Nice3point.Revit.Extensions" Version="2023.5.6" Condition="$(RevitVersion) == '2023'"/>
+        <PackageVersion Include="Nice3point.Revit.Extensions" Version="2024.3.6" Condition="$(RevitVersion) == '2024'"/>
+        <PackageVersion Include="Nice3point.Revit.Extensions" Version="2025.2.6" Condition="$(RevitVersion) == '2025'"/>
+        <PackageVersion Include="Nice3point.Revit.Extensions" Version="2026.1.6" Condition="$(RevitVersion) == '2026'"/>
+        <PackageVersion Include="Nice3point.Revit.Extensions" Version="2027.0.6" Condition="$(RevitVersion) == '2027'"/>
 
         <!-- Ядро выгрузки и клиент Revit Server, общие с фермой ToadFlow: https://github.com/Alexpivo394/ToadExport -->
         <PackageVersion Include="Alexpivo394.Revit.Export" Version="$(RevitVersion).*" Condition="$(RevitVersion) != ''"/>
@@ -49,40 +49,32 @@
 
     <!-- Core Dependencies -->
     <ItemGroup>
-        <!-- Application Hosting -->
-        <PackageVersion Include="Scrutor" Version="7.0.0"/>
-        <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.9"/>
-
-        <!-- Logging -->
-        <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.9"/>
-
         <!-- MVVM -->
         <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2"/>
 
         <!-- Dependency Injection -->
-        <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9"/>
-        <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.9"/>
+        <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.15"/>
 
         <!-- UI -->
         <PackageVersion Include="Alexpivo394.ToadDesign" Version="1.0.0"/>
-        <PackageVersion Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135"/>
 
         <!-- Serialization & Office -->
-        <PackageVersion Include="Newtonsoft.Json" Version="13.0.3"/>
-        <PackageVersion Include="EPPlus" Version="8.0.1"/>
-        <!-- EPPlus 8.0.1 тянет 9.0.3 с известными уязвимостями (GHSA-2fmv-rv2c-59x7 и др.) — закрепляем исправленные -->
-        <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="9.0.21"/>
-        <PackageVersion Include="System.Security.Cryptography.Xml" Version="9.0.21"/>
-        <!-- DPAPI: токен ToadFlow в настройках ParamChecker хранится зашифрованным -->
-        <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="9.0.21"/>
+        <!-- На .NET (Revit 2025+) входит в рантайм; пакет нужен только .NET Framework -->
+        <PackageVersion Include="System.Text.Json" Version="10.0.15"/>
+        <PackageVersion Include="ClosedXML" Version="0.105.1"/>
+        <!-- Пакет Alexpivo394.Revit.ParamCheck тянет EPPlus 8.0.1, а тот — 9.0.3 с известными уязвимостями (GHSA-2fmv-rv2c-59x7 и др.): закрепляем исправленные -->
+        <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.15"/>
+        <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.15"/>
+        <!-- DPAPI: токен ToadFlow хранится зашифрованным -->
+        <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="10.0.15"/>
 
-        <!-- net48 facade assemblies (explicitly referenced to resolve versions) -->
+        <!-- net48 facade assemblies: одна версия на все пакеты, которые их тянут -->
         <PackageVersion Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2"/>
         <PackageVersion Include="System.Buffers" Version="4.6.1"/>
 
         <!-- Testing -->
         <PackageVersion Include="Shouldly" Version="4.3.0"/>
-        <PackageVersion Include="TUnit" Version="1.72.10"/>
+        <PackageVersion Include="TUnit" Version="1.87.12"/>
 
         <!-- Build Automation -->
         <PackageVersion Include="Sourcy.DotNet" Version="1.1.1"/>
@@ -90,17 +82,13 @@
         <PackageVersion Include="ModularPipelines.Git" Version="3.2.8"/>
         <PackageVersion Include="ModularPipelines.GitHub" Version="3.2.8"/>
         <PackageVersion Include="ModularPipelines.DotNet" Version="3.2.8"/>
-        <PackageVersion Include="ModularPipelines.Slack" Version="3.2.8"/>
         <PackageVersion Include="Microsoft.VisualStudio.SolutionPersistence" Version="1.0.52"/>
-        <PackageVersion Include="ILRepack" Version="2.0.45"/>
-
-        <!-- System Dependencies -->
-        <PackageVersion Include="System.Text.Json" Version="10.0.9"/>
+        <PackageVersion Include="ILRepack" Version="2.0.48"/>
     </ItemGroup>
 
     <!-- Development Dependencies -->
     <ItemGroup>
-        <GlobalPackageReference Include="Polyfill" Version="10.10.0"/>
+        <GlobalPackageReference Include="Polyfill" Version="12.0.0"/>
         <GlobalPackageReference Include="JetBrains.Annotations.Sources" Version="2026.2.0"/>
     </ItemGroup>
 

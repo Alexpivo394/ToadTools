@@ -8,9 +8,9 @@ namespace ToadTools.Commands;
 /// </summary>
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
-public class RenameSpacesCommand : ExternalCommand
+public class RenameSpacesCommand : ToadCommand
 {
-    public override void Execute() => new WarmSync.RenameSpaces().Run();
+    protected override void Run() => new WarmSync.RenameSpaces().Run();
 }
 
 /// <summary>
@@ -18,9 +18,9 @@ public class RenameSpacesCommand : ExternalCommand
 /// </summary>
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
-public class WriteSpaceIdToParamCommand : ExternalCommand
+public class WriteSpaceIdToParamCommand : ToadCommand
 {
-    public override void Execute() => new WarmSync.WriteSpaceIdToParam().Run();
+    protected override void Run() => new WarmSync.WriteSpaceIdToParam().Run();
 }
 
 /// <summary>
@@ -28,9 +28,9 @@ public class WriteSpaceIdToParamCommand : ExternalCommand
 /// </summary>
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
-public class ExportSpacesToExcelCommand : ExternalCommand
+public class ExportSpacesToExcelCommand : ToadCommand
 {
-    public override void Execute() => new WarmSync.ExportSpacesToExcel().Run();
+    protected override void Run() => new WarmSync.ExportSpacesToExcel().Run();
 }
 
 /// <summary>
@@ -38,7 +38,7 @@ public class ExportSpacesToExcelCommand : ExternalCommand
 /// </summary>
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
-public class WriteFromExcelCommand : ExternalCommand
+public class WriteFromExcelCommand : ToadCommand
 {
-    public override void Execute() => new WarmSync.WriteFromExcel().Run();
+    protected override void Run() => new WarmSync.WriteFromExcel().Run();
 }

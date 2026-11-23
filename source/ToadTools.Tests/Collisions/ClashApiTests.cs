@@ -1,6 +1,7 @@
 using System.Net;
 using Collisions.Core;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Shouldly;
 using ToadTools.Connection;
 
@@ -88,7 +89,7 @@ public class ClashApiTests
             ("POST", $"/api/clash/collisions/{id}/notes"),
             ("POST", "/api/clash/my/visit")
         ]);
-        JObject Body(int i) => JObject.Parse(http.Requests[i].Body);
+        JsonObject Body(int i) => JsonNode.Parse(http.Requests[i].Body)!.AsObject();
         ((string?)Body(1)["assignee"], (string?)Body(1)["note"]).ShouldBe(("SideB", "пусть ОВ"));
         ((string?)Body(2)["status"], (string?)Body(2)["note"]).ShouldBe(("Fake", "Гильза"));
         ((string?)Body(3)["text"]).ShouldBe("Проверю");
@@ -104,9 +105,9 @@ public class ClashApiTests
         var result = await api.BulkAsync(part, "Assignee", [a, b], null, "SideB", CancellationToken.None);
 
         http.Requests[0].Request.RequestUri!.AbsolutePath.ShouldBe("/api/clash/collisions/bulk");
-        var body = JObject.Parse(http.Requests[0].Body);
+        var body = JsonNode.Parse(http.Requests[0].Body)!.AsObject();
         ((Guid?)body["partId"], (string?)body["action"], (string?)body["assignee"]).ShouldBe((part, "Assignee", "SideB"));
-        body["ids"]!.ToObject<Guid[]>().ShouldBe([a, b]);
+        body["ids"].Deserialize<Guid[]>().ShouldBe([a, b]);
         result.Done.ShouldBe(2);
         result.Unchanged.ShouldBe(1);
         result.Refused.ShouldHaveSingleItem().ShouldBe(new BulkRefusal(7, "Нет прав"));
@@ -128,10 +129,10 @@ public class ClashApiTests
     [Test]
     public async Task Api_UnknownStatusAndAssignee_ReadAsUnknown()
     {
-        var card = JObject.Parse(Sample("collision-card.json"));
+        var card = JsonNode.Parse(Sample("collision-card.json"))!.AsObject();
         card["collision"]!["status"] = "Archived";
         card["collision"]!["assignee"] = "Nobody";
-        var (api, _, temp) = Create(_ => FakeHttp.Ok(card.ToString()));
+        var (api, _, temp) = Create(_ => FakeHttp.Ok(card.ToJsonString()));
         using var _ = temp;
 
         var read = await api.CardAsync(Guid.NewGuid(), CancellationToken.None);

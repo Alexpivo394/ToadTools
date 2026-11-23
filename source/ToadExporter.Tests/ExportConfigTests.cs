@@ -66,6 +66,35 @@ public class ExportConfigTests
         await Task.CompletedTask;
     }
 
+    /// <summary>Конфигурации прежних версий: перечисление именем (как писал ToadExporter) или числом, имена в любом регистре.</summary>
+    [Test]
+    [Arguments("""{ "Settings": { "SourceKind": "Folder", "NwcParameters": "Elements" }, "Models": [] }""")]
+    [Arguments("""{ "Settings": { "sourceKind": 1, "nwcParameters": 1 }, "Models": [] }""")]
+    public async Task Load_EnumByNameOrNumber(string content)
+    {
+        using var file = new TempFile();
+        File.WriteAllText(file.Path, content);
+
+        var target = new ExportSettings();
+        ExportConfig.Load(file.Path, target);
+
+        target.SourceKind.ShouldBe(SourceKind.Folder);
+        target.NwcParameters.ShouldBe(NwcParameters.Elements);
+        await Task.CompletedTask;
+    }
+
+    [Test]
+    public async Task Save_WritesEnumNamesAndCyrillicAsIs()
+    {
+        using var file = new TempFile();
+        ExportConfig.Save(file.Path, new ExportSettings { SourceKind = SourceKind.Folder, SourceFolder = @"D:\Модели" }, Models);
+
+        var text = File.ReadAllText(file.Path);
+        text.ShouldContain("\"SourceKind\": \"Folder\"");
+        text.ShouldContain("Модели");
+        await Task.CompletedTask;
+    }
+
     [Test]
     [Arguments("не json")]
     [Arguments("""{ "Something": 1 }""")]

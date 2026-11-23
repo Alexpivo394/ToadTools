@@ -19,7 +19,6 @@ internal static class ServiceRegistration
         // RevitContext and need no registration. SSPlan, CreateCover, ParamChecker, SmartTags and
         // WorksetCheck build their view graph inside the command (bespoke runtime construction).
 
-        services.AddHostedService<NotificationWatcher>();
         services.AddParamToFinish();
         services.AddQuantityCheck();
         services.AddWriteDash();

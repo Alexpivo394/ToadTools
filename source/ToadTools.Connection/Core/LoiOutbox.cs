@@ -1,7 +1,7 @@
 using System.IO;
 using System.Text;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace ToadTools.Connection;
 
@@ -18,7 +18,7 @@ public sealed record SendResult(int Sent, int Pending, string? Error);
 /// <param name="enabled">Включена ли отправка итогов в настройках.</param>
 /// <param name="connected">Есть ли подключение к ToadFlow.</param>
 /// <param name="post">Отправка одного итога на сервер.</param>
-public sealed class LoiOutbox(string folder, Func<bool> enabled, Func<bool> connected, Func<JObject, CancellationToken, Task> post)
+public sealed class LoiOutbox(string folder, Func<bool> enabled, Func<bool> connected, Func<JsonObject, CancellationToken, Task> post)
 {
     public const string SignInAgain = "Подключение к ToadFlow устарело — войдите заново (ToadTools → Подключение к ToadFlow)";
 
@@ -56,7 +56,7 @@ public sealed class LoiOutbox(string folder, Func<bool> enabled, Func<bool> conn
         {
             try
             {
-                var body = JObject.Parse(File.ReadAllText(file));
+                var body = JsonNode.Parse(File.ReadAllText(file)) as JsonObject ?? throw new JsonException("ожидался объект JSON");
                 post(body, CancellationToken.None).GetAwaiter().GetResult();
                 File.Delete(file);
                 sent++;

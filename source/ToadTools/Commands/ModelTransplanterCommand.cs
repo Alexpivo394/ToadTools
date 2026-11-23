@@ -12,9 +12,9 @@ namespace ToadTools.Commands;
 [UsedImplicitly]
 [Transaction(TransactionMode.Manual)]
 [Regeneration(RegenerationOption.Manual)]
-public class ModelTransplanterCommand : ExternalCommand
+public class ModelTransplanterCommand : ToadCommand
 {
-    public override void Execute()
+    protected override void Run()
     {
         if (Application.ActiveUIDocument?.Document.IsReadOnly == true)
         {
