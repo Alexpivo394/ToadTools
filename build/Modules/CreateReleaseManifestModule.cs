@@ -27,7 +27,7 @@ public sealed class CreateReleaseManifestModule(IOptions<BuildOptions> buildOpti
         var versioning = (await context.GetModule<ResolveVersioningModule>()).ValueOrDefault!;
         var notes = (await context.GetModule<GenerateChangelogModule>()).ValueOrDefault ?? "";
         // Owner/Name; у remote вида https://github.com/owner/name.git имя приходит с ".git" — в ссылках его быть не должно
-        var repository = context.GitHub().RepositoryInfo.Identifier;
+        var repository = context.GitHub().RepositoryInfo.Identifier ?? throw new InvalidOperationException("У репозитория нет remote на GitHub");
         if (repository.EndsWith(".git", StringComparison.OrdinalIgnoreCase)) repository = repository[..^4];
         var outputFolder = context.Git().RootDirectory.GetFolder(buildOptions.Value.OutputDirectory);
 

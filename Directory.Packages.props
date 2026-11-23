@@ -62,9 +62,6 @@
         <!-- На .NET (Revit 2025+) входит в рантайм; пакет нужен только .NET Framework -->
         <PackageVersion Include="System.Text.Json" Version="10.0.15"/>
         <PackageVersion Include="ClosedXML" Version="0.105.1"/>
-        <!-- Пакет Alexpivo394.Revit.ParamCheck тянет EPPlus 8.0.1, а тот — 9.0.3 с известными уязвимостями (GHSA-2fmv-rv2c-59x7 и др.): закрепляем исправленные -->
-        <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.15"/>
-        <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.15"/>
         <!-- DPAPI: токен ToadFlow хранится зашифрованным -->
         <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="10.0.15"/>
 

@@ -276,7 +276,7 @@ public class ClassificationEngineTests
         var result = Engine().Classify(F("OST_Casework", "шкаф", "Т1"));
         result.Status.ShouldBe(EngineStatus.Unclassified);
         result.Reason!.ShouldContain("Отопление");
-        result.Reason.ShouldContain("Шкаф");
+        result.Reason!.ShouldContain("Шкаф");
     }
 
     [Test]
