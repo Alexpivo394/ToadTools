@@ -27,7 +27,7 @@ namespace ToadTools
             NotificationWatcher.UiDispatcher = System.Windows.Threading.Dispatcher.CurrentDispatcher;
             try
             {
-                Host.Start();
+                Host.Start(Application);
                 CreateRibbon();
             }
             catch (Exception exception)

@@ -39,7 +39,8 @@ public sealed class SessionTracker(
     private readonly HashSet<string> _dirtyDays = [];
     private readonly HashSet<string> _dirtyCommands = [];
 
-    public Guid SessionId => _state?.Id ?? Guid.Empty;
+    /// <summary>Id своей сессии — известен сразу, до <see cref="Start" />: операции могут начаться раньше, чем фоновый запуск дойдёт до учёта.</summary>
+    public Guid SessionId { get; } = Guid.NewGuid();
 
     /// <summary>Аварийные сессии прошлых запусков → в очередь как <c>end: Abnormal</c>; затем начинает свою.</summary>
     public void Start(SessionStart start)
@@ -52,7 +53,7 @@ public sealed class SessionTracker(
             {
                 _state = new SessionState
                 {
-                    Id = Guid.NewGuid(), Machine = start.Machine, WindowsUser = start.WindowsUser, RevitYear = start.RevitYear,
+                    Id = SessionId, Machine = start.Machine, WindowsUser = start.WindowsUser, RevitYear = start.RevitYear,
                     RevitBuild = start.RevitBuild, ToadTools = start.ToadTools, ProcessId = start.ProcessId, ProcessStartedUtc = start.ProcessStartedUtc,
                     StartedAt = now, SeenAt = now
                 };

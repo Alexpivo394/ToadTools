@@ -206,3 +206,54 @@ public class OperationTimerTests
         timer.Flush();
     }
 }
+
+public class OperationTimerExtrasTests
+{
+    [Test]
+    public void Discard_ForgetsBegun()
+    {
+        using var temp = new TempFolder();
+        var outbox = new TelemetryOutbox(temp.File("o"), () => DateTime.UtcNow);
+        var timer = new OperationTimer(outbox, () => DateTime.UtcNow, Guid.NewGuid, "WS", 2024, () => 1);
+        timer.Begin("a", OperationKind.Open, @"C:\a.rfa");
+
+        timer.Discard("a");
+        timer.End("a", OperationOutcome.Succeeded);
+        timer.Flush();
+
+        timer.Pending.ShouldBe(0);
+        outbox.Take(10).ShouldBeEmpty();
+    }
+
+    [Test]
+    public void LocalFile_SizeReadOnFlush()
+    {
+        using var temp = new TempFolder();
+        var file = temp.File("model.rvt");
+        System.IO.File.WriteAllBytes(file, new byte[1234]);
+        var outbox = new TelemetryOutbox(temp.File("o"), () => DateTime.UtcNow);
+        var timer = new OperationTimer(outbox, () => DateTime.UtcNow, Guid.NewGuid, "WS", 2024, () => 1);
+        timer.Begin("a", OperationKind.Open, file);
+
+        timer.End("a", OperationOutcome.Succeeded, localFile: file);
+        timer.Flush();
+
+        var item = outbox.Take(10).Single().Item;
+        ((long)item["fileSizeBytes"]!).ShouldBe(1234);
+        item.ContainsKey("localFile").ShouldBeFalse();
+    }
+
+    [Test]
+    public void LocalFile_Missing_NoSize()
+    {
+        using var temp = new TempFolder();
+        var outbox = new TelemetryOutbox(temp.File("o"), () => DateTime.UtcNow);
+        var timer = new OperationTimer(outbox, () => DateTime.UtcNow, Guid.NewGuid, "WS", 2024, () => 1);
+        timer.Begin("a", OperationKind.Open, @"\nowhere\share\a.rvt");
+
+        timer.End("a", OperationOutcome.Succeeded, localFile: @"\nowhere\share\a.rvt");
+        timer.Flush();
+
+        outbox.Take(10).Single().Item["fileSizeBytes"].ShouldBeNull();
+    }
+}

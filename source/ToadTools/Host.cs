@@ -14,7 +14,7 @@ public static class Host
     /// <summary>
     ///     Builds the service container and starts the background work
     /// </summary>
-    public static void Start()
+    public static void Start(Autodesk.Revit.UI.UIControlledApplication application)
     {
         var services = new ServiceCollection();
         services.RegisterServices();
@@ -22,6 +22,9 @@ public static class Host
 
         _notifications = new NotificationWatcher();
         _notifications.Start();
+
+        // Сборщик аналитики: сам ловит свои сбои и не мешает ленте.
+        Telemetry.TelemetryHost.Start(application);
     }
 
     /// <summary>
@@ -29,6 +32,8 @@ public static class Host
     /// </summary>
     public static void Stop()
     {
+        Telemetry.TelemetryHost.Stop();
+
         _notifications?.Dispose();
         _notifications = null;
 
