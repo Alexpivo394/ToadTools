@@ -25,6 +25,7 @@ internal static class TelemetryHost
 
     private static UIControlledApplication? _application;
     private static RevitEvents? _events;
+    private static RibbonWatcher? _ribbon;
     private static SessionTracker? _tracker;
     private static OperationTimer? _timer;
     private static TelemetryOutbox? _outbox;
@@ -52,6 +53,9 @@ internal static class TelemetryHost
             var timer = new OperationTimer(outbox, () => DateTime.UtcNow, () => tracker.SessionId, Environment.MachineName, year, ActivityProbe.FreeMemoryMb);
             var events = new RevitEvents(timer);
             events.Subscribe(revit);
+            var ribbon = new RibbonWatcher(Command);
+            ribbon.Start();
+            _ribbon = ribbon;
 
             _application = application;
             _events = events;
@@ -71,6 +75,53 @@ internal static class TelemetryHost
         finally
         {
             StartMilliseconds = watch.Elapsed.TotalMilliseconds;
+        }
+    }
+
+    /// <summary>
+    ///     Запоминает подписи кнопок ToadTools по классу команды — их показывает «Инструменты». Зовётся после сборки ленты; переводы
+    ///     строк в подписи заменяются пробелом.
+    /// </summary>
+    public static void RememberButtons(IEnumerable<RibbonPanel> panels)
+    {
+        try
+        {
+            foreach (var panel in panels)
+            foreach (var item in panel.GetItems())
+            {
+                if (item is PushButton push) Remember(push);
+                if (item is PulldownButton pulldown) // SplitButton — тоже PulldownButton
+                    foreach (var child in pulldown.GetItems())
+                        Remember(child);
+            }
+        }
+        catch (Exception exception)
+        {
+            ErrorReport.Log("Аналитика ToadFlow: подписи кнопок", exception);
+        }
+    }
+
+    private static void Remember(PushButton button)
+    {
+        var type = button.ClassName?.Split('.').LastOrDefault();
+        if (string.IsNullOrEmpty(type)) return;
+        ButtonNames[CommandNaming.ToadToolsId(type!)] = System.Text.RegularExpressions.Regex.Replace(button.ItemText ?? "", @"\s+", " ").Trim();
+    }
+
+    private static readonly Dictionary<string, string> ButtonNames = new();
+
+    /// <summary>Запуск команды ToadTools — из <c>ToadCommand</c>: имя класса без «Command», подпись кнопки, исход и длительность.</summary>
+    public static void ToadToolsCommand(Type command, CommandOutcome outcome, long durationMs)
+    {
+        try
+        {
+            var id = CommandNaming.ToadToolsId(command.Name);
+            var name = ButtonNames.TryGetValue(id, out var label) && label.Length > 0 ? label : id;
+            Command(new CommandRun(id, name, "ToadTools", CommandNaming.ToadToolsTab, outcome, durationMs));
+        }
+        catch (Exception exception)
+        {
+            ErrorReport.Log("Аналитика ToadFlow: команда", exception);
         }
     }
 
@@ -94,6 +145,7 @@ internal static class TelemetryHost
         {
             _stop?.Cancel();
             if (_application is not null) _events?.Unsubscribe(_application.ControlledApplication);
+            _ribbon?.Stop();
             _timer?.Flush();
             _tracker?.Stop();
             if (_sender is { } sender)
@@ -109,6 +161,7 @@ internal static class TelemetryHost
         finally
         {
             _events = null;
+            _ribbon = null;
             _tracker = null;
             _timer = null;
             _sender = null;

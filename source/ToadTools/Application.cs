@@ -29,6 +29,7 @@ namespace ToadTools
             {
                 Host.Start(Application);
                 CreateRibbon();
+                Telemetry.TelemetryHost.RememberButtons(Application.GetRibbonPanels(TabName));
             }
             catch (Exception exception)
             {
