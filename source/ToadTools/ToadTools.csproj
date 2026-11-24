@@ -38,6 +38,8 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
+        <!-- Лента Revit (ComponentManager.ItemExecuted) — для счётчика запусков штатных команд -->
+        <PackageReference Include="Nice3point.Revit.Api.AdWindows"/>
         <PackageReference Include="ILRepack" PrivateAssets="all"/>
     </ItemGroup>
 

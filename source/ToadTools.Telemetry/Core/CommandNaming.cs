@@ -1,0 +1,46 @@
+using System.Text.RegularExpressions;
+
+namespace ToadTools.Telemetry;
+
+/// <summary>Команда ленты для счётчика: идентификатор, подпись для людей, источник и вкладка.</summary>
+public sealed record NamedCommand(string CommandId, string Name, string Source, string? Tab);
+
+/// <summary>Как называть запуск команды с ленты: источник по вкладке и идентификатору, подпись — одной строкой.</summary>
+public static class CommandNaming
+{
+    public const string ToadToolsTab = "ToadTools";
+
+    /// <summary>Вкладки самого Revit (русский и английский интерфейс): кнопки на них — штатные команды.</summary>
+    private static readonly HashSet<string> RevitTabs = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Архитектура", "Конструкция", "Сталь", "Сборные конструкции", "Системы", "Вставка", "Аннотации", "Анализ", "Формы и генплан",
+        "Совместная работа", "Вид", "Управление", "Изменить", "Создание",
+        "Architecture", "Structure", "Steel", "Precast", "Systems", "Insert", "Annotate", "Analyze", "Massing & Site", "Collaborate", "View",
+        "Manage", "Modify", "Create"
+    };
+
+    private static readonly Regex Spaces = new(@"\s+");
+
+    /// <summary>
+    ///     null — запуск не записывается: нет идентификатора или это кнопка ToadTools (её считает сама команда, иначе двойной счёт).
+    /// </summary>
+    public static NamedCommand? From(string? id, string? text, string? tab)
+    {
+        if (string.IsNullOrWhiteSpace(id)) return null;
+        if (string.Equals(tab, ToadToolsTab, StringComparison.OrdinalIgnoreCase)) return null;
+        // Вкладку не нашли, но кнопка своя: Revit пишет вкладку в идентификатор кнопки надстройки.
+        if (id!.IndexOf("%" + ToadToolsTab + "%", StringComparison.OrdinalIgnoreCase) >= 0) return null;
+        var commandId = id!.Trim();
+        var name = Spaces.Replace(text ?? "", " ").Trim();
+        var cleanTab = string.IsNullOrWhiteSpace(tab) ? null : tab!.Trim();
+        // Кнопки сторонних надстроек Revit называет CustomCtrl_%…; штатные команды — ID_….
+        var source = commandId.StartsWith("CustomCtrl_", StringComparison.Ordinal) ? "Addin"
+            : commandId.StartsWith("ID_", StringComparison.Ordinal) || (cleanTab is not null && RevitTabs.Contains(cleanTab)) ? "Revit"
+            : "Addin";
+        return new NamedCommand(commandId, name.Length > 0 ? name : commandId, source, cleanTab);
+    }
+
+    /// <summary>Идентификатор команды ToadTools — имя класса без «Command».</summary>
+    public static string ToadToolsId(string typeName) =>
+        typeName.EndsWith("Command", StringComparison.Ordinal) ? typeName.Substring(0, typeName.Length - "Command".Length) : typeName;
+}
