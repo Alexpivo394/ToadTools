@@ -1,0 +1,22 @@
+<Project Sdk="Nice3point.Revit.Sdk/6.3.2">
+
+    <!-- Сборщик аналитики ToadFlow: очередь на диске, учёт сессии, таймер операций, железо и отправка.
+         Обычная библиотека без Revit API; к событиям Revit её привязывает проект ToadTools. -->
+    <PropertyGroup>
+        <UseWPF>false</UseWPF>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!-- На .NET входит в рантайм -->
+        <PackageReference Include="System.Text.Json" Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))' == '.NETFramework'"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\ToadTools.Connection\ToadTools.Connection.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="ToadTools.Tests"/>
+    </ItemGroup>
+
+</Project>
