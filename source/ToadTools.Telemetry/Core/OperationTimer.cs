@@ -35,6 +35,7 @@ public sealed class OperationTimer(TelemetryOutbox outbox, Func<DateTime> utcNow
     private readonly object _gate = new();
     private readonly Dictionary<object, Started> _pending = new();
     private readonly List<JsonObject> _done = [];
+    private readonly Dictionary<int, string> _localFiles = new();
 
     /// <summary>Сколько операций начато и не закончено.</summary>
     public int Pending
@@ -74,8 +75,15 @@ public sealed class OperationTimer(TelemetryOutbox outbox, Func<DateTime> utcNow
         }
     }
 
+    /// <summary>Забывает начатую операцию: оказалось, что её не считаем (семейство, документ связи).</summary>
+    public void Discard(object token)
+    {
+        lock (_gate) _pending.Remove(token);
+    }
+
     /// <param name="model">Уточнённая модель (после открытия известен путь хранилища); null — по пути из <see cref="Begin" />.</param>
-    public void End(object token, OperationOutcome outcome, ModelRef? model = null, long? fileSizeBytes = null)
+    /// <param name="localFile">Файл модели на этой машине: его размер читается в <see cref="Flush" />, если он на локальном диске.</param>
+    public void End(object token, OperationOutcome outcome, ModelRef? model = null, long? fileSizeBytes = null, string? localFile = null)
     {
         try
         {
@@ -85,6 +93,7 @@ public sealed class OperationTimer(TelemetryOutbox outbox, Func<DateTime> utcNow
                 if (!_pending.TryGetValue(token, out var started)) return;
                 _pending.Remove(token);
                 var reference = model ?? ModelRef.From(null, started.Path);
+                if (fileSizeBytes is null && !string.IsNullOrEmpty(localFile)) _localFiles[_done.Count] = localFile!;
                 _done.Add(new JsonObject
                 {
                     ["type"] = "operation", ["id"] = Guid.NewGuid().ToString(), ["sessionId"] = sessionId().ToString(), ["machine"] = machine,
@@ -105,13 +114,37 @@ public sealed class OperationTimer(TelemetryOutbox outbox, Func<DateTime> utcNow
     public void Flush()
     {
         List<JsonObject> done;
+        Dictionary<int, string> files;
         lock (_gate)
         {
             done = [.. _done];
+            files = new Dictionary<int, string>(_localFiles);
             _done.Clear();
+            _localFiles.Clear();
         }
 
-        foreach (var item in done) outbox.Add(item);
+        for (var i = 0; i < done.Count; i++)
+        {
+            if (files.TryGetValue(i, out var file)) done[i]["fileSizeBytes"] = LocalSize(file);
+            outbox.Add(done[i]);
+        }
+    }
+
+    /// <summary>Размер файла на локальном диске; сетевой путь не трогаем — обращение к сети может быть долгим.</summary>
+    private static long? LocalSize(string path)
+    {
+        try
+        {
+            if (path.StartsWith(@"\\", StringComparison.Ordinal) || !System.IO.Path.IsPathRooted(path)) return null;
+            var root = System.IO.Path.GetPathRoot(path);
+            if (root is null || new System.IO.DriveInfo(root).DriveType != System.IO.DriveType.Fixed) return null;
+            var info = new System.IO.FileInfo(path);
+            return info.Exists ? info.Length : null;
+        }
+        catch (Exception exception) when (Safe(exception))
+        {
+            return null;
+        }
     }
 
     private static string Iso(DateTime utc) => DateTime.SpecifyKind(utc, DateTimeKind.Utc).ToString("o", CultureInfo.InvariantCulture);

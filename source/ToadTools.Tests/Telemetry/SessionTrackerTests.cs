@@ -251,3 +251,19 @@ public class SessionTrackerTests
         rig.Outbox.Take(10).ShouldBeEmpty();
     }
 }
+
+public class SessionTrackerIdTests
+{
+    [Test]
+    public void SessionId_KnownBeforeStart_KeptAfter()
+    {
+        using var temp = new TempFolder();
+        var tracker = new SessionTracker(temp.File("s"), new TelemetryOutbox(temp.File("o"), () => DateTime.UtcNow), () => DateTime.UtcNow, t => t, _ => null);
+        var before = tracker.SessionId;
+
+        tracker.Start(new SessionStart("WS", "u", 2024, "b", "4.6.0", 1, DateTime.UtcNow));
+
+        before.ShouldNotBe(Guid.Empty);
+        tracker.SessionId.ShouldBe(before);
+    }
+}

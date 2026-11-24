@@ -59,6 +59,7 @@
       <ProjectReference Include="..\SSPlan\SSPlan.csproj" />
       <ProjectReference Include="..\ToadExporter\ToadExporter.csproj" />
       <ProjectReference Include="..\ToadTools.Connection\ToadTools.Connection.csproj" />
+      <ProjectReference Include="..\ToadTools.Telemetry\ToadTools.Telemetry.csproj" />
       <ProjectReference Include="..\WarmSync\WarmSync.csproj" />
       <ProjectReference Include="..\WorkingSet\WorkingSet.csproj" />
       <ProjectReference Include="..\WorksetCheck\WorksetCheck.csproj" />
