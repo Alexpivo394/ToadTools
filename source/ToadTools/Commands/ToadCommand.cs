@@ -17,6 +17,8 @@ public abstract class ToadCommand : ExternalCommand
     {
         var watch = Stopwatch.StartNew();
         var outcome = CommandOutcome.Succeeded;
+        var name = GetType().Name.Replace("Command", string.Empty);
+        ToadLog.Info(name, "старт");
         try
         {
             Run();
@@ -40,12 +42,13 @@ public abstract class ToadCommand : ExternalCommand
         }
         catch (Exception exception)
         {
-            ErrorReport.Show(GetType().Name.Replace("Command", string.Empty), exception);
+            ErrorReport.Show(name, exception);
             Result = Result.Failed;
             outcome = CommandOutcome.Failed;
         }
         finally
         {
+            ToadLog.Info(name, $"итог: {outcome}, {watch.ElapsedMilliseconds} мс");
             // Учёт не меняет результата команды: TelemetryHost сам ловит свои сбои.
             TelemetryHost.ToadToolsCommand(GetType(), outcome, watch.ElapsedMilliseconds);
         }

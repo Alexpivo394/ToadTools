@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Collisions.Core;
 using ToadTools.Connection;
+using ToadTools.UI.Services;
 
 namespace Collisions.ViewModels;
 
@@ -153,6 +154,7 @@ public sealed partial class PaneViewModel : ObservableObject
         Show(PaneScreen.Resolving, "Ищем модель в ToadFlow…");
         var resolved = await _api.ResolveAsync(doc.CentralPath, doc.FileName, CancellationToken.None);
         if (version != _version) return;
+        ToadLog.Debug("Коллизии", $"поиск модели в ToadFlow: найдено {resolved.Matches.Count}");
 
         if (resolved.Matches.Count == 0)
         {
@@ -528,6 +530,7 @@ public sealed partial class PaneViewModel : ObservableObject
         var state = new CollisionListState(_api, match.Key);
         await state.SetQueryAsync(_session.QueryFor(match.Key));
         if (version != _version) return;
+        ToadLog.Debug("Коллизии", $"загружена страница списка: {state.Items.Count} коллизий");
         _state = state;
         ShowList(state, rebuild: true);
         Show(PaneScreen.Ready, "");
@@ -619,10 +622,12 @@ public sealed partial class PaneViewModel : ObservableObject
         }
         catch (ToadFlowAuthRequiredException exception)
         {
+            ToadLog.Debug("Коллизии", "подключение устарело: нужен вход в ToadFlow");
             if (version == _version) Show(PaneScreen.NotConnected, exception.Message);
         }
         catch (Exception exception)
         {
+            ToadLog.Debug("Коллизии", $"ошибка шага панели: {exception.GetType().Name}: {exception.Message}");
             if (version == _version) Show(PaneScreen.Error, ToadFlowErrors.Describe(exception));
         }
         finally

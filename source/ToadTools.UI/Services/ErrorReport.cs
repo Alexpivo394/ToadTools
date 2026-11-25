@@ -35,6 +35,7 @@ public static class ErrorReport
     /// <returns><c>false</c> — журнал недоступен.</returns>
     public static bool Log(string where, Exception exception)
     {
+        ToadLog.Error(where, exception);
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(LogPath)!);

@@ -8,6 +8,7 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using ToadTools.UI.Services;
 
 namespace ToadTools.Connection;
 
@@ -235,20 +236,29 @@ public sealed class ToadFlowClient
 #if NETFRAMEWORK
         AllowParallelRequests(request.RequestUri);
 #endif
+        var started = System.Diagnostics.Stopwatch.StartNew();
         try
         {
-            return await _http.SendAsync(request, ct).ConfigureAwait(false);
+            var response = await _http.SendAsync(request, ct).ConfigureAwait(false);
+            LogRequest(request, (int)response.StatusCode, started);
+            return response;
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
+            LogRequest(request, "отменён", started);
             throw;
         }
         catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException or IOException or WebException)
         {
+            LogRequest(request, exception is TaskCanceledException ? "тайм-аут" : "нет связи: " + exception.GetType().Name, started);
             var reason = exception is TaskCanceledException ? $"сервер не ответил за {Timeout.TotalSeconds:0} с" : Root(exception).Message;
             throw new ToadFlowUnavailableException($"Нет связи с ToadFlow: {reason}", exception);
         }
     }
+
+    /// <summary>В журнал: метод, путь без query, исход и время. Заголовки, токены и тела не пишутся никогда.</summary>
+    private static void LogRequest(HttpRequestMessage request, object outcome, System.Diagnostics.Stopwatch watch) =>
+        ToadLog.Debug("ToadFlow", $"{request.Method} {request.RequestUri?.AbsolutePath} → {outcome}, {watch.ElapsedMilliseconds} мс");
 
 #if NETFRAMEWORK
     /// <summary>

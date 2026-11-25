@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Families.Core;
 using ToadTools.Connection;
+using ToadTools.UI.Services;
 
 namespace Families.ViewModels;
 
@@ -105,6 +106,7 @@ public sealed partial class FamiliesPaneViewModel : ObservableObject
         Me = await _api.MeAsync(CancellationToken.None);
         Library = await _api.LibraryAsync(CancellationToken.None);
         if (version != _version) return;
+        ToadLog.Debug("Семейства", $"библиотека загружена, настроена: {Library.Configured}");
         if (!Library.Configured)
         {
             Show(PaneScreen.NotConfigured, "Библиотека семейств в ToadFlow ещё не настроена: администратор задаёт её папку в вебе, «Семейства» → «Параметры»");
@@ -187,6 +189,7 @@ public sealed partial class FamiliesPaneViewModel : ObservableObject
         else _page++;
         var page = await _api.SearchAsync(new FamilySearch(SearchText, Section, Category, ShowUnreviewed), _page, CancellationToken.None);
         if (version != _version) return;
+        ToadLog.Debug("Семейства", $"страница {_page} поиска: {page.Items.Count} из {page.Total}");
 
         if (reset)
         {
@@ -448,10 +451,12 @@ public sealed partial class FamiliesPaneViewModel : ObservableObject
         }
         catch (ToadFlowAuthRequiredException)
         {
+            ToadLog.Debug("Семейства", "подключение устарело: нужен вход в ToadFlow");
             Show(PaneScreen.NotConnected, "Подключение к ToadFlow устарело — войдите заново");
         }
         catch (ToadFlowUnavailableException exception)
         {
+            ToadLog.Debug("Семейства", $"нет связи с ToadFlow: {exception.Message}");
             Show(PaneScreen.Error, $"{exception.Message}. Сами файлы библиотеки по-прежнему можно взять проводником");
         }
         catch (Exception exception) when (exception is ToadFlowRequestException or InvalidOperationException or ArgumentException)
@@ -468,7 +473,11 @@ public sealed partial class FamiliesPaneViewModel : ObservableObject
         }
     }
 
-    public void ReportUnexpected(Exception exception) => Status = $"Не получилось: {exception.Message}";
+    public void ReportUnexpected(Exception exception)
+    {
+        ToadLog.Error("Семейства", exception);
+        Status = $"Не получилось: {exception.Message}";
+    }
 
     private void Show(PaneScreen screen, string message)
     {

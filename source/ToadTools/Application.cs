@@ -48,6 +48,9 @@ namespace ToadTools
             {
                 ToadTools.UI.Services.ErrorReport.Log("Завершение ToadTools", exception);
             }
+
+            ToadTools.UI.Services.ToadLog.Info("ToadTools", "Revit закрыт");
+            ToadTools.UI.Services.ToadLog.Flush();
         }
 
         /// <summary>

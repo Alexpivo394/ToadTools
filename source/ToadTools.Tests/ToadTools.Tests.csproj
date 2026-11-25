@@ -31,6 +31,8 @@
     <ItemGroup>
         <Compile Include="..\ToadTools.Connection\Core\**\*.cs" Link="Linked\Connection\%(RecursiveDir)%(Filename)%(Extension)"/>
         <Compile Include="..\ToadTools.Connection\ViewModels\**\*.cs" Link="Linked\ConnectionViewModels\%(RecursiveDir)%(Filename)%(Extension)"/>
+        <!-- Журнал из ToadTools.UI: файлы без WPF и Revit API -->
+        <Compile Include="..\ToadTools.UI\Services\ToadLog.cs;..\ToadTools.UI\Services\LogSettings.cs;..\ToadTools.UI\Services\SettingsJson.cs" Link="Linked\Log\%(Filename)%(Extension)"/>
         <Compile Include="..\ToadTools.Telemetry\Core\**\*.cs" Link="Linked\Telemetry\%(RecursiveDir)%(Filename)%(Extension)"/>
         <Compile Include="..\Collisions\Core\**\*.cs" Link="Linked\Collisions\%(RecursiveDir)%(Filename)%(Extension)"/>
         <Compile Include="..\Collisions\ViewModels\**\*.cs" Link="Linked\CollisionsViewModels\%(RecursiveDir)%(Filename)%(Extension)"/>
