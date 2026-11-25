@@ -25,6 +25,8 @@ namespace ToadTools
             Collisions.CollisionsPane.Register(Application);
             Families.FamiliesPane.Register(Application);
             NotificationWatcher.UiDispatcher = System.Windows.Threading.Dispatcher.CurrentDispatcher;
+            // Год Revit для раздела «О ToadTools»: окно настроек не ссылается на Revit API.
+            ToadTools.Connection.SettingsDialog.RevitVersion = Application.ControlledApplication.VersionNumber;
             try
             {
                 Host.Start(Application);

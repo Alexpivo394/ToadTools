@@ -13,8 +13,11 @@ namespace ToadTools.Connection;
 /// </summary>
 public sealed class ConnectionStore(string path)
 {
+    /// <summary>Имя файла подключения; рядом на время записи появляется <c>toadflow.json.tmp</c>.</summary>
+    public const string FileName = "toadflow.json";
+
     public static string DefaultPath { get; } =
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ToadTools", "toadflow.json");
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ToadTools", FileName);
 
     private static readonly JsonSerializerOptions Json = new()
     {

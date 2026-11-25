@@ -16,7 +16,7 @@ namespace ToadTools.UI.Services;
 ///         in one tool shows the choice made in another.
 ///     </para>
 /// </summary>
-public sealed partial class ThemePreference : INotifyPropertyChanged
+public sealed partial class ThemePreference : IThemePreference
 {
     private static readonly string FilePath =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ToadTools", "theme.json");

@@ -16,6 +16,8 @@
     <!-- HttpClient; на .NET входит в рантайм -->
     <ItemGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))' == '.NETFramework'">
         <Reference Include="System.Net.Http"/>
+        <!-- Архив для разработчика (DiagnosticsArchive) -->
+        <Reference Include="System.IO.Compression"/>
     </ItemGroup>
 
     <ItemGroup>

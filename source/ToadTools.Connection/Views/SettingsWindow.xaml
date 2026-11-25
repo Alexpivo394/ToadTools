@@ -1,0 +1,186 @@
+<toad:ToadWindow
+    x:Class="ToadTools.Connection.Views.SettingsWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:toad="urn:toaddesign"
+    xmlns:vm="clr-namespace:ToadTools.Connection.ViewModels"
+    xmlns:views="clr-namespace:ToadTools.Connection.Views"
+    xmlns:services="clr-namespace:ToadTools.UI.Services;assembly=ToadTools.UI"
+    xmlns:conv="clr-namespace:ToadTools.UI.Converters;assembly=ToadTools.UI"
+    d:DataContext="{d:DesignInstance Type=vm:SettingsViewModel}"
+    mc:Ignorable="d"
+    Title="Настройки ToadTools"
+    WindowStartupLocation="CenterOwner"
+    ShowInTaskbar="False"
+    Width="640"
+    Height="560"
+    MinWidth="480"
+    MinHeight="360"
+    ShowMaximizeButton="False"
+    ShowMinimizeButton="False"
+    TitleIcon="Settings">
+
+    <Grid Margin="0,4,0,0">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="170" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Разделы -->
+        <ListBox Grid.Column="0" Margin="12,0,0,16" BorderThickness="0" Background="Transparent"
+                 SelectedValuePath="Tag" SelectedValue="{Binding Section}">
+            <ListBoxItem Tag="{x:Static services:SettingsSection.ToadFlow}">
+                <StackPanel Orientation="Horizontal">
+                    <toad:Icon Symbol="Plug" Margin="0,0,8,0" />
+                    <TextBlock Text="ToadFlow" />
+                </StackPanel>
+            </ListBoxItem>
+            <ListBoxItem Tag="{x:Static services:SettingsSection.Appearance}">
+                <StackPanel Orientation="Horizontal">
+                    <toad:Icon Symbol="Palette" Margin="0,0,8,0" />
+                    <TextBlock Text="Вид" />
+                </StackPanel>
+            </ListBoxItem>
+            <ListBoxItem Tag="{x:Static services:SettingsSection.Log}">
+                <StackPanel Orientation="Horizontal">
+                    <toad:Icon Symbol="Notes" Margin="0,0,8,0" />
+                    <TextBlock Text="Журнал" />
+                </StackPanel>
+            </ListBoxItem>
+            <ListBoxItem Tag="{x:Static services:SettingsSection.Cache}">
+                <StackPanel Orientation="Horizontal">
+                    <toad:Icon Symbol="Photo" Margin="0,0,8,0" />
+                    <TextBlock Text="Кэш" />
+                </StackPanel>
+            </ListBoxItem>
+            <ListBoxItem Tag="{x:Static services:SettingsSection.About}">
+                <StackPanel Orientation="Horizontal">
+                    <toad:Icon Symbol="InfoCircle" Margin="0,0,8,0" />
+                    <TextBlock Text="О ToadTools" />
+                </StackPanel>
+            </ListBoxItem>
+        </ListBox>
+
+        <!-- Содержимое раздела: длинное прокручивается на маленьком экране -->
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <Grid Margin="16,0,16,16">
+
+                <!-- ToadFlow -->
+                <Border Visibility="{Binding Section, Converter={views:SectionVisibilityConverter}, ConverterParameter=ToadFlow}">
+                    <StackPanel DataContext="{Binding Connection}">
+                        <TextBlock Text="ToadFlow" FontSize="{DynamicResource Toad.FontSize.Heading}" FontWeight="SemiBold" Margin="0,0,0,8" />
+                        <TextBlock TextWrapping="Wrap" Opacity="0.75" FontSize="{DynamicResource Toad.FontSize.Small}" Margin="0,0,0,12"
+                                   Text="Один вход для всех плагинов ToadTools: ParamChecker, «Коллизии» и других. Пароль не сохраняется — на этом компьютере остаётся личный токен, который можно отозвать в веб-интерфейсе." />
+
+                        <!-- Вход -->
+                        <StackPanel Visibility="{Binding IsConnected, Converter={conv:InverseBooleanCollapsedVisibilityConverter}}">
+                            <TextBlock Text="Адрес сервера" Margin="0,0,0,4" />
+                            <toad:TextBox Text="{Binding Url, UpdateSourceTrigger=PropertyChanged}" Placeholder="http://toadflow:8080" Margin="0,0,0,8" />
+                            <TextBlock Text="Логин" Margin="0,0,0,4" />
+                            <toad:TextBox Text="{Binding Login, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
+                            <TextBlock Text="Пароль" Margin="0,0,0,4" />
+                            <toad:PasswordBox Password="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
+                            <toad:Button Content="Войти" Variant="Filled" HorizontalAlignment="Right" IsDefault="True"
+                                         Command="{Binding SignInCommand}" />
+                        </StackPanel>
+
+                        <!-- Кто вошёл -->
+                        <StackPanel Visibility="{Binding IsConnected, Converter={conv:BooleanCollapsedVisibilityConverter}}">
+                            <toad:Switch Content="Показывать уведомления ToadFlow" IsChecked="{Binding ShowNotifications}" Margin="0,4,0,0"
+                                         ToolTip="Заявки на семейства, ошибки расписаний, новые коллизии — всплывающим окном справа внизу" />
+                            <toad:Button Content="Выйти" Icon="Logout" HorizontalAlignment="Right" Margin="0,8,0,0" Command="{Binding SignOutCommand}" />
+                        </StackPanel>
+
+                        <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Margin="0,12,0,0"
+                                   Visibility="{Binding Status, Converter={conv:StringVisibilityConverter}}" />
+                        <TextBlock Text="{Binding Error}" TextWrapping="Wrap" Margin="0,8,0,0" Foreground="{DynamicResource Toad.Brush.Danger}"
+                                   Visibility="{Binding Error, Converter={conv:StringVisibilityConverter}}" />
+                        <toad:Loader Width="20" Height="20" Margin="0,8,0,0" HorizontalAlignment="Left"
+                                     Visibility="{Binding IsBusy, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Вид -->
+                <StackPanel Visibility="{Binding Section, Converter={views:SectionVisibilityConverter}, ConverterParameter=Appearance}">
+                    <TextBlock Text="Вид" FontSize="{DynamicResource Toad.FontSize.Heading}" FontWeight="SemiBold" Margin="0,0,0,8" />
+                    <TextBlock TextWrapping="Wrap" Opacity="0.75" FontSize="{DynamicResource Toad.FontSize.Small}" Margin="0,0,0,12"
+                               Text="Одна настройка для всех окон и панелей ToadTools; меняется сразу в открытых окнах." />
+
+                    <TextBlock Text="Тема" FontWeight="SemiBold" Margin="0,0,0,6" />
+                    <RadioButton GroupName="Theme" Content="Светлая" Margin="0,0,0,6"
+                                 IsChecked="{Binding Theme, Converter={views:ChoiceConverter}, ConverterParameter=Light}" />
+                    <RadioButton GroupName="Theme" Content="Тёмная" Margin="0,0,0,6"
+                                 IsChecked="{Binding Theme, Converter={views:ChoiceConverter}, ConverterParameter=Dark}" />
+                    <RadioButton GroupName="Theme" Content="Как в Windows" Margin="0,0,0,16"
+                                 IsChecked="{Binding Theme, Converter={views:ChoiceConverter}, ConverterParameter=System}" />
+
+                    <TextBlock Text="Размер" FontWeight="SemiBold" Margin="0,0,0,6" />
+                    <RadioButton GroupName="Density" Content="Авто" Margin="0,0,0,6"
+                                 IsChecked="{Binding Density, Converter={views:ChoiceConverter}, ConverterParameter=Auto}" />
+                    <RadioButton GroupName="Density" Content="Обычный" Margin="0,0,0,6"
+                                 IsChecked="{Binding Density, Converter={views:ChoiceConverter}, ConverterParameter=Normal}" />
+                    <RadioButton GroupName="Density" Content="Компактный" Margin="0,0,0,6"
+                                 IsChecked="{Binding Density, Converter={views:ChoiceConverter}, ConverterParameter=Compact}" />
+                    <TextBlock TextWrapping="Wrap" Opacity="0.75" FontSize="{DynamicResource Toad.FontSize.Small}" Margin="0,4,0,0"
+                               Text="Компактный — мельче шрифт и элементы, больше помещается на экране ноутбука." />
+                    <TextBlock Text="{Binding DensityHint}" TextWrapping="Wrap" FontSize="{DynamicResource Toad.FontSize.Small}" Margin="0,4,0,0"
+                               Visibility="{Binding DensityHint, Converter={conv:StringVisibilityConverter}}" />
+                </StackPanel>
+
+                <!-- Журнал -->
+                <StackPanel Visibility="{Binding Section, Converter={views:SectionVisibilityConverter}, ConverterParameter=Log}">
+                    <TextBlock Text="Журнал" FontSize="{DynamicResource Toad.FontSize.Heading}" FontWeight="SemiBold" Margin="0,0,0,8" />
+                    <toad:Switch Content="Подробный журнал" IsChecked="{Binding VerboseLog}" Margin="0,0,0,6" />
+                    <TextBlock TextWrapping="Wrap" Opacity="0.75" FontSize="{DynamicResource Toad.FontSize.Small}" Margin="0,0,0,16"
+                               Text="Запросы к ToadFlow, запуски команд и шаги панелей пишутся в ToadTools-ГГГГ-ММ-ДД.log и хранятся 7 дней. Включите, если разработчик попросил." />
+
+                    <toad:Button Content="Открыть папку журналов" Icon="FolderOpen" HorizontalAlignment="Left" Margin="0,0,0,8"
+                                 Command="{Binding OpenLogsFolderCommand}" />
+                    <toad:Button Content="Собрать архив для разработчика" Icon="FileZip" HorizontalAlignment="Left" Margin="0,0,0,4"
+                                 Command="{Binding CreateArchiveCommand}" />
+                    <TextBlock TextWrapping="Wrap" Opacity="0.75" FontSize="{DynamicResource Toad.FontSize.Small}" Margin="0,0,0,8"
+                               Text="Zip на рабочий стол: журналы, версии ToadTools, Revit и Windows, адрес сервера, файлы настроек. Пароля и токена ToadFlow в архиве нет." />
+                    <toad:Button Content="Очистить журналы" Icon="Trash" HorizontalAlignment="Left" Margin="0,0,0,8"
+                                 Command="{Binding ClearLogsCommand}" />
+
+                    <toad:Loader Width="20" Height="20" HorizontalAlignment="Left"
+                                 Visibility="{Binding IsArchiving, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
+                    <TextBlock Text="{Binding LogStatus}" TextWrapping="Wrap" Margin="0,4,0,0"
+                               Visibility="{Binding LogStatus, Converter={conv:StringVisibilityConverter}}" />
+                </StackPanel>
+
+                <!-- Кэш -->
+                <StackPanel Visibility="{Binding Section, Converter={views:SectionVisibilityConverter}, ConverterParameter=Cache}">
+                    <TextBlock Text="Кэш" FontSize="{DynamicResource Toad.FontSize.Heading}" FontWeight="SemiBold" Margin="0,0,0,8" />
+                    <TextBlock TextWrapping="Wrap" Opacity="0.75" FontSize="{DynamicResource Toad.FontSize.Small}" Margin="0,0,0,8"
+                               Text="Картинки коллизий, скачанные с ToadFlow. После очистки «Коллизии» скачают нужные заново." />
+                    <TextBlock Margin="0,0,0,8">
+                        <Run Text="Миниатюры коллизий:" />
+                        <Run Text="{Binding ThumbnailsSize, Mode=OneWay}" FontWeight="SemiBold" />
+                    </TextBlock>
+                    <toad:Button Content="Очистить кэш миниатюр коллизий" Icon="Trash" HorizontalAlignment="Left"
+                                 Command="{Binding ClearThumbnailsCommand}" />
+                </StackPanel>
+
+                <!-- О ToadTools -->
+                <StackPanel Visibility="{Binding Section, Converter={views:SectionVisibilityConverter}, ConverterParameter=About}">
+                    <TextBlock Text="О ToadTools" FontSize="{DynamicResource Toad.FontSize.Heading}" FontWeight="SemiBold" Margin="0,0,0,8" />
+                    <TextBlock Margin="0,0,0,4">
+                        <Run Text="Версия ToadTools:" />
+                        <Run Text="{Binding ToadToolsVersion, Mode=OneWay}" FontWeight="SemiBold" />
+                    </TextBlock>
+                    <TextBlock Margin="0,0,0,16">
+                        <Run Text="Revit:" />
+                        <Run Text="{Binding RevitVersion, Mode=OneWay}" FontWeight="SemiBold" />
+                    </TextBlock>
+                    <toad:Button Content="Вики ToadTools" Icon="ExternalLink" HorizontalAlignment="Left" Margin="0,0,0,8"
+                                 Command="{Binding OpenWikiCommand}" />
+                    <toad:Button Content="Список изменений" Icon="ExternalLink" HorizontalAlignment="Left"
+                                 Command="{Binding OpenChangelogCommand}" />
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</toad:ToadWindow>
