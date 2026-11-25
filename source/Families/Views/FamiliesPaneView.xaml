@@ -13,7 +13,7 @@
     d:DesignWidth="380" d:DesignHeight="760"
     Background="{DynamicResource Toad.Brush.Background}"
     Foreground="{DynamicResource Toad.Brush.Text}"
-    FontSize="{DynamicResource Toad.FontSize}"
+    FontSize="{DynamicResource Toad.FontSize.Small}"
     toad:Theme.IsRoot="True">
 
     <UserControl.Resources>

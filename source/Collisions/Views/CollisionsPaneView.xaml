@@ -15,7 +15,7 @@
     d:DesignWidth="380" d:DesignHeight="700"
     Background="{DynamicResource Toad.Brush.Background}"
     Foreground="{DynamicResource Toad.Brush.Text}"
-    FontSize="{DynamicResource Toad.FontSize}"
+    FontSize="{DynamicResource Toad.FontSize.Small}"
     toad:Theme.IsRoot="True">
 
     <UserControl.Resources>
@@ -71,7 +71,7 @@
             <TextBlock Text="{Binding SearchedPath, StringFormat=Искали: {0}}" TextWrapping="Wrap" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.7"
                        Visibility="{Binding Screen, Converter={views:ScreenVisibilityConverter}, ConverterParameter=NotFound}" />
             <!-- Вход в ToadFlow — в «Настройках» ToadTools; после входа панель перечитывает список -->
-            <toad:Button Content="Настройки…" Variant="Filled" Command="{Binding ConnectCommand}" Margin="0,8,0,0" HorizontalAlignment="Left"
+            <toad:Button Content="Настройки…" Variant="Filled" Command="{Binding ConnectCommand}" Margin="0,8,0,0"
                        ToolTip="Войти в ToadFlow в настройках ToadTools"
                        Visibility="{Binding Screen, Converter={views:ScreenVisibilityConverter}, ConverterParameter=NotConnected}" />
             <toad:Loader Width="24" Height="24" HorizontalAlignment="Left"
@@ -106,16 +106,14 @@
         <!-- Список коллизий -->
         <Grid Grid.Row="1" Visibility="{Binding Screen, Converter={views:ScreenVisibilityConverter}, ConverterParameter=Ready}">
             <Grid.RowDefinitions>
-                <!-- Фильтры, поиск, счётчики — по содержимому; делят высоту только список и карточка -->
-                <RowDefinition Height="Auto" />
-                <!-- Список и карточка — 3:2; в компактном размере 5:2, списку больше половины панели -->
-                <RowDefinition MinHeight="120">
+                <!-- Список с фильтрами и карточка — 3:2; в компактном размере 3:1, списку больше половины панели -->
+                <RowDefinition MinHeight="160">
                     <RowDefinition.Style>
                         <Style TargetType="RowDefinition">
                             <Setter Property="Height" Value="3*" />
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding IsCompact, Source={x:Static services:ThemePreference.Instance}}" Value="True">
-                                    <Setter Property="Height" Value="5*" />
+                                    <Setter Property="Height" Value="6*" />
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
@@ -139,7 +137,8 @@
                 </RowDefinition>
             </Grid.RowDefinitions>
 
-            <StackPanel Grid.Row="0">
+        <DockPanel Grid.Row="0">
+            <StackPanel DockPanel.Dock="Top">
                 <!-- Строка-переключатель блока фильтров: «Фильтры · N активных» -->
                 <toad:Button Variant="Subtle" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Margin="0,0,0,6"
                              Command="{Binding ToggleFiltersCommand}" ToolTip="Показать или скрыть фильтры">
@@ -192,7 +191,7 @@
                     </toad:TextBox.InputBindings>
                 </toad:TextBox>
 
-                <WrapPanel Margin="0,0,0,2">
+                <WrapPanel Margin="0,0,0,6">
                     <!-- Счётчики — переключатели, как в вебе: нажатие включает фильтр, повторное — снимает -->
                     <ToggleButton Margin="0,0,6,4" Padding="6,1" FontSize="{DynamicResource Toad.FontSize.Caption}" Content="{Binding MineCounter}" IsChecked="{Binding MineActive, Mode=OneWay}"
                                   Command="{Binding MineFilterCommand}" ToolTip="Показать только мои и общие коллизии" />
@@ -227,7 +226,6 @@
                            TextWrapping="Wrap" Margin="0,0,0,6" Visibility="{Binding Status, Converter={views:TextVisibilityConverter}}" />
             </StackPanel>
 
-        <DockPanel Grid.Row="1">
             <toad:Button DockPanel.Dock="Bottom" Content="Показать ещё" HorizontalAlignment="Stretch" Margin="0,6,0,0"
                        Command="{Binding LoadMoreCommand}" Visibility="{Binding HasMore, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
 
@@ -294,10 +292,10 @@
                 </ListView.ItemTemplate>
             </ListView>
         </DockPanel>
-            <GridSplitter Grid.Row="2" Height="5" HorizontalAlignment="Stretch" Background="Transparent" ResizeDirection="Rows"
+            <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" Background="Transparent" ResizeDirection="Rows"
                           Visibility="{Binding CardVisible, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
             <!-- Видимость — по панели, а не по карточке: после перетаскивания разделителя высота строки уже не нулевая -->
-            <views:CollisionCardView Grid.Row="3" DataContext="{Binding Card}"
+            <views:CollisionCardView Grid.Row="2" DataContext="{Binding Card}"
                                      Visibility="{Binding DataContext.CardVisible, RelativeSource={RelativeSource AncestorType=views:CollisionsPaneView}, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
         </Grid>
     </Grid>
