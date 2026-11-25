@@ -27,6 +27,8 @@ namespace ToadTools
             NotificationWatcher.UiDispatcher = System.Windows.Threading.Dispatcher.CurrentDispatcher;
             // Год Revit для раздела «О ToadTools»: окно настроек не ссылается на Revit API.
             ToadTools.Connection.SettingsDialog.RevitVersion = Application.ControlledApplication.VersionNumber;
+            // Кнопка «Настройки» в окнах плагинов открывает то же окно, что и лента.
+            ToadTools.UI.Services.SettingsLauncher.Handler = ToadTools.Connection.SettingsDialog.Show;
             try
             {
                 Host.Start(Application);
@@ -56,7 +58,7 @@ namespace ToadTools
         }
 
         /// <summary>
-        ///     Вход — подключение к ToadFlow, всегда первая панель вкладки.
+        ///     ToadTools — кнопка «Настройки», всегда первая панель вкладки.
         ///     BIM — основные команды крупными кнопками, остальные стопкой маленьких с подписью.
         ///     Общие — «Коллизии» крупной кнопкой, остальное — маленькие кнопки с короткой подписью, по три в столбик.
         ///     Панели разделов (Лотки, Сети связи, ОВ, АР, КР) — полноразмерные кнопки.
@@ -71,10 +73,10 @@ namespace ToadTools
 
         private void CreateSignInPanel()
         {
-            var panel = CreatePanel("Вход", MediaColor.FromRgb(173, 216, 230));
-            panel.AddPushButton<Commands.ConnectionCommand>("Подключение\nк ToadFlow")
-                .WithIcon("ToadFlow")
-                .WithInfo("Вход в ToadFlow для ParamChecker,\nплагина «Коллизии» и других.", "ToadFlow");
+            var panel = CreatePanel("ToadTools",MediaColor.FromRgb(173, 216, 230));
+            panel.AddPushButton<Commands.SettingsCommand>("Настройки")
+                .WithIcon("Settings")
+                .WithInfo("Вход в ToadFlow, тема, компактный режим,\nжурнал и диагностика — для всех\nинструментов ToadTools.", "ToadFlow");
         }
 
         private void CreateBimPanel()
