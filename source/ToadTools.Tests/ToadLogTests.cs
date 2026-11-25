@@ -17,6 +17,18 @@ public class ToadLogTests
     }
 
     [Test]
+    public async Task TestSession_JournalNotInUserFolder()
+    {
+        // Тесты, которые сами не подменяют папку (панель коллизий пишет ToadLog.Error), не должны писать в журнал пользователя.
+        var user = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ToadTools");
+        var settings = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ToadTools");
+
+        TestSessionLog.Folder.ShouldNotStartWith(user, Case.Insensitive);
+        TestSessionLog.SettingsPath.ShouldNotStartWith(settings, Case.Insensitive);
+        await Task.CompletedTask;
+    }
+
+    [Test]
     public async Task Debug_VerboseOff_NotWritten()
     {
         using var temp = Isolate();
