@@ -237,11 +237,29 @@ public sealed partial class FamiliesPaneViewModel : ObservableObject
     {
         var dto = await _api.CardAsync(id, unreviewed: true, CancellationToken.None);
         if (version != _version) return;
-        var card = new FamilyCardViewModel(dto, _revit.RevitYear);
+        var card = new FamilyCardViewModel(dto, _revit.RevitYear, Library?.CanPublish == true);
         Card = card;
+        // Другой вариант — своя картинка: у итерации своя действующая версия.
+        card.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(FamilyCardViewModel.SelectedVariant)) _ = LoadVariantPreviewAsync(card);
+        };
         if (dto.Current is { } current && dto.Versions.Any(v => v.IsCurrent))
             card.Preview = Items.FirstOrDefault(i => i.Hit.Id == id)?.Preview ?? await _previews.GetAsync(id, current.Hash);
     });
+
+    private async Task LoadVariantPreviewAsync(FamilyCardViewModel card)
+    {
+        var variant = card.SelectedVariant;
+        try
+        {
+            card.Preview = variant.Hash is { } hash ? await _previews.GetAsync(card.Card.Id, hash) : null;
+        }
+        catch (Exception exception) when (exception is ToadFlowUnavailableException or ToadFlowRequestException or IOException)
+        {
+            card.Preview = null;
+        }
+    }
 
     [RelayCommand]
     private void CloseCard()
@@ -277,13 +295,20 @@ public sealed partial class FamiliesPaneViewModel : ObservableObject
             return;
         }
 
-        var result = await LoadFamilyAsync(card.Card.Id, card.Name, card.FullPath, card.Card.Current?.Hash, card.ChosenTypes);
+        var variant = card.SelectedVariant;
+        if (variant.IsFinal && !_dialogs.Confirm($"Итерация «{card.Name} · {variant.Label}» завершена: {variant.FinalComment}. Её не меняют и в новые проекты обычно не грузят. Всё равно загрузить?"))
+        {
+            Status = "Загрузка отменена";
+            return;
+        }
+
+        var result = await LoadFamilyAsync(card.Card.Id, card.Name, card.FullPath, variant.Hash, card.ChosenTypes, variant.IterationId);
         if (result is not null)
             Status = $"«{card.Name}» {(result.Replaced ? "обновлено" : "загружено")}: {Texts.Types(result.Types.Count)}";
     });
 
     /// <returns>Итог загрузки; null — не загружено (человек отказался или файла нет), причина — в <see cref="Status" />.</returns>
-    private async Task<LoadOutcome?> LoadFamilyAsync(Guid cardId, string name, string path, string? expectedHash, IReadOnlyCollection<string>? types)
+    private async Task<LoadOutcome?> LoadFamilyAsync(Guid cardId, string name, string path, string? expectedHash, IReadOnlyCollection<string>? types, Guid? iterationId)
     {
         string hash;
         try
@@ -303,10 +328,10 @@ public sealed partial class FamiliesPaneViewModel : ObservableObject
             return null;
         }
 
-        var outcome = await _revit.LoadAsync(new LoadRequest(path, types, cardId, hash));
+        var outcome = await _revit.LoadAsync(new LoadRequest(path, types, cardId, hash, iterationId));
         try
         {
-            await _api.ReportLoadAsync(cardId, hash, Document?.Title, CancellationToken.None);
+            await _api.ReportLoadAsync(cardId, hash, Document?.Title, iterationId, CancellationToken.None);
         }
         catch (Exception exception) when (exception is ToadFlowUnavailableException or ToadFlowRequestException)
         {
@@ -319,7 +344,7 @@ public sealed partial class FamiliesPaneViewModel : ObservableObject
     [RelayCommand]
     private void ShowInFolder()
     {
-        if (Card is { } card) _dialogs.ShowInExplorer(card.FullPath);
+        if (Card is { FullPath.Length: > 0 } card) _dialogs.ShowInExplorer(card.FullPath);
     }
 
     [RelayCommand]

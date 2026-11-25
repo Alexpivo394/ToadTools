@@ -11,7 +11,10 @@ public interface IFamiliesApi
     Task<FamilyFacets> FacetsAsync(bool unreviewed, CancellationToken ct);
     Task<FamilyCardDto> CardAsync(Guid id, bool unreviewed, CancellationToken ct);
     Task<byte[]> PreviewAsync(Guid id, string hash, CancellationToken ct);
-    Task ReportLoadAsync(Guid id, string? hash, string? project, CancellationToken ct);
+    Task ReportLoadAsync(Guid id, string? hash, string? project, Guid? iterationId, CancellationToken ct);
+
+    /// <summary>Папки библиотеки, где лежат утверждённые семейства, — куда публиковать новое.</summary>
+    Task<List<string>> FoldersAsync(CancellationToken ct);
     Task<List<ProjectFamilyStatus>> ProjectStatusAsync(IReadOnlyList<ProjectFamilyDto> families, bool unreviewed, CancellationToken ct);
     Task<PublishResult> PublishAsync(PublishRequest request, CancellationToken ct);
 
@@ -64,8 +67,10 @@ public sealed class FamiliesApi(ToadFlowClient client) : IFamiliesApi
     public Task<byte[]> PreviewAsync(Guid id, string hash, CancellationToken ct) =>
         client.GetBytesAsync($"/api/families/{id}/preview?version={E(hash)}&unreviewed=true", ct);
 
-    public Task ReportLoadAsync(Guid id, string? hash, string? project, CancellationToken ct) =>
-        client.PostAsync<object>($"/api/families/{id}/loads", new { hash, project }, ct);
+    public Task ReportLoadAsync(Guid id, string? hash, string? project, Guid? iterationId, CancellationToken ct) =>
+        client.PostAsync<object>($"/api/families/{id}/loads", new { hash, project, iterationId }, ct);
+
+    public Task<List<string>> FoldersAsync(CancellationToken ct) => client.GetAsync<List<string>>("/api/families/folders", ct);
 
     public async Task<List<ProjectFamilyStatus>> ProjectStatusAsync(IReadOnlyList<ProjectFamilyDto> families, bool unreviewed, CancellationToken ct) =>
         await client.PostAsync<List<ProjectFamilyStatus>>("/api/families/project-status", new { families, unreviewed }, ct) ?? [];

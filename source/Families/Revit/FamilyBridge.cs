@@ -14,7 +14,11 @@ public sealed class FamilyBridge(int revitYear) : IFamilyBridge
     private readonly AsyncRequestExternalEvent<ActiveDocument?> _active = new(Active);
     private readonly AsyncRequestExternalEvent<LoadRequest, LoadOutcome> _load = new(Load);
     private readonly AsyncRequestExternalEvent<IReadOnlyList<Core.ProjectFamily>> _families = new(Families);
-    private readonly AsyncRequestExternalEvent<(string Path, bool Overwrite), bool> _save = new(Save);
+    private readonly AsyncRequestExternalEvent<(string Path, bool Overwrite, string Root), PublishedCopy> _publish = new(PublishCopy);
+
+    /// <summary>Куда уходит документ, открытый прямо из библиотеки или ещё не сохранённый, перед публикацией копии.</summary>
+    public static string DraftsFolder { get; } =
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ToadTools", "Families", "Черновики");
 
     public int RevitYear { get; } = revitYear;
 
@@ -24,7 +28,7 @@ public sealed class FamilyBridge(int revitYear) : IFamilyBridge
 
     public Task<IReadOnlyList<Core.ProjectFamily>> ProjectFamiliesAsync() => _families.RaiseAsync();
 
-    public Task SaveFamilyAsync(string path, bool overwrite) => _save.RaiseAsync((path, overwrite));
+    public Task<PublishedCopy> PublishCopyAsync(string path, bool overwrite, string libraryRoot) => _publish.RaiseAsync((path, overwrite, libraryRoot));
 
     private static ActiveDocument? Active(UIApplication application) =>
         application.ActiveUIDocument?.Document is { } document ? new ActiveDocument(document.Title, document.IsFamilyDocument, document.PathName ?? "") : null;
@@ -50,6 +54,13 @@ public sealed class FamilyBridge(int revitYear) : IFamilyBridge
         try
         {
             var result = FamilyLoader.Load(project, request.Path, types, new FamilyStamp(request.CardId, request.Hash, DateTime.UtcNow));
+            using (var transaction = new Transaction(project, "ToadTools: итерация семейства"))
+            {
+                transaction.Start();
+                IterationStamps.Write(result.Family, request.IterationId);
+                transaction.Commit();
+            }
+
             return new LoadOutcome(result.Types, result.Replaced);
         }
         catch (Autodesk.Revit.Exceptions.ApplicationException exception)
@@ -63,15 +74,43 @@ public sealed class FamilyBridge(int revitYear) : IFamilyBridge
         var project = Project(application);
         return FamilyStamps.ReadAll(project)
             .Select(f => new Core.ProjectFamily(f.Name, f.Category, f.Stamp?.CardId, f.Stamp?.Hash,
-                f.Family.GetFamilySymbolIds().Select(project.GetElement).OfType<FamilySymbol>().Select(s => s.Name).ToList()))
+                f.Family.GetFamilySymbolIds().Select(project.GetElement).OfType<FamilySymbol>().Select(s => s.Name).ToList(),
+                f.Stamp is null ? null : IterationStamps.Read(f.Family)))
             .ToList();
     }
 
-    private static bool Save(UIApplication application, (string Path, bool Overwrite) target)
+    /// <summary>
+    ///     Документ сохраняется на своё место, а в библиотеку уходит копия файла с каталогом <c>.txt</c>. Открытый прямо из библиотеки или
+    ///     ещё не сохранённый документ сначала уходит в черновики: иначе следующее «Сохранить» писало бы в библиотеку мимо публикации.
+    /// </summary>
+    private static PublishedCopy PublishCopy(UIApplication application, (string Path, bool Overwrite, string Root) target)
     {
         if (application.ActiveUIDocument?.Document is not { IsFamilyDocument: true } document) throw new InvalidOperationException("Откройте семейство в редакторе семейств");
+        if (!target.Overwrite && File.Exists(target.Path)) throw new InvalidOperationException($"Файл «{target.Path}» уже есть");
+
+        var source = document.PathName ?? "";
+        var root = target.Root.TrimEnd('\\') + "\\";
+        var redirected = source.Length == 0 || source.StartsWith(root, StringComparison.OrdinalIgnoreCase);
+        if (redirected)
+        {
+            Directory.CreateDirectory(DraftsFolder);
+            var draft = Path.Combine(DraftsFolder, Path.GetFileName(target.Path));
+            var catalogBefore = source.Length > 0 ? Path.ChangeExtension(source, ".txt") : null;
+            document.SaveAs(draft, new SaveAsOptions { OverwriteExistingFile = true, Compact = true });
+            // Каталог типоразмеров лежал рядом с файлом библиотеки — с черновиком он тоже нужен.
+            if (catalogBefore is not null && File.Exists(catalogBefore)) File.Copy(catalogBefore, Path.ChangeExtension(draft, ".txt"), overwrite: true);
+            source = draft;
+        }
+        else if (document.IsModified)
+            document.Save(new SaveOptions { Compact = true });
+
         Directory.CreateDirectory(Path.GetDirectoryName(target.Path)!);
-        document.SaveAs(target.Path, new SaveAsOptions { OverwriteExistingFile = target.Overwrite, Compact = true });
-        return true;
+        File.Copy(source, target.Path, target.Overwrite);
+        var sourceCatalog = Path.ChangeExtension(source, ".txt");
+        var targetCatalog = Path.ChangeExtension(target.Path, ".txt");
+        if (File.Exists(sourceCatalog)) File.Copy(sourceCatalog, targetCatalog, overwrite: true);
+        // Без каталога у новой версии прежний каталог описывал бы чужие типоразмеры; его копия остаётся в истории библиотеки.
+        else if (target.Overwrite && File.Exists(targetCatalog)) File.Delete(targetCatalog);
+        return new PublishedCopy(source, redirected);
     }
 }

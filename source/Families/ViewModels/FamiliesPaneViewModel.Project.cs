@@ -6,7 +6,7 @@ using Families.Core;
 namespace Families.ViewModels;
 
 /// <summary>Семейство открытого проекта и его состояние относительно библиотеки.</summary>
-public sealed partial class ProjectFamilyViewModel(ProjectFamily family, ProjectFamilyStatus status, int revitYear) : ObservableObject
+public sealed partial class ProjectFamilyViewModel(ProjectFamily family, ProjectFamilyStatus status, int revitYear, bool coordinator = false) : ObservableObject
 {
     public ProjectFamily Family { get; } = family;
 
@@ -16,12 +16,15 @@ public sealed partial class ProjectFamilyViewModel(ProjectFamily family, Project
 
     public string Category => Family.Category;
 
+    /// <summary>Итерация, из которой загружено; пусто — «Основная».</summary>
+    public string Iteration { get; } = status.IterationName ?? "";
+
     /// <summary>«актуально», «устарело», «не из библиотеки», «в архиве» — и что предложено.</summary>
     public string StateText { get; } = status.State switch
     {
-        "Current" => "актуально",
-        "Outdated" => "устарело — в библиотеке новее",
-        "Archived" => "убрано из библиотеки в архив",
+        "Current" => status.IterationFinal ? "актуально, итерация завершена" : "актуально",
+        "Outdated" => status.IterationId is null ? "устарело — в библиотеке новее" : "устарело — в итерации новее",
+        "Archived" => status.IterationId is null ? "убрано из библиотеки в архив" : "итерация убрана из библиотеки",
         _ => status.CardId is null ? "не из библиотеки" : $"не из библиотеки — есть «{status.CardName}»"
     };
 
@@ -33,7 +36,7 @@ public sealed partial class ProjectFamilyViewModel(ProjectFamily family, Project
     ///     запущенного Revit.
     /// </summary>
     public bool CanUpdate { get; } = status.CardId is not null && status.FullPath is not null && status.State is "Outdated" or "NotFromLibrary"
-                                     && (status.RevitYear is not { } year || year <= revitYear);
+                                     && (status.RevitYear is not { } year || year <= revitYear) && (!status.CoordinatorsOnly || coordinator);
 
     [ObservableProperty] private bool _isChosen;
 }
@@ -66,10 +69,11 @@ public sealed partial class FamiliesPaneViewModel
         var families = await _revit.ProjectFamiliesAsync();
         var statuses = families.Count == 0
             ? []
-            : await _api.ProjectStatusAsync(families.Select(f => new ProjectFamilyDto(f.Name, f.CardId, f.Hash)).ToList(), ShowUnreviewed, CancellationToken.None);
+            : await _api.ProjectStatusAsync(families.Select(f => new ProjectFamilyDto(f.Name, f.CardId, f.Hash, f.IterationId)).ToList(), ShowUnreviewed,
+                CancellationToken.None);
         if (version != _version) return;
 
-        var rows = families.Zip(statuses, (family, status) => new ProjectFamilyViewModel(family, status, _revit.RevitYear)).ToList();
+        var rows = families.Zip(statuses, (family, status) => new ProjectFamilyViewModel(family, status, _revit.RevitYear, Library?.CanPublish == true)).ToList();
         var outdated = rows.Count(r => r.State == "Outdated");
         var archived = rows.Count(r => r.State == "Archived");
         var foreign = rows.Count(r => r.State == "NotFromLibrary");
@@ -112,7 +116,9 @@ public sealed partial class FamiliesPaneViewModel
         {
             try
             {
-                var outcome = await LoadFamilyAsync(item.Status.CardId!.Value, item.Name, item.Status.FullPath!, item.Status.CurrentHash, item.Family.TypeNames);
+                // Обновляется своя итерация: вариант одной модели не подменяет вариант другой.
+                var outcome = await LoadFamilyAsync(item.Status.CardId!.Value, item.Name, item.Status.FullPath!, item.Status.CurrentHash, item.Family.TypeNames,
+                    item.Status.IterationId);
                 if (outcome is not null) updated.Add(item.Name);
             }
             catch (Exception exception) when (exception is InvalidOperationException or ArgumentException)

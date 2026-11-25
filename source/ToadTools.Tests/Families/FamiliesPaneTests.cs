@@ -39,11 +39,17 @@ internal sealed class FakeFamiliesApi : IFamiliesApi
 
     public Task<byte[]> PreviewAsync(Guid id, string hash, CancellationToken ct) => Task.FromResult(new byte[] { 1, 2, 3 });
 
-    public Task ReportLoadAsync(Guid id, string? hash, string? project, CancellationToken ct)
+    public List<Guid?> LoadIterations { get; } = [];
+    public List<string> Folders { get; } = [@"ОВ\Клапаны", "КР"];
+
+    public Task ReportLoadAsync(Guid id, string? hash, string? project, Guid? iterationId, CancellationToken ct)
     {
         Loads.Add((id, hash, project));
+        LoadIterations.Add(iterationId);
         return Task.CompletedTask;
     }
+
+    public Task<List<string>> FoldersAsync(CancellationToken ct) => Task.FromResult(Folders.ToList());
 
     public Task<List<ProjectFamilyStatus>> ProjectStatusAsync(IReadOnlyList<ProjectFamilyDto> families, bool unreviewed, CancellationToken ct)
     {
@@ -87,6 +93,9 @@ internal sealed class FakeFamilyRevit : IFamilyBridge
     public List<ProjectFamily> Families { get; } = [];
     public List<(string Path, bool Overwrite)> Saved { get; } = [];
 
+    /// <summary>Документ был открыт прямо из библиотеки или не сохранён — ушёл в черновики.</summary>
+    public bool Redirect { get; set; }
+
     public Task<ActiveDocument?> ActiveDocumentAsync() => Task.FromResult(Document);
 
     public Task<LoadOutcome> LoadAsync(LoadRequest request)
@@ -97,10 +106,10 @@ internal sealed class FakeFamilyRevit : IFamilyBridge
 
     public Task<IReadOnlyList<ProjectFamily>> ProjectFamiliesAsync() => Task.FromResult<IReadOnlyList<ProjectFamily>>(Families);
 
-    public Task SaveFamilyAsync(string path, bool overwrite)
+    public Task<PublishedCopy> PublishCopyAsync(string path, bool overwrite, string libraryRoot)
     {
         Saved.Add((path, overwrite));
-        return Task.CompletedTask;
+        return Task.FromResult(new PublishedCopy(Redirect ? @"C:\Черновики\" +Path.GetFileName(path) : Document?.PathName ?? "", Redirect));
     }
 }
 
@@ -492,6 +501,196 @@ public class FamiliesPaneTests
         setup.Model.Publish.YearWarning.ShouldContain("проекты в Revit 2022 его не получат");
         setup.Dialogs.Asked.Single().ShouldContain("Всё равно опубликовать?");
         setup.Revit.Saved.ShouldBeEmpty();
+    }
+
+    private static FamilyIterationDto IterationDto(string name, string hash, bool final = false, bool locked = false) =>
+        new(Guid.NewGuid(), name, $"для {name}", Guid.NewGuid(), $@"_Итерации\Клапан\{name}\Клапан.rfa", $@"\\nas\Families\_Итерации\Клапан\{name}\Клапан.rfa",
+            locked, final, final ? "сдано" : null, null, DateTimeOffset.Now, 2022, hash, null,
+            new FamilyContentDto("Арматура", "OneLevelBased", 2022, [new("DN50П", new() { ["Ду"] = "50" })], false));
+
+    /// <summary>Клапан с итерациями «ЖК Полковая» (в работе) и «ЖК Север» (завершена).</summary>
+    private static (FamilyHit Hit, FamilyCardDto Card) WithIterations(bool cardLocked = false, bool iterationLocked = false)
+    {
+        var hit = Hit("Клапан");
+        var card = Card(hit) with
+        {
+            CoordinatorsOnly = cardLocked,
+            Iterations = [IterationDto("ЖК Полковая", HashB, locked: iterationLocked), IterationDto("ЖК Север", HashB, final: true)]
+        };
+        return (hit, card);
+    }
+
+    [Test]
+    public async Task Load_Iteration_LoadsItsFileAndTypes_StampsIteration()
+    {
+        using var setup = new Setup();
+        var (hit, card) = WithIterations();
+        setup.Api.Hits.Add(hit);
+        setup.Api.Cards[hit.Id] = card;
+        var polk = card.Iterations![0];
+        setup.FileHashes[polk.FullPath] = HashB;
+        await setup.Model.ActivateAsync();
+        await setup.Model.OpenCardAsync(hit.Id);
+        var model = setup.Model.Card!;
+
+        model.Variants.Select(v => v.Label).ShouldBe(["Основная", "ЖК Полковая"]);
+        model.Select(polk.Id).ShouldBeTrue();
+        model.Types.Select(t => t.Name).ShouldBe(["DN50П"]);
+        model.VariantNote.ShouldBe("для ЖК Полковая");
+        await setup.Model.LoadCommand.ExecuteAsync(null);
+
+        var load = setup.Revit.Loaded.Single();
+        (load.Path, load.Hash, load.IterationId).ShouldBe((polk.FullPath, HashB, (Guid?)polk.Id));
+        setup.Api.LoadIterations.ShouldBe([(Guid?)polk.Id]);
+        setup.Dialogs.Asked.ShouldBeEmpty();
+    }
+
+    [Test]
+    public async Task Load_FinalIteration_HiddenUntilAsked_ThenConfirmed()
+    {
+        using var setup = new Setup();
+        var (hit, card) = WithIterations();
+        setup.Api.Hits.Add(hit);
+        setup.Api.Cards[hit.Id] = card;
+        var north = card.Iterations![1];
+        setup.FileHashes[north.FullPath] = HashB;
+        setup.Dialogs.Answer = false;
+        await setup.Model.ActivateAsync();
+        await setup.Model.OpenCardAsync(hit.Id);
+        var model = setup.Model.Card!;
+
+        model.Variants.ShouldNotContain(v => v.IterationId == north.Id);
+        model.ShowFinished = true;
+        model.Variants.Select(v => v.Label).ShouldContain("ЖК Север (завершена)");
+        model.Select(north.Id);
+        model.VariantNote.ShouldContain("Итерация завершена: сдано");
+        await setup.Model.LoadCommand.ExecuteAsync(null);
+
+        setup.Dialogs.Asked.Single().ShouldContain("завершена");
+        setup.Revit.Loaded.ShouldBeEmpty();
+        setup.Model.Status.ShouldBe("Загрузка отменена");
+    }
+
+    [Test]
+    [Arguments(true, false)]
+    [Arguments(false, true)]
+    public async Task CoordinatorsOnly_DesignerCannotLoad_CoordinatorCan(bool cardLocked, bool iterationLocked)
+    {
+        using var setup = new Setup();
+        var (hit, card) = WithIterations(cardLocked, iterationLocked);
+        setup.Api.Hits.Add(hit);
+        setup.Api.Cards[hit.Id] = card;
+        await setup.Model.ActivateAsync();
+        await setup.Model.OpenCardAsync(hit.Id);
+        setup.Model.Card!.Select(card.Iterations![0].Id);
+
+        setup.Model.Card.CanLoad.ShouldBeFalse();
+        setup.Model.Card.BlockedReason.ShouldBe("Загружают только координаторы");
+
+        setup.Api.Library = setup.Api.Library with { CanPublish = true };
+        await setup.Model.ActivateAsync();
+        await setup.Model.OpenCardAsync(hit.Id);
+        setup.Model.Card!.Select(card.Iterations[0].Id);
+        setup.Model.Card.CanLoad.ShouldBeTrue();
+    }
+
+    [Test]
+    public async Task Project_IterationFromStamp_SentAndUpdatedInSameIteration()
+    {
+        using var setup = new Setup();
+        var cardId = Guid.NewGuid();
+        var iterationId = Guid.NewGuid();
+        const string path = @"\\nas\Families\_Итерации\Клапан\ЖК Полковая\Клапан.rfa";
+        setup.Revit.Families.Add(new ProjectFamily("Клапан", "Арматура", cardId, HashA, ["DN50"], iterationId));
+        setup.Api.Statuses = [new ProjectFamilyStatus("Клапан", "Outdated", cardId, "Клапан", HashB, 2022, path, null, iterationId, "ЖК Полковая")];
+        setup.FileHashes[path] = HashB;
+        await setup.Model.ActivateAsync();
+        setup.Model.SelectedTab = 1;
+        await setup.Model.RefreshProjectCommand.ExecuteAsync(null);
+
+        setup.Api.StatusRequests.Last().Single().IterationId.ShouldBe(iterationId);
+        var row = setup.Model.ProjectItems.Single();
+        (row.Iteration, row.StateText).ShouldBe(("ЖК Полковая", "устарело — в итерации новее"));
+        await setup.Model.UpdateChosenCommand.ExecuteAsync(null);
+
+        var load = setup.Revit.Loaded.Single();
+        (load.Path, load.IterationId).ShouldBe((path, (Guid?)iterationId));
+    }
+
+    private static async Task<(Setup Setup, FamilyHit Hit, FamilyCardDto Card)> PublishSetupAsync()
+    {
+        var setup = new Setup();
+        setup.Api.Library = setup.Api.Library with { CanPublish = true, IterationsFolder = "_Итерации" };
+        setup.Revit.Document = new ActiveDocument("Клапан правка.rfa", true, @"C:\Work\Клапан правка.rfa");
+        var (hit, card) = WithIterations();
+        setup.Api.Hits.Add(hit);
+        setup.Api.Cards[hit.Id] = card;
+        await setup.Model.ActivateAsync();
+        var publish = setup.Model.Publish;
+        publish.IsIteration = true;
+        publish.ExistingQuery = "Клапан";
+        await publish.FindExistingCommand.ExecuteAsync(null);
+        await publish.LoadIterationsAsync();
+        return (setup, hit, card);
+    }
+
+    [Test]
+    public async Task Publish_IntoExistingIteration_OverwritesItsFile_FinalNeedsComment()
+    {
+        var (setup, hit, card) = await PublishSetupAsync();
+        using var dispose = setup;
+        var publish = setup.Model.Publish;
+        publish.Iterations.Select(i => i.Name).ShouldBe(["ЖК Полковая", ""]); // завершённой нет, последняя — «новая»
+        const string target = @"\\nas\Families\_Итерации\Клапан\ЖК Полковая\Клапан.rfa";
+        setup.FileHashes[target] = HashB;
+        publish.IsFinal = true;
+
+        await publish.PublishCommand.ExecuteAsync(null);
+        publish.Result.ShouldContain("что проделано");
+        setup.Revit.Saved.ShouldBeEmpty();
+
+        publish.FinalComment = "сдано, корпус 1";
+        publish.Silent = true;
+        publish.Comment = "ручка слева";
+        await publish.PublishCommand.ExecuteAsync(null);
+
+        setup.Revit.Saved.ShouldBe([(target, true)]);
+        var sent = setup.Api.Publications.Single();
+        (sent.CardId, sent.IterationId, sent.IterationName, sent.Silent, sent.FinalComment, sent.Comment, sent.RequestId)
+            .ShouldBe(((Guid?)hit.Id, (Guid?)card.Iterations![0].Id, (string?)null, true, (string?)"сдано, корпус 1", (string?)"ручка слева", (Guid?)null));
+    }
+
+    [Test]
+    public async Task Publish_NewIteration_SavedIntoItsFolder_DocumentRedirectedFromLibrary()
+    {
+        var (setup, hit, _) = await PublishSetupAsync();
+        using var dispose = setup;
+        var publish = setup.Model.Publish;
+        publish.Iteration = publish.Iterations.Last();
+        publish.IsNewIteration.ShouldBeTrue();
+        publish.NewIterationName = " Дом на Набережной ";
+        publish.IterationComment = "корпус 2";
+        const string target = @"\\nas\Families\_Итерации\Клапан\Дом на Набережной\Клапан.rfa";
+        setup.FileHashes[target] = HashA;
+        setup.Revit.Redirect = true;
+
+        await publish.PublishCommand.ExecuteAsync(null);
+
+        setup.Revit.Saved.ShouldBe([(target, false)]);
+        var sent = setup.Api.Publications.Single();
+        (sent.CardId, sent.IterationId, sent.IterationName, sent.IterationComment).ShouldBe(((Guid?)hit.Id, (Guid?)null, (string?)"Дом на Набережной", (string?)"корпус 2"));
+        publish.Result.ShouldContain("Открытый документ теперь сохранён у вас");
+    }
+
+    [Test]
+    public async Task Publish_NewFamily_FolderChosenFromLibraryFolders()
+    {
+        using var setup = new Setup();
+        setup.Api.Library = setup.Api.Library with { CanPublish = true };
+        setup.Revit.Document = new ActiveDocument("Задвижка.rfa", true, @"C:\Work\Задвижка.rfa");
+        await setup.Model.ActivateAsync();
+
+        setup.Model.Publish.Folders.ShouldBe(["_На проверке", @"ОВ\Клапаны", "КР"]);
     }
 
     [Test]

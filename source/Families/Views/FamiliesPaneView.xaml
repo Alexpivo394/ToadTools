@@ -178,6 +178,9 @@
                                         <TextBlock FontSize="11" TextTrimming="CharacterEllipsis">
                                             <Run Text="{Binding StateText, Mode=OneWay}" /><Run Text=" · " Foreground="Gray" /><Run Text="{Binding Category, Mode=OneWay}" Foreground="Gray" />
                                         </TextBlock>
+                                        <TextBlock FontSize="11" Opacity="0.75" TextTrimming="CharacterEllipsis" Visibility="{Binding Iteration, Converter={views:ShownConverter}}">
+                                            <Run Text="итерация " /><Run Text="{Binding Iteration, Mode=OneWay}" FontWeight="SemiBold" />
+                                        </TextBlock>
                                     </StackPanel>
                                 </DockPanel>
                             </DataTemplate>
@@ -192,18 +195,20 @@
                     <StackPanel Margin="0,6,0,0">
                         <TextBlock Text="{Binding YearWarning}" TextWrapping="Wrap" Foreground="{DynamicResource Toad.Brush.Warning}" Margin="0,0,0,6"
                                    Visibility="{Binding YearWarning, Converter={views:ShownConverter}}" />
-                        <RadioButton Content="Новое семейство" IsChecked="{Binding IsNewVersion, Converter={views:NotConverter}}" Margin="0,0,0,4" />
-                        <RadioButton Content="Новая версия существующего" IsChecked="{Binding IsNewVersion}" Margin="0,0,0,8" />
+                        <RadioButton GroupName="PublishMode" Content="Новое семейство" IsChecked="{Binding IsNewFamily}" Margin="0,0,0,4" />
+                        <RadioButton GroupName="PublishMode" Content="Новая версия существующего (через проверку)" IsChecked="{Binding IsNewVersion}" Margin="0,0,0,4" />
+                        <RadioButton GroupName="PublishMode" Content="В итерацию существующего (проектный вариант, сразу)" IsChecked="{Binding IsIteration}" Margin="0,0,0,8" />
 
-                        <StackPanel Visibility="{Binding IsNewVersion, Converter={views:ShownConverter Invert=True}}">
+                        <StackPanel Visibility="{Binding IsNewFamily, Converter={views:ShownConverter}}">
                             <TextBlock Text="Имя файла (имя семейства в проекте)" FontSize="11" Opacity="0.8" />
                             <toad:TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,6" />
-                            <TextBlock Text="Папка от корня библиотеки — по умолчанию папка проверки" FontSize="11" Opacity="0.8" />
-                            <toad:TextBox Text="{Binding Folder, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,6" />
+                            <TextBlock Text="Папка от корня библиотеки — по умолчанию папка проверки; можно вписать новую" FontSize="11" Opacity="0.8" TextWrapping="Wrap" />
+                            <ComboBox ItemsSource="{Binding Folders}" Text="{Binding Folder, UpdateSourceTrigger=PropertyChanged}" IsEditable="True" Margin="0,2,0,6" />
                         </StackPanel>
 
-                        <StackPanel Visibility="{Binding IsNewVersion, Converter={views:ShownConverter}}">
-                            <TextBlock Text="Какое семейство обновляете — версия ляжет в папку проверки под его именем" FontSize="11" Opacity="0.8" TextWrapping="Wrap" />
+                        <StackPanel Visibility="{Binding NeedsExisting, Converter={views:ShownConverter}}">
+                            <TextBlock Text="Какое семейство — новая версия «Основной» ляжет в папку проверки под его именем, итерация — в папку итераций" FontSize="11"
+                                       Opacity="0.8" TextWrapping="Wrap" />
                             <toad:TextBox Placeholder="Имя семейства — Enter" Text="{Binding ExistingQuery, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,4">
                                 <toad:TextBox.InputBindings>
                                     <KeyBinding Key="Enter" Command="{Binding FindExistingCommand}" />
@@ -212,10 +217,29 @@
                             <ComboBox ItemsSource="{Binding ExistingResults}" SelectedItem="{Binding Existing}" DisplayMemberPath="Name" Margin="0,0,0,6" />
                         </StackPanel>
 
+                        <StackPanel Visibility="{Binding IsIteration, Converter={views:ShownConverter}}">
+                            <TextBlock Text="Итерация (завершённые не показаны — с них снимают финал в вебе)" FontSize="11" Opacity="0.8" TextWrapping="Wrap" />
+                            <ComboBox ItemsSource="{Binding Iterations}" SelectedItem="{Binding Iteration}" DisplayMemberPath="Label" Margin="0,2,0,6" />
+                            <StackPanel Visibility="{Binding IsNewIteration, Converter={views:ShownConverter}}">
+                                <TextBlock Text="Название новой итерации — имя её папки, например «ЖК Полковая»" FontSize="11" Opacity="0.8" TextWrapping="Wrap" />
+                                <toad:TextBox Text="{Binding NewIterationName, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,4" />
+                                <TextBlock Text="Комментарий к итерации" FontSize="11" Opacity="0.8" />
+                                <toad:TextBox Text="{Binding IterationComment, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Margin="0,2,0,6" />
+                            </StackPanel>
+                            <CheckBox Content="Финальная версия итерации — итерация завершается" IsChecked="{Binding IsFinal}" Margin="0,0,0,4" />
+                            <StackPanel Visibility="{Binding IsFinal, Converter={views:ShownConverter}}">
+                                <TextBlock Text="Что проделано (обязательно)" FontSize="11" Opacity="0.8" />
+                                <toad:TextBox Text="{Binding FinalComment, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Margin="0,2,0,6" />
+                            </StackPanel>
+                        </StackPanel>
+
                         <TextBlock Text="Что изменилось" FontSize="11" Opacity="0.8" />
                         <toad:TextBox Text="{Binding Comment, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="54" Margin="0,2,0,6" />
-                        <TextBlock Text="Закрывает заявку" FontSize="11" Opacity="0.8" />
-                        <ComboBox ItemsSource="{Binding Requests}" SelectedItem="{Binding Request}" DisplayMemberPath="Label" Margin="0,2,0,8" />
+                        <StackPanel Visibility="{Binding IsIteration, Converter={views:ShownConverter Invert=True}}">
+                            <TextBlock Text="Закрывает заявку" FontSize="11" Opacity="0.8" />
+                            <ComboBox ItemsSource="{Binding Requests}" SelectedItem="{Binding Request}" DisplayMemberPath="Label" Margin="0,2,0,6" />
+                        </StackPanel>
+                        <CheckBox Content="Без оповещения — мелкая правка, тем, кто загружал, «Обновлено» не придёт" IsChecked="{Binding Silent}" Margin="0,0,0,8" />
                         <toad:Button Content="Опубликовать" Variant="Filled" Command="{Binding PublishCommand}" HorizontalAlignment="Left" />
                         <TextBlock Text="{Binding Result}" TextWrapping="Wrap" Margin="0,8,0,0" />
                     </StackPanel>
@@ -235,6 +259,15 @@
                 <TextBlock Text="{Binding Subtitle}" FontSize="11" Opacity="0.8" TextWrapping="Wrap" />
                 <TextBlock Text="на проверке — показано, потому что включены «непроверенные»" FontSize="11" Foreground="{DynamicResource Toad.Brush.Warning}"
                            TextWrapping="Wrap" Visibility="{Binding Unreviewed, Converter={views:ShownConverter}}" />
+                <StackPanel Visibility="{Binding HasIterations, Converter={views:ShownConverter}}" Margin="0,6,0,0">
+                    <DockPanel>
+                        <CheckBox DockPanel.Dock="Right" Content="завершённые" IsChecked="{Binding ShowFinished}" VerticalAlignment="Center"
+                                  Visibility="{Binding HasFinished, Converter={views:ShownConverter}}" />
+                        <TextBlock Text="Вариант" FontSize="11" Opacity="0.8" VerticalAlignment="Center" />
+                    </DockPanel>
+                    <ComboBox ItemsSource="{Binding Variants}" SelectedItem="{Binding SelectedVariant}" DisplayMemberPath="Label" Margin="0,2,0,2" />
+                    <TextBlock Text="{Binding VariantNote}" FontSize="11" TextWrapping="Wrap" Opacity="0.85" Visibility="{Binding VariantNote, Converter={views:ShownConverter}}" />
+                </StackPanel>
                 <DockPanel Margin="0,6">
                     <Border DockPanel.Dock="Left" Width="112" Height="112" CornerRadius="4" Background="{DynamicResource Toad.Brush.Hover}" Margin="0,0,8,0">
                         <Image Source="{Binding Preview, Converter={views:PreviewConverter DecodeWidth=224}}" Stretch="Uniform" />

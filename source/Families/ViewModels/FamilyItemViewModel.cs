@@ -13,6 +13,8 @@ public sealed partial class FamilyItemViewModel : ObservableObject
         if (hit.Category.Length > 0) parts.Add(hit.Category);
         if (hit.Section.Length > 0) parts.Add(hit.Section);
         if (hit.TypeCount > 0) parts.Add(Texts.Types(hit.TypeCount));
+        if (hit.IterationCount > 0) parts.Add($"итераций: {hit.IterationCount}");
+        if (hit.CoordinatorsOnly) parts.Add("🔒 только координаторы");
         Details = string.Join(" · ", parts);
         YearBadge = hit.RevitYear is { } year && year != 2022 ? $"R{year}" : "";
         TooNew = hit.RevitYear is { } saved && saved > revitYear;
