@@ -11,5 +11,7 @@ public sealed partial class FamiliesPaneView
         InitializeComponent();
         ThemePreference.Apply();
         DataContext = viewModel;
+        // Карточка не выше половины панели: на низком экране список не сжимается в ноль, карточка прокручивается.
+        SizeChanged += (_, _) => CardScroll.MaxHeight = Math.Max(160, ActualHeight / 2);
     }
 }

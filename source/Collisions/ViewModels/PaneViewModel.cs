@@ -34,6 +34,9 @@ public sealed class PaneSession
     public string? Since { get; set; }
     public Dictionary<string, ListQuery> ByModel { get; } = [];
 
+    /// <summary>Блок фильтров развёрнут; null — человек его ещё не сворачивал и не разворачивал, решает размер окон.</summary>
+    public bool? FiltersExpanded { get; set; }
+
     /// <summary>Запрос списка модели: общие фильтры сеанса и её собственные.</summary>
     public CollisionQuery QueryFor(string? modelKey)
     {
@@ -70,6 +73,7 @@ public sealed partial class PaneViewModel : ObservableObject
     private readonly Func<bool> _connect;
     private readonly ICardDialogs _dialogs;
     private readonly PartMemory? _partMemory;
+    private readonly Func<bool> _isCompact;
     private UserInfo? _me;
 
     private CollisionListState? _state;
@@ -120,12 +124,50 @@ public sealed partial class PaneViewModel : ObservableObject
     [ObservableProperty] private bool _newForMeActive;
 
     public PaneViewModel(IClashApi api, IRevitBridge revit, ConnectionStore store, ModelChoices choices, ThumbnailCache thumbnails, PaneSession session,
-        Func<bool> connect, ICardDialogs dialogs, PartMemory? partMemory = null)
+        Func<bool> connect, ICardDialogs dialogs, PartMemory? partMemory = null, Func<bool>? isCompact = null)
     {
         (_api, _revit, _store, _choices, _thumbnails, _session, _connect, _dialogs) = (api, revit, store, choices, thumbnails, session, connect, dialogs);
         _partMemory = partMemory;
+        _isCompact = isCompact ?? (() => false);
         ShowQuery(session.QueryFor(null));
     }
+
+    /// <summary>
+    ///     Блок фильтров развёрнут. Пока человек его не трогал — свёрнут в компактном размере и развёрнут в обычном; выбор
+    ///     человека помнится до закрытия Revit.
+    /// </summary>
+    public bool FiltersExpanded
+    {
+        get => _session.FiltersExpanded ?? !_isCompact();
+        set
+        {
+            if (_session.FiltersExpanded == value) return;
+            _session.FiltersExpanded = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>Сколько фильтров блока отличаются от «всё»: часть, пара, уровень, статус кроме «открытые», группа кроме «все».</summary>
+    public int ActiveFilterCount =>
+        (PartFilter is null ? 0 : 1) + (PairFilter is null ? 0 : 1) + (LevelFilter is null ? 0 : 1) + ((StatusFilter ?? "open") == "open" ? 0 : 1) +
+        ((GroupFilter ?? "all") == "all" ? 0 : 1);
+
+    /// <summary>Строка свёрнутого блока: «Фильтры · 2 активных» или просто «Фильтры».</summary>
+    public string FiltersSummary => ActiveFilterCount switch
+    {
+        0 => "Фильтры",
+        1 => "Фильтры · 1 активный",
+        var count => $"Фильтры · {count} активных"
+    };
+
+    /// <summary>Размер окон ToadTools сменился: блок фильтров, который человек не трогал, следует новому размеру.</summary>
+    public void SizeChanged()
+    {
+        if (_session.FiltersExpanded is null) OnPropertyChanged(nameof(FiltersExpanded));
+    }
+
+    [RelayCommand]
+    private void ToggleFilters() => FiltersExpanded = !FiltersExpanded;
 
     public ObservableCollection<CollisionItemViewModel> Items { get; } = [];
 
@@ -536,6 +578,8 @@ public sealed partial class PaneViewModel : ObservableObject
 
     private void FilterChanged()
     {
+        OnPropertyChanged(nameof(ActiveFilterCount));
+        OnPropertyChanged(nameof(FiltersSummary));
         if (!_quiet) _ = ApplyFiltersCommand.ExecuteAsync(null);
     }
 

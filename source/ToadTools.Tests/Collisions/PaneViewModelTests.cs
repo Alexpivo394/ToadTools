@@ -51,7 +51,7 @@ public class PaneViewModelTests
         public void Dispose() => Temp.Dispose();
     }
 
-    private static Setup Create(bool connected = true, PaneSession? session = null, PartMemory? parts = null)
+    private static Setup Create(bool connected = true, PaneSession? session = null, PartMemory? parts = null, bool compact = false)
     {
         var temp = new TempFolder();
         var store = new ConnectionStore(temp.File("toadflow.json"));
@@ -63,7 +63,7 @@ public class PaneViewModelTests
         var thumbnails = new ThumbnailCache(temp.File("images"), api.ImageAsync);
         var dialogs = new FakeDialogs();
         parts ??= new PartMemory(temp.File("collisions.json"));
-        var model = new PaneViewModel(api, revit, store, choices, thumbnails, session, () => false, dialogs, parts);
+        var model = new PaneViewModel(api, revit, store, choices, thumbnails, session, () => false, dialogs, parts, () => compact);
         return new Setup(model, api, revit, store, choices, session, temp) { Dialogs = dialogs, Parts = parts };
     }
 
@@ -78,6 +78,77 @@ public class PaneViewModelTests
         s.Api.Facets = new ModelFacets([], [], [], withFacet
             ? [new Facet(PartOne.ToString("D"), "Корпус 1", 2), new Facet(PartTwo.ToString("D"), "Корпус 2", 1)]
             : null);
+    }
+
+    [Test]
+    public void Filters_Compact_CollapsedByDefault()
+    {
+        using var s = Create(compact: true);
+
+        s.Model.FiltersExpanded.ShouldBeFalse();
+    }
+
+    [Test]
+    public void Filters_Normal_ExpandedByDefault()
+    {
+        using var s = Create();
+
+        s.Model.FiltersExpanded.ShouldBeTrue();
+    }
+
+    [Test]
+    public async Task ActiveFilterCount_CountsNonDefault()
+    {
+        using var s = Create();
+        TwoParts(s);
+        await s.Model.ActivateAsync();
+        (s.Model.ActiveFilterCount, s.Model.FiltersSummary).ShouldBe((0, "Фильтры"));
+
+        s.Model.PartFilter = PartTwo.ToString("D");
+        (s.Model.ActiveFilterCount, s.Model.FiltersSummary).ShouldBe((1, "Фильтры · 1 активный"));
+        s.Model.PairFilter = "ОВ / КР";
+        s.Model.LevelFilter = "Этаж 1";
+        s.Model.StatusFilter = "fixed";
+        s.Model.GroupFilter = "mine";
+        (s.Model.ActiveFilterCount, s.Model.FiltersSummary).ShouldBe((5, "Фильтры · 5 активных"));
+
+        // Поиск — вне сворачиваемого блока и в счёт не идёт.
+        s.Model.StatusFilter = "open";
+        s.Model.GroupFilter = "all";
+        s.Model.Search = "123";
+        (s.Model.ActiveFilterCount, s.Model.FiltersSummary).ShouldBe((3, "Фильтры · 3 активных"));
+    }
+
+    [Test]
+    public void FiltersExpanded_RememberedInSession()
+    {
+        var session = new PaneSession();
+        using (var first = Create(session: session, compact: true))
+        {
+            first.Model.FiltersExpanded = true;
+        }
+
+        using var second = Create(session: session, compact: true);
+
+        second.Model.FiltersExpanded.ShouldBeTrue();
+    }
+
+    [Test]
+    public void FiltersExpanded_NotToggled_FollowsSizeChange()
+    {
+        var compact = false;
+        using var s = Create();
+        var model = new PaneViewModel(s.Api, s.Revit, s.Store, s.Choices, new ThumbnailCache(s.Temp.File("img2"), s.Api.ImageAsync), new PaneSession(),
+            () => false, s.Dialogs, s.Parts, () => compact);
+        var raised = new List<string?>();
+        model.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+        model.FiltersExpanded.ShouldBeTrue();
+
+        compact = true;
+        model.SizeChanged();
+
+        model.FiltersExpanded.ShouldBeFalse();
+        raised.ShouldContain(nameof(PaneViewModel.FiltersExpanded));
     }
 
     [Test]

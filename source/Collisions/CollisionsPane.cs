@@ -9,6 +9,7 @@ using Collisions.ViewModels;
 using Collisions.Views;
 using Nice3point.Revit.Toolkit.Decorators;
 using ToadTools.Connection;
+using ToadTools.UI.Services;
 
 namespace Collisions;
 
@@ -40,9 +41,15 @@ public static class CollisionsPane
         var thumbnails = new ThumbnailCache(ThumbnailCache.DefaultFolder, api.ImageAsync);
         var mainWindow = application.MainWindowHandle;
         _viewModel = new PaneViewModel(api, new RevitBridge(), ConnectionStore.Shared, new ModelChoices(ModelChoices.DefaultPath), thumbnails,
-            new PaneSession(), () => ConnectionDialog.Show(mainWindow), new CardDialogs(mainWindow), new PartMemory(PartMemory.DefaultPath));
+            new PaneSession(), () => ConnectionDialog.Show(mainWindow), new CardDialogs(mainWindow), new PartMemory(PartMemory.DefaultPath),
+            () => ThemePreference.Instance.IsCompact);
         var view = new CollisionsPaneView(_viewModel);
         _dispatcher = view.Dispatcher;
+        // Сменился размер окон ToadTools — блок фильтров, который человек не трогал, сворачивается или разворачивается.
+        ThemePreference.Instance.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(ThemePreference.IsCompact) && _viewModel is { } model) _dispatcher?.BeginInvoke(new Action(model.SizeChanged));
+        };
 
         DockablePaneProvider
             .Register(application, Id.Guid, Title)

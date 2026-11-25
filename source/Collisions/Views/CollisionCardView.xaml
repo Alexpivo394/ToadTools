@@ -8,6 +8,7 @@
     xmlns:vm="clr-namespace:Collisions.ViewModels"
     xmlns:views="clr-namespace:Collisions.Views"
     xmlns:conv="clr-namespace:ToadTools.UI.Converters;assembly=ToadTools.UI"
+    xmlns:services="clr-namespace:ToadTools.UI.Services;assembly=ToadTools.UI"
     d:DataContext="{d:DesignInstance Type=vm:CardViewModel}"
     mc:Ignorable="d"
     d:DesignWidth="380">
@@ -19,24 +20,24 @@
                     <ColumnDefinition Width="2*" />
                     <ColumnDefinition Width="3*" />
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="{Binding Key}" FontSize="11" Opacity="0.7" TextWrapping="Wrap" Margin="0,0,6,0" />
-                <TextBlock Grid.Column="1" Text="{Binding Value}" FontSize="11" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding Key}" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.7" TextWrapping="Wrap" Margin="0,0,6,0" />
+                <TextBlock Grid.Column="1" Text="{Binding Value}" FontSize="{DynamicResource Toad.FontSize.Caption}" TextWrapping="Wrap" />
             </Grid>
         </DataTemplate>
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Margin="0,4,4,4">
-            <TextBlock FontWeight="SemiBold" FontSize="14" TextWrapping="Wrap">
+            <TextBlock FontWeight="SemiBold" FontSize="{DynamicResource Toad.FontSize}" TextWrapping="Wrap">
                 <Run Text="{Binding Number, StringFormat=№ {0}, Mode=OneWay}" /><Run Text=" · " /><Run Text="{Binding Status, Mode=OneWay}" />
                 <Run Text=" · " /><Run Text="{Binding Depth, Mode=OneWay}" />
             </TextBlock>
-            <TextBlock Text="{Binding Assignee, StringFormat=Кто правит: {0}}" FontSize="11" Opacity="0.75" />
+            <TextBlock Text="{Binding Assignee, StringFormat=Кто правит: {0}}" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.75" />
 
-            <TextBlock Text="{Binding NavigateMessage}" TextWrapping="Wrap" FontSize="12" Margin="0,6,0,0"
+            <TextBlock Text="{Binding NavigateMessage}" TextWrapping="Wrap" FontSize="{DynamicResource Toad.FontSize.Small}" Margin="0,6,0,0"
                        Foreground="{DynamicResource Toad.Brush.Warning}"
                        Visibility="{Binding NavigateMessage, Converter={views:TextVisibilityConverter}}" />
-            <TextBlock Text="{Binding Error}" TextWrapping="Wrap" FontSize="12" Margin="0,6,0,0"
+            <TextBlock Text="{Binding Error}" TextWrapping="Wrap" FontSize="{DynamicResource Toad.FontSize.Small}" Margin="0,6,0,0"
                        Foreground="{DynamicResource Toad.Brush.Danger}"
                        Visibility="{Binding Error, Converter={views:TextVisibilityConverter}}" />
 
@@ -60,17 +61,29 @@
                 <toad:Button Content="Выбрать свой" ToolTip="Выделить в Revit только свой элемент" Command="{Binding SelectOwnCommand}" Margin="0,0,6,6" />
                 <toad:Button Content="Выбрать второй" ToolTip="Выделить в Revit только второй элемент" Command="{Binding SelectOtherCommand}" Margin="0,0,6,6" />
             </WrapPanel>
-            <TextBlock Text="{Binding Hint}" FontSize="11" Opacity="0.7" TextWrapping="Wrap"
+            <TextBlock Text="{Binding Hint}" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.7" TextWrapping="Wrap"
                        Visibility="{Binding Hint, Converter={views:TextVisibilityConverter}}" />
 
             <Border CornerRadius="4" Margin="0,8,0,0" MinHeight="120" Background="{DynamicResource Toad.Brush.Hover}">
                 <Grid>
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="8">
-                        <TextBlock Text="{Binding ImageText}" FontSize="11" Opacity="0.7" TextWrapping="Wrap" TextAlignment="Center" />
+                        <TextBlock Text="{Binding ImageText}" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.7" TextWrapping="Wrap" TextAlignment="Center" />
                         <toad:Button Content="Обновить" Command="{Binding RefreshImageCommand}" HorizontalAlignment="Center" Margin="0,6,0,0"
                                    Visibility="{Binding CanRefreshImage, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
                     </StackPanel>
-                    <Image Source="{Binding Image}" Stretch="Uniform" MaxHeight="320" />
+                    <!-- Картинка до 320 px; в компактном размере до 200 — карточке хватает места на кнопки и параметры -->
+                    <Image Source="{Binding Image}" Stretch="Uniform">
+                        <Image.Style>
+                            <Style TargetType="Image">
+                                <Setter Property="MaxHeight" Value="320" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsCompact, Source={x:Static services:ThemePreference.Instance}}" Value="True">
+                                        <Setter Property="MaxHeight" Value="200" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Image.Style>
+                    </Image>
                 </Grid>
             </Border>
 
@@ -84,7 +97,7 @@
             <ItemsControl ItemsSource="{Binding Feed}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <TextBlock Text="{Binding}" FontSize="11" TextWrapping="Wrap" Margin="0,1" />
+                        <TextBlock Text="{Binding}" FontSize="{DynamicResource Toad.FontSize.Caption}" TextWrapping="Wrap" Margin="0,1" />
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>

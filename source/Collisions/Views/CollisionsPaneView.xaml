@@ -8,11 +8,14 @@
     xmlns:vm="clr-namespace:Collisions.ViewModels"
     xmlns:views="clr-namespace:Collisions.Views"
     xmlns:conv="clr-namespace:ToadTools.UI.Converters;assembly=ToadTools.UI"
+    xmlns:ui="clr-namespace:ToadTools.UI.Controls;assembly=ToadTools.UI"
+    xmlns:services="clr-namespace:ToadTools.UI.Services;assembly=ToadTools.UI"
     d:DataContext="{d:DesignInstance Type=vm:PaneViewModel}"
     mc:Ignorable="d"
     d:DesignWidth="380" d:DesignHeight="700"
     Background="{DynamicResource Toad.Brush.Background}"
     Foreground="{DynamicResource Toad.Brush.Text}"
+    FontSize="{DynamicResource Toad.FontSize}"
     toad:Theme.IsRoot="True">
 
     <UserControl.Resources>
@@ -22,6 +25,18 @@
                     <PropertyGroupDescription PropertyName="Group" />
                 </CollectionViewSource.GroupDescriptions>
             </CollectionViewSource>
+
+            <!-- Текст в несколько строк; в компактном размере — одна строка с многоточием, полный текст в подсказке -->
+            <Style x:Key="WrapUnlessCompact" TargetType="TextBlock">
+                <Setter Property="TextWrapping" Value="Wrap" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsCompact, Source={x:Static services:ThemePreference.Instance}}" Value="True">
+                        <Setter Property="TextWrapping" Value="NoWrap" />
+                        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                        <Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -31,29 +46,33 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Шапка: модель, части и дата прогона, «Обновить» -->
+        <!-- Шапка: модель, части и дата прогона, «Обновить», настройки -->
         <Grid Grid.Row="0" Margin="0,0,0,8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel Visibility="{Binding Screen, Converter={views:ScreenVisibilityConverter}, ConverterParameter=Ready}">
-                <TextBlock Text="{Binding Header}" FontWeight="SemiBold" FontSize="14" TextTrimming="CharacterEllipsis" />
-                <TextBlock Text="{Binding Parts}" FontSize="11" Opacity="0.7" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding Header}" FontWeight="SemiBold" FontSize="{DynamicResource Toad.FontSize}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{Binding Parts}" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.7" Style="{StaticResource WrapUnlessCompact}" />
             </StackPanel>
             <toad:Button Grid.Column="1" Content="Обновить" Command="{Binding RefreshCommand}" VerticalAlignment="Top" Margin="8,0,0,0"
                        Visibility="{Binding Screen, Converter={views:ScreenVisibilityConverter}, ConverterParameter='Ready,NoDocument,NotFound,Error,Choose'}" />
+            <ui:SettingsButton Grid.Column="2" VerticalAlignment="Top" Margin="4,0,0,0" />
         </Grid>
 
         <!-- Сообщения: нет подключения, нет документа, модель не найдена, ошибка, поиск модели -->
         <StackPanel Grid.Row="1" VerticalAlignment="Top"
                     Visibility="{Binding Screen, Converter={views:ScreenVisibilityConverter}, ConverterParameter='NotConnected,NoDocument,NotFound,Error,Resolving'}">
-            <TextBlock Text="{Binding Message}" TextWrapping="Wrap" FontSize="13" Margin="0,8,0,8" />
-            <TextBlock Text="{Binding Status}" FontSize="11" Foreground="{DynamicResource Toad.Brush.Warning}" TextWrapping="Wrap"
+            <TextBlock Text="{Binding Message}" TextWrapping="Wrap" FontSize="{DynamicResource Toad.FontSize}" Margin="0,8,0,8" />
+            <TextBlock Text="{Binding Status}" FontSize="{DynamicResource Toad.FontSize.Caption}" Foreground="{DynamicResource Toad.Brush.Warning}" TextWrapping="Wrap"
                        Margin="0,0,0,8" Visibility="{Binding Status, Converter={views:TextVisibilityConverter}}" />
-            <TextBlock Text="{Binding SearchedPath, StringFormat=Искали: {0}}" TextWrapping="Wrap" FontSize="11" Opacity="0.7"
+            <TextBlock Text="{Binding SearchedPath, StringFormat=Искали: {0}}" TextWrapping="Wrap" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.7"
                        Visibility="{Binding Screen, Converter={views:ScreenVisibilityConverter}, ConverterParameter=NotFound}" />
-            <toad:Button Content="Подключение…" Variant="Filled" Command="{Binding ConnectCommand}" Margin="0,8,0,0"
+            <!-- Вход в ToadFlow — в «Настройках» ToadTools; после входа панель перечитывает список -->
+            <toad:Button Content="Настройки…" Variant="Filled" Command="{Binding ConnectCommand}" Margin="0,8,0,0" HorizontalAlignment="Left"
+                       ToolTip="Войти в ToadFlow в настройках ToadTools"
                        Visibility="{Binding Screen, Converter={views:ScreenVisibilityConverter}, ConverterParameter=NotConnected}" />
             <toad:Loader Width="24" Height="24" HorizontalAlignment="Left"
                              Visibility="{Binding Screen, Converter={views:ScreenVisibilityConverter}, ConverterParameter=Resolving}" />
@@ -61,31 +80,47 @@
 
         <!-- Несколько моделей с таким именем — выбор -->
         <DockPanel Grid.Row="1" Visibility="{Binding Screen, Converter={views:ScreenVisibilityConverter}, ConverterParameter=Choose}">
-            <TextBlock DockPanel.Dock="Top" Text="{Binding Message}" TextWrapping="Wrap" FontSize="13" Margin="0,8,0,8" />
-            <TextBlock DockPanel.Dock="Top" Text="{Binding Status}" FontSize="11" Foreground="{DynamicResource Toad.Brush.Warning}"
+            <TextBlock DockPanel.Dock="Top" Text="{Binding Message}" TextWrapping="Wrap" FontSize="{DynamicResource Toad.FontSize}" Margin="0,8,0,8" />
+            <TextBlock DockPanel.Dock="Top" Text="{Binding Status}" FontSize="{DynamicResource Toad.FontSize.Caption}" Foreground="{DynamicResource Toad.Brush.Warning}"
                        TextWrapping="Wrap" Margin="0,0,0,8" Visibility="{Binding Status, Converter={views:TextVisibilityConverter}}" />
-            <ItemsControl ItemsSource="{Binding Matches}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <toad:Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Margin="0,0,0,6" Padding="10,6"
-                                   Command="{Binding DataContext.ChooseModelCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                   CommandParameter="{Binding}">
-                            <StackPanel>
-                                <TextBlock FontWeight="SemiBold">
-                                    <Run Text="{Binding Name, Mode=OneWay}" /><Run Text=" · " /><Run Text="{Binding Discipline, Mode=OneWay}" />
-                                </TextBlock>
-                                <TextBlock Text="{Binding ModelPath}" FontSize="11" Opacity="0.7" TextWrapping="Wrap" />
-                            </StackPanel>
-                        </toad:Button>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <ItemsControl ItemsSource="{Binding Matches}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <toad:Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Margin="0,0,0,6" Padding="10,6"
+                                       Command="{Binding DataContext.ChooseModelCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                       CommandParameter="{Binding}">
+                                <StackPanel>
+                                    <TextBlock FontWeight="SemiBold">
+                                        <Run Text="{Binding Name, Mode=OneWay}" /><Run Text=" · " /><Run Text="{Binding Discipline, Mode=OneWay}" />
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding ModelPath}" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.7" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </toad:Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
         </DockPanel>
 
         <!-- Список коллизий -->
         <Grid Grid.Row="1" Visibility="{Binding Screen, Converter={views:ScreenVisibilityConverter}, ConverterParameter=Ready}">
             <Grid.RowDefinitions>
-                <RowDefinition Height="3*" MinHeight="160" />
+                <!-- Фильтры, поиск, счётчики — по содержимому; делят высоту только список и карточка -->
+                <RowDefinition Height="Auto" />
+                <!-- Список и карточка — 3:2; в компактном размере 5:2, списку больше половины панели -->
+                <RowDefinition MinHeight="120">
+                    <RowDefinition.Style>
+                        <Style TargetType="RowDefinition">
+                            <Setter Property="Height" Value="3*" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsCompact, Source={x:Static services:ThemePreference.Instance}}" Value="True">
+                                    <Setter Property="Height" Value="5*" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </RowDefinition.Style>
+                </RowDefinition>
                 <RowDefinition Height="Auto" />
                 <!-- Место карточки: пока коллизия не выбрана или выделено несколько, список занимает всю высоту -->
                 <RowDefinition>
@@ -103,74 +138,96 @@
                     </RowDefinition.Style>
                 </RowDefinition>
             </Grid.RowDefinitions>
-        <DockPanel Grid.Row="0">
-            <Grid DockPanel.Dock="Top" Margin="0,0,0,6">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="6" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="6" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="6" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <ComboBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,0,0,6" ToolTip="Часть здания"
-                          ItemsSource="{Binding PartOptions}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding PartFilter}"
-                          Visibility="{Binding ShowPartFilter, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
-                <ComboBox Grid.Row="1" Grid.Column="0" ToolTip="Статус" ItemsSource="{Binding StatusOptions}" DisplayMemberPath="Label"
-                          SelectedValuePath="Value" SelectedValue="{Binding StatusFilter}" />
-                <ComboBox Grid.Row="1" Grid.Column="2" ToolTip="Кто правит" ItemsSource="{Binding GroupOptions}" DisplayMemberPath="Label"
-                          SelectedValuePath="Value" SelectedValue="{Binding GroupFilter}" />
-                <ComboBox Grid.Row="3" Grid.Column="0" ToolTip="Пара разделов" ItemsSource="{Binding PairOptions}" DisplayMemberPath="Label"
-                          SelectedValuePath="Value" SelectedValue="{Binding PairFilter}" />
-                <ComboBox Grid.Row="3" Grid.Column="2" ToolTip="Уровень" ItemsSource="{Binding LevelOptions}" DisplayMemberPath="Label"
-                          SelectedValuePath="Value" SelectedValue="{Binding LevelFilter}" />
-                <toad:TextBox Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="3" Placeholder="№, ID элемента или UniqueId — Enter"
-                            Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}">
+
+            <StackPanel Grid.Row="0">
+                <!-- Строка-переключатель блока фильтров: «Фильтры · N активных» -->
+                <toad:Button Variant="Subtle" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Margin="0,0,0,6"
+                             Command="{Binding ToggleFiltersCommand}" ToolTip="Показать или скрыть фильтры">
+                    <StackPanel Orientation="Horizontal">
+                        <toad:Icon Width="12" Height="12" Margin="0,0,6,0" VerticalAlignment="Center">
+                            <toad:Icon.Style>
+                                <Style TargetType="toad:Icon">
+                                    <Setter Property="Symbol" Value="ChevronRight" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding FiltersExpanded}" Value="True">
+                                            <Setter Property="Symbol" Value="ChevronDown" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </toad:Icon.Style>
+                        </toad:Icon>
+                        <TextBlock Text="{Binding FiltersSummary}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </toad:Button>
+
+                <Grid Margin="0,0,0,6" Visibility="{Binding FiltersExpanded, Converter={conv:BooleanCollapsedVisibilityConverter}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="6" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="6" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <ComboBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,0,0,6" ToolTip="Часть здания"
+                              ItemsSource="{Binding PartOptions}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding PartFilter}"
+                              Visibility="{Binding ShowPartFilter, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
+                    <ComboBox Grid.Row="1" Grid.Column="0" ToolTip="Статус" ItemsSource="{Binding StatusOptions}" DisplayMemberPath="Label"
+                              SelectedValuePath="Value" SelectedValue="{Binding StatusFilter}" />
+                    <ComboBox Grid.Row="1" Grid.Column="2" ToolTip="Кто правит" ItemsSource="{Binding GroupOptions}" DisplayMemberPath="Label"
+                              SelectedValuePath="Value" SelectedValue="{Binding GroupFilter}" />
+                    <ComboBox Grid.Row="3" Grid.Column="0" ToolTip="Пара разделов" ItemsSource="{Binding PairOptions}" DisplayMemberPath="Label"
+                              SelectedValuePath="Value" SelectedValue="{Binding PairFilter}" />
+                    <ComboBox Grid.Row="3" Grid.Column="2" ToolTip="Уровень" ItemsSource="{Binding LevelOptions}" DisplayMemberPath="Label"
+                              SelectedValuePath="Value" SelectedValue="{Binding LevelFilter}" />
+                </Grid>
+
+                <!-- Поиск — вне сворачиваемого блока: виден всегда -->
+                <toad:TextBox Margin="0,0,0,6" Placeholder="№, ID элемента или UniqueId — Enter" Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}">
                     <toad:TextBox.InputBindings>
                         <KeyBinding Key="Enter" Command="{Binding ApplyFiltersCommand}" />
                     </toad:TextBox.InputBindings>
                 </toad:TextBox>
-            </Grid>
 
-            <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,6">
-                <!-- Счётчики — переключатели, как в вебе: нажатие включает фильтр, повторное — снимает -->
-                <ToggleButton Margin="0,0,6,4" Padding="6,1" FontSize="11" Content="{Binding MineCounter}" IsChecked="{Binding MineActive, Mode=OneWay}"
-                              Command="{Binding MineFilterCommand}" ToolTip="Показать только мои и общие коллизии" />
-                <ToggleButton Margin="0,0,6,4" Padding="6,1" FontSize="11" Content="{Binding OtherCounter}" IsChecked="{Binding OtherActive, Mode=OneWay}"
-                              Command="{Binding OtherFilterCommand}" ToolTip="Показать коллизии, которые взяла другая сторона" />
-                <!-- «новые для меня N» — фильтр since=unseen; у старого сервера счётчика нет, вместо него текст -->
-                <ToggleButton Margin="0,0,6,4" Padding="6,1" FontSize="11" Content="{Binding NewForMe}" IsChecked="{Binding NewForMeActive, Mode=OneWay}"
-                              Command="{Binding NewForMeFilterCommand}" ToolTip="Показать только коллизии, которые я ещё не открывал"
-                              Visibility="{Binding NewForMe, Converter={views:TextVisibilityConverter}}" />
-                <TextBlock Text="{Binding Counters}" FontSize="11" Opacity="0.8" TextWrapping="Wrap" VerticalAlignment="Center"
-                           Visibility="{Binding Counters, Converter={views:TextVisibilityConverter}}" />
-            </WrapPanel>
-
-            <!-- Выделено несколько строк (Ctrl/Shift+щелчок, Ctrl+A): действия над всеми, как в вебе; карточка скрыта -->
-            <Border DockPanel.Dock="Top" Margin="0,0,0,6" Padding="6,4,0,0" CornerRadius="4" Background="{DynamicResource Toad.Brush.Hover}"
-                    Visibility="{Binding IsMultiSelect, Converter={conv:BooleanCollapsedVisibilityConverter}}">
-                <WrapPanel>
-                    <TextBlock Text="{Binding SelectionText}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,6" />
-                    <toad:Button Content="Снять" Command="{Binding ClearSelectionCommand}" Margin="0,0,6,6" />
-                    <WrapPanel Visibility="{Binding CanBulkEdit, Converter={conv:BooleanCollapsedVisibilityConverter}}">
-                        <toad:Button Content="Беру" Command="{Binding BulkTakeCommand}" Margin="0,0,6,6" />
-                        <toad:Button Content="Передать…" Command="{Binding BulkPassCommand}" Margin="0,0,6,6" />
-                        <toad:Button Content="Исправлены" Command="{Binding BulkFixedCommand}" Margin="0,0,6,6"
-                                     ToolTip="Подтвердит следующий прогон: коллизии не будет — статус «исправлена»" />
-                        <toad:Button Content="Фиктивные…" Command="{Binding BulkFakeCommand}" Margin="0,0,6,6" />
-                        <toad:Button Content="Примечание…" Command="{Binding BulkNoteCommand}" Margin="0,0,6,6" />
-                    </WrapPanel>
+                <WrapPanel Margin="0,0,0,2">
+                    <!-- Счётчики — переключатели, как в вебе: нажатие включает фильтр, повторное — снимает -->
+                    <ToggleButton Margin="0,0,6,4" Padding="6,1" FontSize="{DynamicResource Toad.FontSize.Caption}" Content="{Binding MineCounter}" IsChecked="{Binding MineActive, Mode=OneWay}"
+                                  Command="{Binding MineFilterCommand}" ToolTip="Показать только мои и общие коллизии" />
+                    <ToggleButton Margin="0,0,6,4" Padding="6,1" FontSize="{DynamicResource Toad.FontSize.Caption}" Content="{Binding OtherCounter}" IsChecked="{Binding OtherActive, Mode=OneWay}"
+                                  Command="{Binding OtherFilterCommand}" ToolTip="Показать коллизии, которые взяла другая сторона" />
+                    <!-- «новые для меня N» — фильтр since=unseen; у старого сервера счётчика нет, вместо него текст -->
+                    <ToggleButton Margin="0,0,6,4" Padding="6,1" FontSize="{DynamicResource Toad.FontSize.Caption}" Content="{Binding NewForMe}" IsChecked="{Binding NewForMeActive, Mode=OneWay}"
+                                  Command="{Binding NewForMeFilterCommand}" ToolTip="Показать только коллизии, которые я ещё не открывал"
+                                  Visibility="{Binding NewForMe, Converter={views:TextVisibilityConverter}}" />
+                    <TextBlock Text="{Binding Counters}" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.8" TextWrapping="Wrap" VerticalAlignment="Center"
+                               Visibility="{Binding Counters, Converter={views:TextVisibilityConverter}}" />
                 </WrapPanel>
-            </Border>
 
-            <TextBlock DockPanel.Dock="Top" Text="{Binding Status}" FontSize="11" Foreground="{DynamicResource Toad.Brush.Warning}"
-                       TextWrapping="Wrap" Margin="0,0,0,6" Visibility="{Binding Status, Converter={views:TextVisibilityConverter}}" />
+                <!-- Выделено несколько строк (Ctrl/Shift+щелчок, Ctrl+A): действия над всеми, как в вебе; карточка скрыта -->
+                <Border Margin="0,0,0,6" Padding="6,4,0,0" CornerRadius="4" Background="{DynamicResource Toad.Brush.Hover}"
+                        Visibility="{Binding IsMultiSelect, Converter={conv:BooleanCollapsedVisibilityConverter}}">
+                    <WrapPanel>
+                        <TextBlock Text="{Binding SelectionText}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,6" />
+                        <toad:Button Content="Снять" Command="{Binding ClearSelectionCommand}" Margin="0,0,6,6" />
+                        <WrapPanel Visibility="{Binding CanBulkEdit, Converter={conv:BooleanCollapsedVisibilityConverter}}">
+                            <toad:Button Content="Беру" Command="{Binding BulkTakeCommand}" Margin="0,0,6,6" />
+                            <toad:Button Content="Передать…" Command="{Binding BulkPassCommand}" Margin="0,0,6,6" />
+                            <toad:Button Content="Исправлены" Command="{Binding BulkFixedCommand}" Margin="0,0,6,6"
+                                         ToolTip="Подтвердит следующий прогон: коллизии не будет — статус «исправлена»" />
+                            <toad:Button Content="Фиктивные…" Command="{Binding BulkFakeCommand}" Margin="0,0,6,6" />
+                            <toad:Button Content="Примечание…" Command="{Binding BulkNoteCommand}" Margin="0,0,6,6" />
+                        </WrapPanel>
+                    </WrapPanel>
+                </Border>
 
+                <TextBlock Text="{Binding Status}" FontSize="{DynamicResource Toad.FontSize.Caption}" Foreground="{DynamicResource Toad.Brush.Warning}"
+                           TextWrapping="Wrap" Margin="0,0,0,6" Visibility="{Binding Status, Converter={views:TextVisibilityConverter}}" />
+            </StackPanel>
+
+        <DockPanel Grid.Row="1">
             <toad:Button DockPanel.Dock="Bottom" Content="Показать ещё" HorizontalAlignment="Stretch" Margin="0,6,0,0"
                        Command="{Binding LoadMoreCommand}" Visibility="{Binding HasMore, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
 
@@ -192,13 +249,25 @@
                     <DataTemplate DataType="{x:Type vm:CollisionItemViewModel}">
                         <Grid Margin="0,4">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="96" />
+                                <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <Border Width="96" Height="72" CornerRadius="4" VerticalAlignment="Top"
-                                    Background="{DynamicResource Toad.Brush.Hover}">
+                            <!-- Миниатюра 96×72; в компактном размере 64×48 -->
+                            <Border CornerRadius="4" VerticalAlignment="Top" Background="{DynamicResource Toad.Brush.Hover}">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Width" Value="96" />
+                                        <Setter Property="Height" Value="72" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsCompact, Source={x:Static services:ThemePreference.Instance}}" Value="True">
+                                                <Setter Property="Width" Value="64" />
+                                                <Setter Property="Height" Value="48" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
                                 <Grid>
-                                    <TextBlock Text="{Binding ThumbnailText}" FontSize="10" Opacity="0.6" TextWrapping="Wrap" TextAlignment="Center"
+                                    <TextBlock Text="{Binding ThumbnailText}" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.6" TextWrapping="Wrap" TextAlignment="Center"
                                                HorizontalAlignment="Center" VerticalAlignment="Center" Margin="4" />
                                     <Image Source="{Binding Image, Converter={views:ThumbnailConverter}}" Stretch="UniformToFill" />
                                 </Grid>
@@ -212,12 +281,12 @@
                                     <Run Text=" · " /><Run Text="{Binding Status, Mode=OneWay}" />
                                     <Run Text=" · " /><Run Text="{Binding Depth, Mode=OneWay}" />
                                 </TextBlock>
-                                <TextBlock FontSize="11" Opacity="0.75" TextTrimming="CharacterEllipsis">
+                                <TextBlock FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.75" TextTrimming="CharacterEllipsis">
                                     <Run Text="{Binding Pair, Mode=OneWay}" /><Run Text=" · " /><Run Text="{Binding Level, Mode=OneWay}" /><Run Text="{Binding PartSuffix, Mode=OneWay}" />
                                 </TextBlock>
-                                <TextBlock Text="{Binding Own}" FontSize="11" TextWrapping="Wrap" />
-                                <TextBlock Text="{Binding Other}" FontSize="11" Opacity="0.75" TextWrapping="Wrap" />
-                                <TextBlock Text="{Binding Taken}" FontSize="11" FontStyle="Italic" Opacity="0.75"
+                                <TextBlock Text="{Binding Own}" FontSize="{DynamicResource Toad.FontSize.Caption}" Style="{StaticResource WrapUnlessCompact}" />
+                                <TextBlock Text="{Binding Other}" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.75" Style="{StaticResource WrapUnlessCompact}" />
+                                <TextBlock Text="{Binding Taken}" FontSize="{DynamicResource Toad.FontSize.Caption}" FontStyle="Italic" Opacity="0.75"
                                            Visibility="{Binding Taken, Converter={views:TextVisibilityConverter}}" />
                             </StackPanel>
                         </Grid>
@@ -225,10 +294,10 @@
                 </ListView.ItemTemplate>
             </ListView>
         </DockPanel>
-            <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" Background="Transparent" ResizeDirection="Rows"
+            <GridSplitter Grid.Row="2" Height="5" HorizontalAlignment="Stretch" Background="Transparent" ResizeDirection="Rows"
                           Visibility="{Binding CardVisible, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
             <!-- Видимость — по панели, а не по карточке: после перетаскивания разделителя высота строки уже не нулевая -->
-            <views:CollisionCardView Grid.Row="2" DataContext="{Binding Card}"
+            <views:CollisionCardView Grid.Row="3" DataContext="{Binding Card}"
                                      Visibility="{Binding DataContext.CardVisible, RelativeSource={RelativeSource AncestorType=views:CollisionsPaneView}, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
         </Grid>
     </Grid>

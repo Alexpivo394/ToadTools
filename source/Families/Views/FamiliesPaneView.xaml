@@ -7,11 +7,13 @@
     xmlns:toad="urn:toaddesign"
     xmlns:vm="clr-namespace:Families.ViewModels"
     xmlns:views="clr-namespace:Families.Views"
+    xmlns:ui="clr-namespace:ToadTools.UI.Controls;assembly=ToadTools.UI"
     d:DataContext="{d:DesignInstance Type=vm:FamiliesPaneViewModel}"
     mc:Ignorable="d"
     d:DesignWidth="380" d:DesignHeight="760"
     Background="{DynamicResource Toad.Brush.Background}"
     Foreground="{DynamicResource Toad.Brush.Text}"
+    FontSize="{DynamicResource Toad.FontSize}"
     toad:Theme.IsRoot="True">
 
     <UserControl.Resources>
@@ -49,8 +51,9 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Шапка: заявки с новостями и «Обновить» -->
+        <!-- Шапка: заявки с новостями, «Обновить», настройки -->
         <DockPanel Grid.Row="0" Margin="0,0,0,6">
+            <ui:SettingsButton DockPanel.Dock="Right" Margin="4,0,0,0" VerticalAlignment="Top" />
             <toad:Button DockPanel.Dock="Right" Content="Обновить" Command="{Binding RefreshCommand}" Margin="6,0,0,0" VerticalAlignment="Top" />
             <toad:Loader DockPanel.Dock="Right" Width="18" Height="18" Visibility="{Binding IsBusy, Converter={views:ShownConverter}}" />
             <ItemsControl ItemsSource="{Binding RequestUpdates}" Visibility="{Binding RequestNews, Converter={views:ShownConverter}}">
@@ -88,8 +91,8 @@
         <!-- Нет подключения, библиотека не настроена, ошибка -->
         <StackPanel Grid.Row="1" Grid.RowSpan="2" VerticalAlignment="Top"
                     Visibility="{Binding Screen, Converter={views:ShownConverter Invert=True}, ConverterParameter=Ready}">
-            <TextBlock Text="{Binding Message}" TextWrapping="Wrap" FontSize="13" Margin="0,8" />
-            <toad:Button Content="Подключение…" Variant="Filled" Command="{Binding ConnectCommand}" HorizontalAlignment="Left"
+            <TextBlock Text="{Binding Message}" TextWrapping="Wrap" FontSize="{DynamicResource Toad.FontSize}" Margin="0,8" />
+            <toad:Button Content="Настройки…" ToolTip="Войти в ToadFlow в настройках ToadTools" Variant="Filled" Command="{Binding ConnectCommand}" HorizontalAlignment="Left"
                          Visibility="{Binding Screen, Converter={views:ShownConverter}, ConverterParameter=NotConnected}" />
         </StackPanel>
 
@@ -129,7 +132,7 @@
                                          ToolTip="Подать заявку на семейство в вебе ToadFlow" />
                             <CheckBox Content="непроверенные" IsChecked="{Binding ShowUnreviewed}" VerticalAlignment="Center"
                                       ToolTip="Показывать и семейства, которые ещё на проверке" />
-                            <TextBlock Text="{Binding Found}" FontSize="11" Opacity="0.7" VerticalAlignment="Center" Margin="8,0" />
+                            <TextBlock Text="{Binding Found}" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.7" VerticalAlignment="Center" Margin="8,0" />
                         </DockPanel>
                     </Grid>
 
@@ -143,12 +146,12 @@
                                     </Border>
                                     <StackPanel VerticalAlignment="Center">
                                         <DockPanel>
-                                            <TextBlock DockPanel.Dock="Right" Text="{Binding YearBadge}" FontSize="11" Margin="6,0,0,0"
+                                            <TextBlock DockPanel.Dock="Right" Text="{Binding YearBadge}" FontSize="{DynamicResource Toad.FontSize.Caption}" Margin="6,0,0,0"
                                                        Foreground="{DynamicResource Toad.Brush.Warning}" />
                                             <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
                                         </DockPanel>
-                                        <TextBlock Text="{Binding Details}" FontSize="11" Opacity="0.75" TextTrimming="CharacterEllipsis" />
-                                        <TextBlock Text="на проверке" FontSize="11" Foreground="{DynamicResource Toad.Brush.Warning}"
+                                        <TextBlock Text="{Binding Details}" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.75" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="на проверке" FontSize="{DynamicResource Toad.FontSize.Caption}" Foreground="{DynamicResource Toad.Brush.Warning}"
                                                    Visibility="{Binding Unreviewed, Converter={views:ShownConverter}}" />
                                     </StackPanel>
                                 </DockPanel>
@@ -163,7 +166,7 @@
             <!-- В проекте -->
             <TabItem Header="В проекте" IsEnabled="{Binding IsProject}">
                 <DockPanel Margin="0,6,0,0">
-                    <TextBlock DockPanel.Dock="Top" Text="{Binding ProjectSummary}" TextWrapping="Wrap" FontSize="11" Opacity="0.8" Margin="0,0,0,6" />
+                    <TextBlock DockPanel.Dock="Top" Text="{Binding ProjectSummary}" TextWrapping="Wrap" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.8" Margin="0,0,0,6" />
                     <DockPanel DockPanel.Dock="Top" Margin="0,0,0,6">
                         <toad:Button DockPanel.Dock="Right" Content="Обновить выбранные" Variant="Filled" Command="{Binding UpdateChosenCommand}" />
                         <CheckBox Content="только устаревшие и чужие" IsChecked="{Binding OnlyProblems}" VerticalAlignment="Center" />
@@ -175,10 +178,10 @@
                                     <CheckBox DockPanel.Dock="Left" IsChecked="{Binding IsChosen}" IsEnabled="{Binding CanUpdate}" VerticalAlignment="Center" Margin="0,0,6,0" />
                                     <StackPanel>
                                         <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                                        <TextBlock FontSize="11" TextTrimming="CharacterEllipsis">
+                                        <TextBlock FontSize="{DynamicResource Toad.FontSize.Caption}" TextTrimming="CharacterEllipsis">
                                             <Run Text="{Binding StateText, Mode=OneWay}" /><Run Text=" · " Foreground="Gray" /><Run Text="{Binding Category, Mode=OneWay}" Foreground="Gray" />
                                         </TextBlock>
-                                        <TextBlock FontSize="11" Opacity="0.75" TextTrimming="CharacterEllipsis" Visibility="{Binding Iteration, Converter={views:ShownConverter}}">
+                                        <TextBlock FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.75" TextTrimming="CharacterEllipsis" Visibility="{Binding Iteration, Converter={views:ShownConverter}}">
                                             <Run Text="итерация " /><Run Text="{Binding Iteration, Mode=OneWay}" FontWeight="SemiBold" />
                                         </TextBlock>
                                     </StackPanel>
@@ -201,14 +204,14 @@
                                      Visibility="{Binding IterationsAvailable, Converter={views:ShownConverter}}" />
 
                         <StackPanel Visibility="{Binding IsNewFamily, Converter={views:ShownConverter}}">
-                            <TextBlock Text="Имя файла (имя семейства в проекте)" FontSize="11" Opacity="0.8" />
+                            <TextBlock Text="Имя файла (имя семейства в проекте)" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.8" />
                             <toad:TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,6" />
-                            <TextBlock Text="Папка от корня библиотеки — по умолчанию папка проверки; можно вписать новую" FontSize="11" Opacity="0.8" TextWrapping="Wrap" />
+                            <TextBlock Text="Папка от корня библиотеки — по умолчанию папка проверки; можно вписать новую" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.8" TextWrapping="Wrap" />
                             <ComboBox ItemsSource="{Binding Folders}" Text="{Binding Folder, UpdateSourceTrigger=PropertyChanged}" IsEditable="True" Margin="0,2,0,6" />
                         </StackPanel>
 
                         <StackPanel Visibility="{Binding NeedsExisting, Converter={views:ShownConverter}}">
-                            <TextBlock Text="Какое семейство — новая версия «Основной» ляжет в папку проверки под его именем, итерация — в папку итераций" FontSize="11"
+                            <TextBlock Text="Какое семейство — новая версия «Основной» ляжет в папку проверки под его именем, итерация — в папку итераций" FontSize="{DynamicResource Toad.FontSize.Caption}"
                                        Opacity="0.8" TextWrapping="Wrap" />
                             <toad:TextBox Placeholder="Имя семейства — Enter" Text="{Binding ExistingQuery, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,4">
                                 <toad:TextBox.InputBindings>
@@ -219,25 +222,25 @@
                         </StackPanel>
 
                         <StackPanel Visibility="{Binding IsIteration, Converter={views:ShownConverter}}">
-                            <TextBlock Text="Итерация (завершённые не показаны — с них снимают финал в вебе)" FontSize="11" Opacity="0.8" TextWrapping="Wrap" />
+                            <TextBlock Text="Итерация (завершённые не показаны — с них снимают финал в вебе)" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.8" TextWrapping="Wrap" />
                             <ComboBox ItemsSource="{Binding Iterations}" SelectedItem="{Binding Iteration}" DisplayMemberPath="Label" Margin="0,2,0,6" />
                             <StackPanel Visibility="{Binding IsNewIteration, Converter={views:ShownConverter}}">
-                                <TextBlock Text="Название новой итерации — имя её папки, например «ЖК Полковая»" FontSize="11" Opacity="0.8" TextWrapping="Wrap" />
+                                <TextBlock Text="Название новой итерации — имя её папки, например «ЖК Полковая»" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.8" TextWrapping="Wrap" />
                                 <toad:TextBox Text="{Binding NewIterationName, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,4" />
-                                <TextBlock Text="Комментарий к итерации" FontSize="11" Opacity="0.8" />
+                                <TextBlock Text="Комментарий к итерации" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.8" />
                                 <toad:TextBox Text="{Binding IterationComment, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Margin="0,2,0,6" />
                             </StackPanel>
                             <CheckBox Content="Финальная версия итерации — итерация завершается" IsChecked="{Binding IsFinal}" Margin="0,0,0,4" />
                             <StackPanel Visibility="{Binding IsFinal, Converter={views:ShownConverter}}">
-                                <TextBlock Text="Что проделано (обязательно)" FontSize="11" Opacity="0.8" />
+                                <TextBlock Text="Что проделано (обязательно)" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.8" />
                                 <toad:TextBox Text="{Binding FinalComment, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Margin="0,2,0,6" />
                             </StackPanel>
                         </StackPanel>
 
-                        <TextBlock Text="Что изменилось" FontSize="11" Opacity="0.8" />
+                        <TextBlock Text="Что изменилось" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.8" />
                         <toad:TextBox Text="{Binding Comment, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="54" Margin="0,2,0,6" />
                         <StackPanel Visibility="{Binding IsIteration, Converter={views:ShownConverter Invert=True}}">
-                            <TextBlock Text="Закрывает заявку" FontSize="11" Opacity="0.8" />
+                            <TextBlock Text="Закрывает заявку" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.8" />
                             <ComboBox ItemsSource="{Binding Requests}" SelectedItem="{Binding Request}" DisplayMemberPath="Label" Margin="0,2,0,6" />
                         </StackPanel>
                         <CheckBox Content="Без оповещения — мелкая правка, тем, кто загружал, «Обновлено» не придёт" IsChecked="{Binding Silent}" Margin="0,0,0,8" />
@@ -251,23 +254,25 @@
         <!-- Карточка выбранного семейства -->
         <Border Grid.Row="3" Margin="0,8,0,0" Padding="8" CornerRadius="6" BorderThickness="1" BorderBrush="{DynamicResource Toad.Brush.Border}"
                 Visibility="{Binding CardVisible, Converter={views:ShownConverter}}">
+            <!-- Высота ограничена половиной панели (код представления): длинная карточка прокручивается -->
+            <ScrollViewer x:Name="CardScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel DataContext="{Binding Card}">
                 <DockPanel>
                     <toad:Button DockPanel.Dock="Right" Content="✕" Padding="6,0"
                                  Command="{Binding DataContext.CloseCardCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
-                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="{DynamicResource Toad.FontSize}" TextWrapping="Wrap" />
                 </DockPanel>
-                <TextBlock Text="{Binding Subtitle}" FontSize="11" Opacity="0.8" TextWrapping="Wrap" />
-                <TextBlock Text="на проверке — показано, потому что включены «непроверенные»" FontSize="11" Foreground="{DynamicResource Toad.Brush.Warning}"
+                <TextBlock Text="{Binding Subtitle}" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.8" TextWrapping="Wrap" />
+                <TextBlock Text="на проверке — показано, потому что включены «непроверенные»" FontSize="{DynamicResource Toad.FontSize.Caption}" Foreground="{DynamicResource Toad.Brush.Warning}"
                            TextWrapping="Wrap" Visibility="{Binding Unreviewed, Converter={views:ShownConverter}}" />
                 <StackPanel Visibility="{Binding HasIterations, Converter={views:ShownConverter}}" Margin="0,6,0,0">
                     <DockPanel>
                         <CheckBox DockPanel.Dock="Right" Content="завершённые" IsChecked="{Binding ShowFinished}" VerticalAlignment="Center"
                                   Visibility="{Binding HasFinished, Converter={views:ShownConverter}}" />
-                        <TextBlock Text="Вариант" FontSize="11" Opacity="0.8" VerticalAlignment="Center" />
+                        <TextBlock Text="Вариант" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.8" VerticalAlignment="Center" />
                     </DockPanel>
                     <ComboBox ItemsSource="{Binding Variants}" SelectedItem="{Binding SelectedVariant}" DisplayMemberPath="Label" Margin="0,2,0,2" />
-                    <TextBlock Text="{Binding VariantNote}" FontSize="11" TextWrapping="Wrap" Opacity="0.85" Visibility="{Binding VariantNote, Converter={views:ShownConverter}}" />
+                    <TextBlock Text="{Binding VariantNote}" FontSize="{DynamicResource Toad.FontSize.Caption}" TextWrapping="Wrap" Opacity="0.85" Visibility="{Binding VariantNote, Converter={views:ShownConverter}}" />
                 </StackPanel>
                 <DockPanel Margin="0,6">
                     <Border DockPanel.Dock="Left" Width="112" Height="112" CornerRadius="4" Background="{DynamicResource Toad.Brush.Hover}" Margin="0,0,8,0">
@@ -275,7 +280,7 @@
                     </Border>
                     <StackPanel>
                         <DockPanel>
-                            <TextBlock Text="Типоразмеры" FontSize="11" Opacity="0.8" />
+                            <TextBlock Text="Типоразмеры" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.8" />
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                                 <toad:Button Content="все" Padding="4,0" Command="{Binding ChooseAllCommand}" />
                                 <toad:Button Content="ни одного" Padding="4,0" Margin="4,0,0,0" Command="{Binding ChooseNoneCommand}" />
@@ -292,11 +297,11 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                         </ScrollViewer>
-                        <TextBlock Text="{Binding TypesNote}" FontSize="11" Opacity="0.7" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding TypesNote}" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.7" TextWrapping="Wrap" />
                     </StackPanel>
                 </DockPanel>
                 <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Visibility="{Binding Description, Converter={views:ShownConverter}}" />
-                <TextBlock FontSize="11" Opacity="0.8" TextWrapping="Wrap">
+                <TextBlock FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.8" TextWrapping="Wrap">
                     <Run Text="{Binding Updated, Mode=OneWay}" /><Run Text=" · " /><Run Text="{Binding Loads, Mode=OneWay}" />
                 </TextBlock>
                 <TextBlock Text="{Binding BlockedReason}" Foreground="{DynamicResource Toad.Brush.Warning}" TextWrapping="Wrap"
@@ -315,16 +320,17 @@
                     <ItemsControl ItemsSource="{Binding History}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding}" FontSize="11" TextWrapping="Wrap" Margin="0,1" />
+                                <TextBlock Text="{Binding}" FontSize="{DynamicResource Toad.FontSize.Caption}" TextWrapping="Wrap" Margin="0,1" />
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </Expander>
             </StackPanel>
+            </ScrollViewer>
         </Border>
 
         <!-- Строка состояния: итог загрузки, отказ сервера -->
-        <TextBlock Grid.Row="4" Text="{Binding Status}" TextWrapping="Wrap" FontSize="11" Margin="0,4,0,0"
+        <TextBlock Grid.Row="4" Text="{Binding Status}" TextWrapping="Wrap" FontSize="{DynamicResource Toad.FontSize.Caption}" Margin="0,4,0,0"
                    Foreground="{DynamicResource Toad.Brush.Warning}" Visibility="{Binding Status, Converter={views:ShownConverter}}" />
     </Grid>
 </UserControl>
