@@ -30,10 +30,14 @@ public sealed class OperationTimer(TelemetryOutbox outbox, Func<DateTime> utcNow
     /// <summary>Начатая операция без конца дольше этого срока забывается: конец уже не придёт.</summary>
     public static readonly TimeSpan Forget = TimeSpan.FromHours(24);
 
-    private sealed record Started(OperationKind Kind, string Path, string? HostModelPath, DateTime At, long? FreeMemoryMb);
+    /// <param name="Host">У связи — открытие или обновление, внутри которого она грузится.</param>
+    private sealed record Started(OperationKind Kind, string Path, string? HostModelPath, DateTime At, long? FreeMemoryMb, object? Host);
 
     private readonly object _gate = new();
     private readonly Dictionary<object, Started> _pending = new();
+
+    /// <summary>Готовые записи связей, чей хост ещё идёт: в конце хоста им ставится его модель (у локальной копии — хранилища).</summary>
+    private readonly Dictionary<object, List<JsonObject>> _nested = new();
     private readonly List<JsonObject> _done = [];
     private readonly Dictionary<int, string> _localFiles = new();
 
@@ -47,7 +51,10 @@ public sealed class OperationTimer(TelemetryOutbox outbox, Func<DateTime> utcNow
     }
 
     /// <param name="token">То, по чему пара событий узнаёт друг друга (путь модели или документ).</param>
-    /// <param name="hostModelPath">У связи — модель, в которую она загружается; null — открываемая сейчас модель, если есть.</param>
+    /// <param name="hostModelPath">
+    ///     У связи — модель, в которую она загружается; null — модель, которая сейчас открывается или обновляется до последней, если
+    ///     есть: Revit грузит связи внутри этих операций.
+    /// </param>
     public void Begin(object token, OperationKind kind, string path, string? hostModelPath = null)
     {
         try
@@ -64,10 +71,25 @@ public sealed class OperationTimer(TelemetryOutbox outbox, Func<DateTime> utcNow
 
             lock (_gate)
             {
-                foreach (var stale in _pending.Where(p => now - p.Value.At > Forget).Select(p => p.Key).ToList()) _pending.Remove(stale);
+                foreach (var stale in _pending.Where(p => now - p.Value.At > Forget).Select(p => p.Key).ToList())
+                {
+                    _pending.Remove(stale);
+                    Release(stale, null);
+                }
+
+                object? host = null;
                 if (kind == OperationKind.Link && hostModelPath is null)
-                    hostModelPath = _pending.Values.Where(p => p.Kind == OperationKind.Open).OrderByDescending(p => p.At).FirstOrDefault()?.Path;
-                _pending[token] = new Started(kind, path, hostModelPath, now, free);
+                {
+                    var running = _pending.Where(p => p.Value.Kind is OperationKind.Open or OperationKind.Reload).OrderByDescending(p => p.Value.At)
+                        .FirstOrDefault();
+                    if (running.Key is not null)
+                    {
+                        host = running.Key;
+                        hostModelPath = running.Value.Path;
+                    }
+                }
+
+                _pending[token] = new Started(kind, path, hostModelPath, now, free, host);
             }
         }
         catch (Exception exception) when (Safe(exception))
@@ -78,7 +100,11 @@ public sealed class OperationTimer(TelemetryOutbox outbox, Func<DateTime> utcNow
     /// <summary>Забывает начатую операцию: оказалось, что её не считаем (семейство, документ связи).</summary>
     public void Discard(object token)
     {
-        lock (_gate) _pending.Remove(token);
+        lock (_gate)
+        {
+            _pending.Remove(token);
+            Release(token, null);
+        }
     }
 
     /// <param name="model">Уточнённая модель (после открытия известен путь хранилища); null — по пути из <see cref="Begin" />.</param>
@@ -94,7 +120,7 @@ public sealed class OperationTimer(TelemetryOutbox outbox, Func<DateTime> utcNow
                 _pending.Remove(token);
                 var reference = model ?? ModelRef.From(null, started.Path);
                 if (fileSizeBytes is null && !string.IsNullOrEmpty(localFile)) _localFiles[_done.Count] = localFile!;
-                _done.Add(new JsonObject
+                var item = new JsonObject
                 {
                     ["type"] = "operation", ["id"] = Guid.NewGuid().ToString(), ["sessionId"] = sessionId().ToString(), ["machine"] = machine,
                     ["kind"] = started.Kind.ToString(), ["startedAt"] = Iso(started.At),
@@ -102,11 +128,32 @@ public sealed class OperationTimer(TelemetryOutbox outbox, Func<DateTime> utcNow
                     ["modelName"] = reference.Name, ["modelPath"] = reference.Path, ["storage"] = reference.Storage, ["serverHost"] = reference.ServerHost,
                     ["hostModelPath"] = started.HostModelPath, ["fileSizeBytes"] = fileSizeBytes, ["freeMemoryMb"] = started.FreeMemoryMb,
                     ["revitYear"] = revitYear
-                });
+                };
+                if (started.Host is not null && _pending.ContainsKey(started.Host))
+                {
+                    if (!_nested.TryGetValue(started.Host, out var held)) _nested[started.Host] = held = [];
+                    held.Add(item);
+                    return;
+                }
+
+                _done.Add(item);
+                Release(token, reference.Path);
             }
         }
         catch (Exception exception) when (Safe(exception))
         {
+        }
+    }
+
+    /// <summary>Связи, которые ждали конца хоста, — в готовые; хост-модель — его модель, если она известна (под замком).</summary>
+    private void Release(object host, string? hostModelPath)
+    {
+        if (!_nested.TryGetValue(host, out var links)) return;
+        _nested.Remove(host);
+        foreach (var link in links)
+        {
+            if (hostModelPath is not null) link["hostModelPath"] = hostModelPath;
+            _done.Add(link);
         }
     }
 

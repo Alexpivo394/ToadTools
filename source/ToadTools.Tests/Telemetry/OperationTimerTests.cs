@@ -180,6 +180,76 @@ public class OperationTimerTests
         ((long)items.Single(i => (string)i["kind"]! == "Open")["durationMs"]!).ShouldBe(17000);
     }
 
+    /// <summary>«Обновить до последней» перезагружает связи внутри себя (живой Revit 2024) — у них тоже есть хост.</summary>
+    [Test]
+    public void Nested_ReloadWithLinks_HostIsReloadedModel()
+    {
+        using var rig = new Rig();
+        rig.Timer.Begin("reload", OperationKind.Reload, "RSN://srv01/П/АР.rvt");
+        rig.Timer.Begin("link", OperationKind.Link, "RSN://srv01/П/КР.rvt");
+        rig.Timer.End("link", OperationOutcome.Succeeded);
+        rig.Timer.End("reload", OperationOutcome.Succeeded);
+
+        var link = rig.Items().Single(i => (string)i["kind"]! == "Link");
+        ((string)link["hostModelPath"]!).ShouldBe("RSN://srv01/П/АР.rvt");
+    }
+
+    /// <summary>У локальной копии «открывается» знает только путь копии; хостом связи становится модель хранилища из конца открытия.</summary>
+    [Test]
+    public void Nested_LocalCopy_HostIsCentral()
+    {
+        using var rig = new Rig();
+        const string local = @"C:\Users\ivanov\Documents\АР_ivanov.rvt";
+        rig.Timer.Begin("open", OperationKind.Open, local);
+        rig.Timer.Begin("link", OperationKind.Link, "RSN://srv01/П/КР.rvt");
+        rig.Timer.End("link", OperationOutcome.Succeeded);
+        rig.Timer.End("open", OperationOutcome.Succeeded, ModelRef.From("RSN://srv01/П/АР.rvt", local));
+
+        var link = rig.Items().Single(i => (string)i["kind"]! == "Link");
+        ((string)link["hostModelPath"]!).ShouldBe("RSN://srv01/П/АР.rvt");
+    }
+
+    /// <summary>Фоновый сброс посреди долгого открытия не уносит связь на диск, пока хост не закончился.</summary>
+    [Test]
+    public void Nested_FlushBeforeHostEnds_LinkWaitsForHost()
+    {
+        using var rig = new Rig();
+        rig.Timer.Begin("open", OperationKind.Open, @"C:\Users\ivanov\Documents\АР_ivanov.rvt");
+        rig.Timer.Begin("link", OperationKind.Link, "RSN://srv01/П/КР.rvt");
+        rig.Timer.End("link", OperationOutcome.Succeeded);
+
+        rig.Items().ShouldBeEmpty();
+
+        rig.Timer.End("open", OperationOutcome.Succeeded, ModelRef.From("RSN://srv01/П/АР.rvt", @"C:\Users\ivanov\Documents\АР_ivanov.rvt"));
+        var link = rig.Items().Single(i => (string)i["kind"]! == "Link");
+        ((string)link["hostModelPath"]!).ShouldBe("RSN://srv01/П/АР.rvt");
+    }
+
+    [Test]
+    public void Nested_HostDiscarded_LinkKept()
+    {
+        using var rig = new Rig();
+        rig.Timer.Begin("open", OperationKind.Open, @"C:\a.rvt");
+        rig.Timer.Begin("link", OperationKind.Link, @"C:\b.rvt");
+        rig.Timer.End("link", OperationOutcome.Succeeded);
+
+        rig.Timer.Discard("open");
+
+        ((string)rig.Items().Single()["hostModelPath"]!).ShouldBe(@"C:\a.rvt");
+    }
+
+    [Test]
+    public void Link_AfterOpenEnded_NoHost()
+    {
+        using var rig = new Rig();
+        rig.Timer.Begin("open", OperationKind.Open, "RSN://srv01/П/АР.rvt");
+        rig.Timer.End("open", OperationOutcome.Succeeded);
+        rig.Timer.Begin("link", OperationKind.Link, "RSN://srv01/П/КР.rvt");
+        rig.Timer.End("link", OperationOutcome.Succeeded);
+
+        rig.Items().Single(i => (string)i["kind"]! == "Link")["hostModelPath"].ShouldBeNull();
+    }
+
     [Test]
     public void End_ModelRefOverridesBeginPath()
     {
