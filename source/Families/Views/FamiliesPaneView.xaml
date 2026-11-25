@@ -136,7 +136,7 @@
                         </DockPanel>
                     </Grid>
 
-                    <ListBox Grid.Row="2" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}" BorderThickness="0" Background="Transparent"
+                    <ListBox x:Name="SearchList" Grid.Row="2" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}" BorderThickness="0" Background="Transparent"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.IsVirtualizing="True">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
@@ -254,7 +254,7 @@
         <!-- Карточка выбранного семейства -->
         <Border Grid.Row="3" Margin="0,8,0,0" Padding="8" CornerRadius="6" BorderThickness="1" BorderBrush="{DynamicResource Toad.Brush.Border}"
                 Visibility="{Binding CardVisible, Converter={views:ShownConverter}}">
-            <!-- Высота ограничена половиной панели (код представления): длинная карточка прокручивается -->
+            <!-- Высоту ограничивает код представления: списку остаётся место, длинная карточка прокручивается -->
             <ScrollViewer x:Name="CardScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel DataContext="{Binding Card}">
                 <DockPanel>
@@ -280,11 +280,12 @@
                     </Border>
                     <StackPanel>
                         <DockPanel>
-                            <TextBlock Text="Типоразмеры" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.8" />
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                                 <toad:Button Content="все" Padding="4,0" Command="{Binding ChooseAllCommand}" />
                                 <toad:Button Content="ни одного" Padding="4,0" Margin="4,0,0,0" Command="{Binding ChooseNoneCommand}" />
                             </StackPanel>
+                            <TextBlock Text="Типоразмеры" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.8"
+                                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                         </DockPanel>
                         <ScrollViewer MaxHeight="140" VerticalScrollBarVisibility="Auto">
                             <ItemsControl ItemsSource="{Binding Types}">
@@ -330,7 +331,7 @@
         </Border>
 
         <!-- Строка состояния: итог загрузки, отказ сервера -->
-        <TextBlock Grid.Row="4" Text="{Binding Status}" TextWrapping="Wrap" FontSize="{DynamicResource Toad.FontSize.Caption}" Margin="0,4,0,0"
+        <TextBlock x:Name="StatusLine" Grid.Row="4" Text="{Binding Status}" TextWrapping="Wrap" FontSize="{DynamicResource Toad.FontSize.Caption}" Margin="0,4,0,0"
                    Foreground="{DynamicResource Toad.Brush.Warning}" Visibility="{Binding Status, Converter={views:ShownConverter}}" />
     </Grid>
 </UserControl>
