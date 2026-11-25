@@ -44,6 +44,7 @@ public sealed class ClashApi(ToadFlowClient client) : IClashApi
         if (!string.IsNullOrWhiteSpace(query.Level)) parts.Add($"level={E(query.Level!)}");
         if (!string.IsNullOrWhiteSpace(query.Search)) parts.Add($"q={E(query.Search!.Trim())}");
         if (!string.IsNullOrWhiteSpace(query.Since)) parts.Add($"since={E(query.Since!)}");
+        if (query.Part is { } part) parts.Add($"part={part:D}");
         parts.Add($"page={page}");
         parts.Add($"pageSize={PageSize}");
         return client.GetAsync<ModelCollisionPage>($"/api/clash/models/{E(key)}/collisions?{string.Join("&", parts)}", ct);

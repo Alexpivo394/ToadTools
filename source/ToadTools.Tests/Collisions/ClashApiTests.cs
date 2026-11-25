@@ -36,6 +36,43 @@ public class ClashApiTests
     }
 
     [Test]
+    public async Task ClashApi_PartGiven_SendsPartParameter()
+    {
+        var (api, http, temp) = Create(_ => FakeHttp.Ok(Sample("model-collisions.json")));
+        using var _ = temp;
+        var part = Guid.Parse("01a196c1-7f07-7ab3-a1c2-21d73689723a");
+
+        await api.CollisionsAsync("abc", new CollisionQuery(Part: part), 1, CancellationToken.None);
+
+        http.Requests[0].Request.RequestUri!.PathAndQuery.ShouldBe(
+            "/api/clash/models/abc/collisions?status=open&group=all&part=01a196c1-7f07-7ab3-a1c2-21d73689723a&page=1&pageSize=100");
+    }
+
+    [Test]
+    public async Task ClashApi_OldServer_PartsFacetNull()
+    {
+        var (api, _, temp) = Create(_ => FakeHttp.Ok(Sample("model-collisions.json")));
+        using var _ = temp;
+
+        var page = await api.CollisionsAsync("abc", new CollisionQuery(), 1, CancellationToken.None);
+
+        page.Facets.Parts.ShouldBeNull();
+    }
+
+    [Test]
+    public async Task ClashApi_NewServer_PartsFacetRead()
+    {
+        var json = Sample("model-collisions.json").Replace("\"facets\":{",
+            "\"facets\":{\"parts\":[{\"value\":\"01a196c1-7f07-7ab3-a1c2-21d73689723a\",\"label\":\"Корпус 1\",\"count\":2}],");
+        var (api, _, temp) = Create(_ => FakeHttp.Ok(json));
+        using var _ = temp;
+
+        var page = await api.CollisionsAsync("abc", new CollisionQuery(), 1, CancellationToken.None);
+
+        page.Facets.Parts.ShouldNotBeNull().ShouldHaveSingleItem().ShouldBe(new Facet("01a196c1-7f07-7ab3-a1c2-21d73689723a", "Корпус 1", 2));
+    }
+
+    [Test]
     public async Task Api_Dtos_DeserializeServerJson()
     {
         var (api, _, temp) = Create(request => FakeHttp.Ok(request.RequestUri!.AbsolutePath switch

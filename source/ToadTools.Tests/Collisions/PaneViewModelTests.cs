@@ -47,10 +47,11 @@ public class PaneViewModelTests
         TempFolder Temp) : IDisposable
     {
         public FakeDialogs Dialogs { get; init; } = new();
+        public PartMemory Parts { get; init; } = new(Temp.File("collisions.json"));
         public void Dispose() => Temp.Dispose();
     }
 
-    private static Setup Create(bool connected = true, PaneSession? session = null)
+    private static Setup Create(bool connected = true, PaneSession? session = null, PartMemory? parts = null)
     {
         var temp = new TempFolder();
         var store = new ConnectionStore(temp.File("toadflow.json"));
@@ -61,8 +62,154 @@ public class PaneViewModelTests
         session ??= new PaneSession();
         var thumbnails = new ThumbnailCache(temp.File("images"), api.ImageAsync);
         var dialogs = new FakeDialogs();
-        var model = new PaneViewModel(api, revit, store, choices, thumbnails, session, () => false, dialogs);
-        return new Setup(model, api, revit, store, choices, session, temp) { Dialogs = dialogs };
+        parts ??= new PartMemory(temp.File("collisions.json"));
+        var model = new PaneViewModel(api, revit, store, choices, thumbnails, session, () => false, dialogs, parts);
+        return new Setup(model, api, revit, store, choices, session, temp) { Dialogs = dialogs, Parts = parts };
+    }
+
+    private static readonly Guid PartOne = Guid.Parse("aaaaaaaa-0000-0000-0000-000000000001");
+    private static readonly Guid PartTwo = Guid.Parse("aaaaaaaa-0000-0000-0000-000000000002");
+
+    /// <summary>Модель с двумя частями: строки по две на часть, фасет частей с числами.</summary>
+    private static void TwoParts(Setup s, bool withFacet = true)
+    {
+        s.Api.Resolve = (_, _) => new ModelResolve("path", [Match("k1")]);
+        s.Api.Rows = [FakeClashApi.Row(1, partId: PartOne), FakeClashApi.Row(2, partId: PartOne), FakeClashApi.Row(3, partId: PartTwo)];
+        s.Api.Facets = new ModelFacets([], [], [], withFacet
+            ? [new Facet(PartOne.ToString("D"), "Корпус 1", 2), new Facet(PartTwo.ToString("D"), "Корпус 2", 1)]
+            : null);
+    }
+
+    [Test]
+    public async Task Pane_OldServer_PartFilterHidden_ListLoads()
+    {
+        using var s = Create();
+        TwoParts(s, withFacet: false);
+
+        await s.Model.ActivateAsync();
+
+        s.Model.ShowPartFilter.ShouldBeFalse();
+        s.Model.PartOptions.ShouldBeEmpty();
+        s.Model.Items.Count.ShouldBe(3);
+        s.Model.Items.ShouldAllBe(i => i.PartName == null);
+    }
+
+    [Test]
+    public async Task Pane_SinglePart_FilterHidden()
+    {
+        using var s = Create();
+        TwoParts(s);
+        s.Api.Facets = new ModelFacets([], [], [], [new Facet(PartOne.ToString("D"), "Корпус 1", 3)]);
+
+        await s.Model.ActivateAsync();
+
+        s.Model.ShowPartFilter.ShouldBeFalse();
+        s.Model.Items.ShouldAllBe(i => i.PartName == null);
+    }
+
+    [Test]
+    public async Task Pane_TwoParts_OptionsAllPlusEach()
+    {
+        using var s = Create();
+        TwoParts(s);
+
+        await s.Model.ActivateAsync();
+
+        s.Model.ShowPartFilter.ShouldBeTrue();
+        s.Model.PartOptions.Select(o => (o.Value, o.Label)).ToList().ShouldBe(
+        [
+            (null, "Все части (3)"), (PartOne.ToString("D"), "Корпус 1 (2)"), (PartTwo.ToString("D"), "Корпус 2 (1)")
+        ]);
+        s.Model.PartFilter.ShouldBeNull();
+        s.Model.Items.ShouldAllBe(i => i.PartName == "Часть 1");
+    }
+
+    [Test]
+    public async Task Pane_PartChosen_ReloadsFirstPageWithPart_HidesPartNames()
+    {
+        using var s = Create();
+        TwoParts(s);
+        await s.Model.ActivateAsync();
+
+        s.Model.PartFilter = PartTwo.ToString("D");
+        await s.Model.ApplyFiltersCommand.ExecuteAsync(null);
+
+        var request = s.Api.PageRequests.Last();
+        (request.Query.Part, request.Page).ShouldBe((PartTwo, 1));
+        s.Model.Items.Select(i => i.Number).ShouldBe([3]);
+        s.Model.Items.ShouldAllBe(i => i.PartName == null);
+        s.Model.PartOptions.Count.ShouldBe(3);
+    }
+
+    [Test]
+    public async Task Pane_PartChosen_RememberedForModel()
+    {
+        using var first = Create();
+        TwoParts(first);
+        await first.Model.ActivateAsync();
+        first.Model.PartFilter = PartTwo.ToString("D");
+        await first.Model.ApplyFiltersCommand.ExecuteAsync(null);
+
+        using var second = Create(parts: new PartMemory(first.Temp.File("collisions.json")));
+        TwoParts(second);
+        await second.Model.ActivateAsync();
+
+        second.Api.PageRequests.First().Query.Part.ShouldBe(PartTwo);
+        second.Model.PartFilter.ShouldBe(PartTwo.ToString("D"));
+        second.Model.Items.Select(i => i.Number).ShouldBe([3]);
+    }
+
+    [Test]
+    public async Task Pane_AllPartsChosen_ForgetsRememberedPart()
+    {
+        using var s = Create();
+        TwoParts(s);
+        s.Parts.Set("k1", PartTwo);
+        await s.Model.ActivateAsync();
+
+        s.Model.PartFilter = null;
+        await s.Model.ApplyFiltersCommand.ExecuteAsync(null);
+
+        s.Api.PageRequests.Last().Query.Part.ShouldBeNull();
+        s.Parts.Get("k1").ShouldBeNull();
+    }
+
+    [Test]
+    public async Task Pane_RememberedPartGone_ResetToAll()
+    {
+        using var s = Create();
+        TwoParts(s);
+        s.Parts.Set("k1", Guid.Parse("aaaaaaaa-0000-0000-0000-0000000000ff"));
+
+        await s.Model.ActivateAsync();
+
+        s.Api.PageRequests.Select(r => r.Query.Part).ToList().ShouldBe([Guid.Parse("aaaaaaaa-0000-0000-0000-0000000000ff"), null]);
+        s.Model.PartFilter.ShouldBeNull();
+        s.Model.Items.Count.ShouldBe(3);
+        s.Parts.Get("k1").ShouldBeNull();
+    }
+
+    [Test]
+    public async Task Pane_PartChosen_HeaderShowsThatPartRun()
+    {
+        using var s = Create();
+        var run = new DateTimeOffset(2026, 10, 30, 14, 5, 0, TimeSpan.Zero);
+        var other = new DateTimeOffset(2026, 11, 2, 9, 0, 0, TimeSpan.Zero);
+        s.Api.Resolve = (_, _) => new ModelResolve("path",
+            [new ModelMatch("k1", Guid.NewGuid(), "DON_OV.rvt", "RSN://srv/DON/DON_OV.rvt", "ОВ",
+                [new ModelPart(PartOne, "Корпус 1", run), new ModelPart(PartTwo, "Корпус 2", other)])]);
+        s.Api.Rows = [FakeClashApi.Row(1, partId: PartOne), FakeClashApi.Row(3, partId: PartTwo)];
+        s.Api.Facets = new ModelFacets([], [], [], [new Facet(PartOne.ToString("D"), "Корпус 1", 1), new Facet(PartTwo.ToString("D"), "Корпус 2", 1)]);
+        await s.Model.ActivateAsync();
+        s.Model.Parts.ShouldContain("Корпус 1");
+        s.Model.Parts.ShouldContain("Корпус 2");
+
+        s.Model.PartFilter = PartTwo.ToString("D");
+        await s.Model.ApplyFiltersCommand.ExecuteAsync(null);
+
+        s.Model.Parts.ShouldContain("Корпус 2");
+        s.Model.Parts.ShouldNotContain("Корпус 1");
+        s.Model.Parts.ShouldContain($"{other.ToLocalTime():dd.MM.yyyy HH:mm}");
     }
 
     [Test]

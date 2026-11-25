@@ -112,20 +112,24 @@
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="6" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="6" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                <ComboBox Grid.Row="0" Grid.Column="0" ToolTip="Статус" ItemsSource="{Binding StatusOptions}" DisplayMemberPath="Label"
+                <ComboBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,0,0,6" ToolTip="Часть здания"
+                          ItemsSource="{Binding PartOptions}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding PartFilter}"
+                          Visibility="{Binding ShowPartFilter, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
+                <ComboBox Grid.Row="1" Grid.Column="0" ToolTip="Статус" ItemsSource="{Binding StatusOptions}" DisplayMemberPath="Label"
                           SelectedValuePath="Value" SelectedValue="{Binding StatusFilter}" />
-                <ComboBox Grid.Row="0" Grid.Column="2" ToolTip="Кто правит" ItemsSource="{Binding GroupOptions}" DisplayMemberPath="Label"
+                <ComboBox Grid.Row="1" Grid.Column="2" ToolTip="Кто правит" ItemsSource="{Binding GroupOptions}" DisplayMemberPath="Label"
                           SelectedValuePath="Value" SelectedValue="{Binding GroupFilter}" />
-                <ComboBox Grid.Row="2" Grid.Column="0" ToolTip="Пара разделов" ItemsSource="{Binding PairOptions}" DisplayMemberPath="Label"
+                <ComboBox Grid.Row="3" Grid.Column="0" ToolTip="Пара разделов" ItemsSource="{Binding PairOptions}" DisplayMemberPath="Label"
                           SelectedValuePath="Value" SelectedValue="{Binding PairFilter}" />
-                <ComboBox Grid.Row="2" Grid.Column="2" ToolTip="Уровень" ItemsSource="{Binding LevelOptions}" DisplayMemberPath="Label"
+                <ComboBox Grid.Row="3" Grid.Column="2" ToolTip="Уровень" ItemsSource="{Binding LevelOptions}" DisplayMemberPath="Label"
                           SelectedValuePath="Value" SelectedValue="{Binding LevelFilter}" />
-                <toad:TextBox Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" Placeholder="№, ID элемента или UniqueId — Enter"
+                <toad:TextBox Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="3" Placeholder="№, ID элемента или UniqueId — Enter"
                             Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}">
                     <toad:TextBox.InputBindings>
                         <KeyBinding Key="Enter" Command="{Binding ApplyFiltersCommand}" />
@@ -209,7 +213,7 @@
                                     <Run Text=" · " /><Run Text="{Binding Depth, Mode=OneWay}" />
                                 </TextBlock>
                                 <TextBlock FontSize="11" Opacity="0.75" TextTrimming="CharacterEllipsis">
-                                    <Run Text="{Binding Pair, Mode=OneWay}" /><Run Text=" · " /><Run Text="{Binding Level, Mode=OneWay}" />
+                                    <Run Text="{Binding Pair, Mode=OneWay}" /><Run Text=" · " /><Run Text="{Binding Level, Mode=OneWay}" /><Run Text="{Binding PartSuffix, Mode=OneWay}" />
                                 </TextBlock>
                                 <TextBlock Text="{Binding Own}" FontSize="11" TextWrapping="Wrap" />
                                 <TextBlock Text="{Binding Other}" FontSize="11" Opacity="0.75" TextWrapping="Wrap" />

@@ -34,6 +34,7 @@ internal sealed class FakeClashApi : IClashApi
     {
         PageRequests.Add((key, query, page));
         var rows = query.Since == "unseen" ? Rows.Where(r => r.Unseen).ToList() : Rows;
+        if (query.Part is { } part) rows = rows.Where(r => r.PartId == part).ToList();
         if (!string.IsNullOrWhiteSpace(query.Search)) rows = rows.Where(r => r.Collision.Number.ToString() == query.Search!.Trim()).ToList();
         var items = rows.Skip((page - 1) * ClashApi.PageSize).Take(ClashApi.PageSize).ToList();
         return new ModelCollisionPage(rows.Count, Mine, Other, items, Facets, Fresh, NewForMe);

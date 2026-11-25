@@ -103,7 +103,8 @@ public sealed record ModelCollisionRow(
 
 public sealed record Facet(string Value, string Label, int Count);
 
-public sealed record ModelFacets(IReadOnlyList<Facet> Pairs, IReadOnlyList<Facet> Levels, IReadOnlyList<Facet> Statuses);
+/// <param name="Parts">Части здания с числами; null — сервер до ToadFlow 3.5.0 без этого фасета.</param>
+public sealed record ModelFacets(IReadOnlyList<Facet> Pairs, IReadOnlyList<Facet> Levels, IReadOnlyList<Facet> Statuses, IReadOnlyList<Facet>? Parts = null);
 
 /// <param name="NewSinceVisit">Открытые коллизии модели, найденные или вернувшиеся после прошлого захода; без учёта фильтров.</param>
 /// <param name="NewForMe">Открытые, которые пользователь не открывал с их появления или возврата; null — сервер до ToadClash 1.0.0 без этого поля.</param>
@@ -129,8 +130,9 @@ public sealed record CollisionCardDto(CollisionRowDto Collision, IReadOnlyList<F
 /// <param name="Level">Ключ уровня; <c>-</c> — без уровня.</param>
 /// <param name="Search">№, ID элемента или UniqueId.</param>
 /// <param name="Since"><c>unseen</c> — только новые для меня.</param>
+/// <param name="Part">Часть здания; null — все части.</param>
 public sealed record CollisionQuery(string Status = "open", string Group = "all", string? Pair = null, string? Level = null, string? Search = null,
-    string? Since = null);
+    string? Since = null, Guid? Part = null);
 
 /// <summary>Коллизия, которую массовое действие не изменило, и почему — тот же текст, что у поштучного отказа.</summary>
 public sealed record BulkRefusal(int Number, string Reason);

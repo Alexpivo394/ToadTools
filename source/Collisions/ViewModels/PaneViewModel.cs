@@ -20,7 +20,7 @@ public enum PaneScreen
 }
 
 /// <summary>Фильтры одной модели: пара и уровень — из её фасетов, в другой модели их может не быть.</summary>
-public sealed record ListQuery(string? Pair = null, string? Level = null, string? Search = null);
+public sealed record ListQuery(string? Pair = null, string? Level = null, string? Search = null, Guid? Part = null);
 
 /// <summary>
 ///     Что панель помнит до закрытия Revit: отмечен ли заход; статус, группа и «новые для меня» — на сеанс, пара, уровень и
@@ -38,14 +38,17 @@ public sealed class PaneSession
     public CollisionQuery QueryFor(string? modelKey)
     {
         var own = modelKey is not null && ByModel.TryGetValue(modelKey, out var saved) ? saved : new ListQuery();
-        return new CollisionQuery(Status, Group, own.Pair, own.Level, own.Search, Since);
+        return new CollisionQuery(Status, Group, own.Pair, own.Level, own.Search, Since, own.Part);
     }
+
+    /// <summary>Фильтры этой модели в сеансе уже выбирали (иначе часть берётся из памяти между сеансами).</summary>
+    public bool Knows(string modelKey) => ByModel.ContainsKey(modelKey);
 
     /// <summary>Запомнить фильтры: общие — на сеанс, пару, уровень и поиск — для модели (если она известна).</summary>
     public void Remember(string? modelKey, CollisionQuery query)
     {
         (Status, Group, Since) = (query.Status, query.Group, query.Since);
-        if (modelKey is not null) ByModel[modelKey] = new ListQuery(query.Pair, query.Level, query.Search);
+        if (modelKey is not null) ByModel[modelKey] = new ListQuery(query.Pair, query.Level, query.Search, query.Part);
     }
 }
 
@@ -66,6 +69,7 @@ public sealed partial class PaneViewModel : ObservableObject
     private readonly PaneSession _session;
     private readonly Func<bool> _connect;
     private readonly ICardDialogs _dialogs;
+    private readonly PartMemory? _partMemory;
     private UserInfo? _me;
 
     private CollisionListState? _state;
@@ -92,6 +96,13 @@ public sealed partial class PaneViewModel : ObservableObject
     [ObservableProperty] private string? _groupFilter;
     [ObservableProperty] private string? _pairFilter;
     [ObservableProperty] private string? _levelFilter;
+
+    /// <summary>Выбранная часть здания (id в формате D); null — «Все части».</summary>
+    [ObservableProperty] private string? _partFilter;
+
+    /// <summary>Фильтр части виден: сервер отдал фасет и частей не меньше двух.</summary>
+    [ObservableProperty] private bool _showPartFilter;
+
     [ObservableProperty] private string _search = "";
 
     /// <summary>Строка состояния под счётчиками: что случилось со вставленной ссылкой.</summary>
@@ -109,13 +120,17 @@ public sealed partial class PaneViewModel : ObservableObject
     [ObservableProperty] private bool _newForMeActive;
 
     public PaneViewModel(IClashApi api, IRevitBridge revit, ConnectionStore store, ModelChoices choices, ThumbnailCache thumbnails, PaneSession session,
-        Func<bool> connect, ICardDialogs dialogs)
+        Func<bool> connect, ICardDialogs dialogs, PartMemory? partMemory = null)
     {
         (_api, _revit, _store, _choices, _thumbnails, _session, _connect, _dialogs) = (api, revit, store, choices, thumbnails, session, connect, dialogs);
+        _partMemory = partMemory;
         ShowQuery(session.QueryFor(null));
     }
 
     public ObservableCollection<CollisionItemViewModel> Items { get; } = [];
+
+    /// <summary>«Все части (N)» и каждая часть с числом; пусто, пока сервер не отдал фасет частей.</summary>
+    public ObservableCollection<FilterOption> PartOptions { get; } = [];
 
     /// <summary>Последняя отметка просмотра (идёт в фоне) — для тестов.</summary>
     public Task SeenTask { get; private set; } = Task.CompletedTask;
@@ -224,9 +239,11 @@ public sealed partial class PaneViewModel : ObservableObject
     [RelayCommand]
     private Task ApplyFilters()
     {
+        var part = Guid.TryParse(PartFilter, out var chosen) ? chosen : (Guid?)null;
         var query = new CollisionQuery(StatusFilter ?? "open", GroupFilter ?? "all", PairFilter, LevelFilter, string.IsNullOrWhiteSpace(Search) ? null : Search.Trim(),
-            NewForMeActive ? "unseen" : null);
+            NewForMeActive ? "unseen" : null, part);
         _session.Remember(Model?.Key, query);
+        if (Model is { } model) _partMemory?.Set(model.Key, part);
         return _state is { } state && Screen == PaneScreen.Ready
             ? RunAsync(async version =>
             {
@@ -515,6 +532,7 @@ public sealed partial class PaneViewModel : ObservableObject
 
     partial void OnPairFilterChanged(string? value) => FilterChanged();
     partial void OnLevelFilterChanged(string? value) => FilterChanged();
+    partial void OnPartFilterChanged(string? value) => FilterChanged();
 
     private void FilterChanged()
     {
@@ -525,11 +543,24 @@ public sealed partial class PaneViewModel : ObservableObject
     {
         Model = match;
         Header = string.IsNullOrWhiteSpace(match.Discipline) ? match.Name : $"{match.Name} · {match.Discipline}";
-        Parts = string.Join("; ", match.Parts.Select(p => p.LastApprovedRunAt is { } at ? $"{p.Name} — прогон {at.ToLocalTime():dd.MM.yyyy HH:mm}" : p.Name));
+        Parts = PartsText(match, null);
 
+        var query = _session.QueryFor(match.Key);
+        // Первый заход в модель за сеанс: часть — та, с которой человек работал в прошлый раз.
+        if (!_session.Knows(match.Key) && _partMemory?.Get(match.Key) is { } remembered) query = query with { Part = remembered };
         var state = new CollisionListState(_api, match.Key);
-        await state.SetQueryAsync(_session.QueryFor(match.Key));
+        await state.SetQueryAsync(query);
         if (version != _version) return;
+        if (query.Part is { } wanted && state.Facets.Parts is { } known && known.All(f => !PartIs(f.Value, wanted)))
+        {
+            // Запомненной части больше нет среди частей с коллизиями: список — по всем частям, память очищена.
+            query = query with { Part = null };
+            _partMemory?.Set(match.Key, null);
+            _session.Remember(match.Key, query);
+            await state.SetQueryAsync(query);
+            if (version != _version) return;
+        }
+
         ToadLog.Debug("Коллизии", $"загружена страница списка: {state.Items.Count} коллизий");
         _state = state;
         ShowList(state, rebuild: true);
@@ -547,22 +578,44 @@ public sealed partial class PaneViewModel : ObservableObject
         }
     }
 
+    private static bool PartIs(string value, Guid part) => Guid.TryParse(value, out var id) && id == part;
+
+    /// <summary>Шапка частей: все части модели; выбрана часть — только она и дата её прогона.</summary>
+    private static string PartsText(ModelMatch match, Guid? chosen)
+    {
+        var parts = chosen is { } id && match.Parts.Any(p => p.Id == id) ? match.Parts.Where(p => p.Id == id) : match.Parts;
+        return string.Join("; ", parts.Select(p => p.LastApprovedRunAt is { } at ? $"{p.Name} — прогон {at.ToLocalTime():dd.MM.yyyy HH:mm}" : p.Name));
+    }
+
     private void ShowList(CollisionListState state, bool rebuild)
     {
         _quiet = true;
         try
         {
+            var partFacets = state.Facets.Parts;
+            ShowPartFilter = partFacets is { Count: >= 2 };
+            // Имя части в строке — когда видны все части, а не одна выбранная.
+            var showPartName = ShowPartFilter && state.Query.Part is null;
             if (rebuild)
             {
                 // Строки создаются заново — прежнее выделение к ним не относится.
                 CheckedItems = [];
                 Items.Clear();
-                foreach (var row in state.Items) Items.Add(new CollisionItemViewModel(row, _thumbnails));
+                foreach (var row in state.Items) Items.Add(new CollisionItemViewModel(row, _thumbnails, showPartName));
             }
             else
             {
-                foreach (var row in state.Items.Skip(Items.Count)) Items.Add(new CollisionItemViewModel(row, _thumbnails));
+                foreach (var row in state.Items.Skip(Items.Count)) Items.Add(new CollisionItemViewModel(row, _thumbnails, showPartName));
             }
+
+            PartOptions.Clear();
+            if (partFacets is not null)
+            {
+                PartOptions.Add(new FilterOption(null, $"Все части ({partFacets.Sum(f => f.Count)})"));
+                foreach (var f in partFacets) PartOptions.Add(new FilterOption(f.Value, $"{f.Label} ({f.Count})"));
+            }
+
+            if (Model is { } model && partFacets is not null) Parts = PartsText(model, state.Query.Part);
 
             SelectedItem = state.Selected is { } selected ? Items.FirstOrDefault(i => i.Row.Collision.Id == selected.Collision.Id) : null;
             HasMore = state.HasMore;
@@ -597,6 +650,7 @@ public sealed partial class PaneViewModel : ObservableObject
         var quiet = _quiet;
         _quiet = true;
         (StatusFilter, GroupFilter, PairFilter, LevelFilter, Search) = (query.Status, query.Group, query.Pair, query.Level, query.Search ?? "");
+        PartFilter = query.Part?.ToString("D");
         NewForMeActive = query.Since == "unseen";
         _quiet = quiet;
     }

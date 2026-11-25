@@ -4,7 +4,7 @@ using Collisions.Core;
 namespace Collisions.ViewModels;
 
 /// <summary>Строка списка коллизий. Миниатюра грузится при первом обращении — то есть когда строка показалась на экране.</summary>
-public sealed partial class CollisionItemViewModel(ModelCollisionRow row, ThumbnailCache thumbnails) : ObservableObject
+public sealed partial class CollisionItemViewModel(ModelCollisionRow row, ThumbnailCache thumbnails, bool showPart = false) : ObservableObject
 {
     public const string MineGroup = "Мои и общие";
     public const string OtherGroup = "Взяла другая сторона";
@@ -31,6 +31,12 @@ public sealed partial class CollisionItemViewModel(ModelCollisionRow row, Thumbn
     public string Depth => $"{row.Collision.DepthMm:0} мм";
     public string Pair => $"{row.Collision.DisciplineA} × {row.Collision.DisciplineB}";
     public string? Level => row.Own.Level;
+
+    /// <summary>Имя части здания; null — не показывать (одна часть или выбрана конкретная).</summary>
+    public string? PartName => showPart ? row.PartName : null;
+
+    /// <summary>Хвост второй строки: « · имя части» или пусто.</summary>
+    public string PartSuffix => PartName is { } name ? $" · {name}" : "";
     public string Own => row.Own.Title;
     public string Other => $"{row.Other.ModelName}: {row.Other.Title}";
     public string? Taken => row.TakenBy is { } who ? $"взял(а) {who}" : null;
