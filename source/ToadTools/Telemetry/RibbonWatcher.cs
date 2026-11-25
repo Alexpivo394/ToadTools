@@ -5,7 +5,9 @@ namespace ToadTools.Telemetry;
 
 /// <summary>
 ///     Запуски команд с ленты Revit (<see cref="ComponentManager.ItemExecuted" />): штатные команды и чужие надстройки. Кнопки
-///     ToadTools пропускаются — их считает сама команда. Горячие клавиши и повтор последней команды это событие не ловит.
+///     ToadTools пропускаются — их считает сама команда. Ловит ленту и панель быстрого доступа; горячие клавиши, повтор
+///     последней команды (Enter, контекстное меню) — нет (проверено в Revit 2024). Основная часть разделённой кнопки считается
+///     её пунктом (<see cref="CommandNaming.SplitTarget" />).
 ///     Обработчик только ищет вкладку кнопки и кладёт запуск в счётчик в памяти.
 /// </summary>
 internal sealed class RibbonWatcher(Action<CommandRun> record)
@@ -26,6 +28,14 @@ internal sealed class RibbonWatcher(Action<CommandRun> record)
         {
             var item = e.Item;
             if (item is null) return;
+            if (item is RibbonListButton list)
+            {
+                var current = list is RibbonSplitButton { IsSynchronizedWithCurrentItem: true } ? list.Current?.Id : null;
+                if (CommandNaming.SplitTarget(list.Id, current, list.Items.Select(i => i.Id)) is { } target &&
+                    list.Items.FirstOrDefault(i => i.Id == target) is { } chosen)
+                    item = chosen;
+            }
+
             if (!_tabs.TryGetValue(item, out var tab) && DateTime.UtcNow - _builtAt > RebuildEvery)
             {
                 _tabs = BuildTabs();

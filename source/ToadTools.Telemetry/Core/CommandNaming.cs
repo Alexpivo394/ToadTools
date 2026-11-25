@@ -40,6 +40,21 @@ public static class CommandNaming
         return new NamedCommand(commandId, name.Length > 0 ? name : commandId, source, cleanTab);
     }
 
+    private const string SplitSuffix = "_RibbonListButton";
+
+    /// <summary>
+    ///     Какой пункт разделённой кнопки запустила её основная часть, чтобы запуск с кнопки и из её списка был одной командой.
+    ///     Синхронизированная кнопка знает текущий пункт; у штатной кнопки Revit без синхронизации id — «id пункта» +
+    ///     <c>_RibbonListButton</c>. null — пункт не узнать, считается сама кнопка.
+    /// </summary>
+    public static string? SplitTarget(string? buttonId, string? currentId, IEnumerable<string?> itemIds)
+    {
+        if (!string.IsNullOrWhiteSpace(currentId)) return currentId;
+        if (buttonId is null || !buttonId.EndsWith(SplitSuffix, StringComparison.Ordinal)) return null;
+        var main = buttonId.Substring(0, buttonId.Length - SplitSuffix.Length);
+        return itemIds.Contains(main, StringComparer.Ordinal) ? main : null;
+    }
+
     /// <summary>Идентификатор команды ToadTools — имя класса без «Command».</summary>
     public static string ToadToolsId(string typeName) =>
         typeName.EndsWith("Command", StringComparison.Ordinal) ? typeName.Substring(0, typeName.Length - "Command".Length) : typeName;

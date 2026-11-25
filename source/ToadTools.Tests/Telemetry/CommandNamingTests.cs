@@ -45,4 +45,19 @@ public class CommandNamingTests
 
     [Test]
     public void ToadToolsCommand_NameWithoutSuffix() => CommandNaming.ToadToolsId("ParamCheckerCommand").ShouldBe("ParamChecker");
+
+    // Живой Revit 2024: основная часть «Стены» приходит как ID_OBJECTS_WALL_RibbonListButton, пункт списка — как ID_OBJECTS_WALL.
+    [Test]
+    public void SplitMain_CountsAsItsItem() =>
+        CommandNaming.SplitTarget("ID_OBJECTS_WALL_RibbonListButton", null, ["ID_OBJECTS_WALL", "ID_OBJECTS_STRUCTURAL_WALL", ""])
+            .ShouldBe("ID_OBJECTS_WALL");
+
+    [Test]
+    public void SplitSynchronized_CountsAsCurrentItem() =>
+        CommandNaming.SplitTarget("Wire_Split_Button", "ID_RBS_ELECTRICAL_WIRE_SPLINE", ["ID_RBS_ELECTRICAL_WIRE", "ID_RBS_ELECTRICAL_WIRE_SPLINE"])
+            .ShouldBe("ID_RBS_ELECTRICAL_WIRE_SPLINE");
+
+    [Test]
+    public void SplitWithoutMatchingItem_KeepsButton() =>
+        CommandNaming.SplitTarget("HID_MODEL_GROUP_RibbonListButton", null, ["ID_OBJECTS_PLACE_GROUP", "ID_EDIT_GROUP"]).ShouldBeNull();
 }
