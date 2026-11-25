@@ -96,13 +96,13 @@ public sealed class FamilyBridge(int revitYear) : IFamilyBridge
             Directory.CreateDirectory(DraftsFolder);
             var draft = Path.Combine(DraftsFolder, Path.GetFileName(target.Path));
             var catalogBefore = source.Length > 0 ? Path.ChangeExtension(source, ".txt") : null;
-            document.SaveAs(draft, new SaveAsOptions { OverwriteExistingFile = true, Compact = true });
+            RevitSave(() => document.SaveAs(draft, new SaveAsOptions { OverwriteExistingFile = true, Compact = true }));
             // Каталог типоразмеров лежал рядом с файлом библиотеки — с черновиком он тоже нужен.
             if (catalogBefore is not null && File.Exists(catalogBefore)) File.Copy(catalogBefore, Path.ChangeExtension(draft, ".txt"), overwrite: true);
             source = draft;
         }
         else if (document.IsModified)
-            document.Save(new SaveOptions { Compact = true });
+            RevitSave(() => document.Save(new SaveOptions { Compact = true }));
 
         Directory.CreateDirectory(Path.GetDirectoryName(target.Path)!);
         File.Copy(source, target.Path, target.Overwrite);
@@ -112,5 +112,18 @@ public sealed class FamilyBridge(int revitYear) : IFamilyBridge
         // Без каталога у новой версии прежний каталог описывал бы чужие типоразмеры; его копия остаётся в истории библиотеки.
         else if (target.Overwrite && File.Exists(targetCatalog)) File.Delete(targetCatalog);
         return new PublishedCopy(source, redirected);
+    }
+
+    /// <summary>Отказ Revit сохранить (файл занят, только для чтения) — понятной ошибкой панели, а не сбоем команды.</summary>
+    private static void RevitSave(Action save)
+    {
+        try
+        {
+            save();
+        }
+        catch (Autodesk.Revit.Exceptions.ApplicationException exception)
+        {
+            throw new InvalidOperationException($"Revit не сохранил семейство: {exception.Message}", exception);
+        }
     }
 }
