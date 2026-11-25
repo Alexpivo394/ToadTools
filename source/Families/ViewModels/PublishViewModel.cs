@@ -95,6 +95,9 @@ public sealed partial class PublishViewModel(IFamiliesApi api, IFamilyBridge rev
         }
     }
 
+    /// <summary>Сервер знает итерации (ToadFlow 3.4+): старый принял бы файл итерации за чужое семейство с занятым именем.</summary>
+    public bool IterationsAvailable => _library?.IterationsFolder is not null;
+
     /// <summary>Нужно выбрать существующее семейство: новая версия или итерация.</summary>
     public bool NeedsExisting => Mode != PublishMode.NewFamily;
 
@@ -144,6 +147,8 @@ public sealed partial class PublishViewModel(IFamiliesApi api, IFamilyBridge rev
         if (Folder.Length == 0) Folder = library.ReviewFolder;
         Result = "";
         OnPropertyChanged(nameof(YearWarning));
+        OnPropertyChanged(nameof(IterationsAvailable));
+        if (!IterationsAvailable && Mode == PublishMode.Iteration) Mode = PublishMode.NewFamily;
         try
         {
             var open = await api.OpenRequestsAsync(CancellationToken.None);
@@ -242,6 +247,12 @@ public sealed partial class PublishViewModel(IFamiliesApi api, IFamilyBridge rev
     private async Task Publish()
     {
         Result = "";
+        if (Mode == PublishMode.Iteration && !IterationsAvailable)
+        {
+            Result = "Итерации появились в ToadFlow 3.4 — этот сервер их ещё не знает";
+            return;
+        }
+
         if (TargetPath() is not { } target)
         {
             Result = MissingText();

@@ -197,7 +197,8 @@
                                    Visibility="{Binding YearWarning, Converter={views:ShownConverter}}" />
                         <RadioButton GroupName="PublishMode" Content="Новое семейство" IsChecked="{Binding IsNewFamily}" Margin="0,0,0,4" />
                         <RadioButton GroupName="PublishMode" Content="Новая версия существующего (через проверку)" IsChecked="{Binding IsNewVersion}" Margin="0,0,0,4" />
-                        <RadioButton GroupName="PublishMode" Content="В итерацию существующего (проектный вариант, сразу)" IsChecked="{Binding IsIteration}" Margin="0,0,0,8" />
+                        <RadioButton GroupName="PublishMode" Content="В итерацию существующего (проектный вариант, сразу)" IsChecked="{Binding IsIteration}" Margin="0,0,0,8"
+                                     Visibility="{Binding IterationsAvailable, Converter={views:ShownConverter}}" />
 
                         <StackPanel Visibility="{Binding IsNewFamily, Converter={views:ShownConverter}}">
                             <TextBlock Text="Имя файла (имя семейства в проекте)" FontSize="11" Opacity="0.8" />

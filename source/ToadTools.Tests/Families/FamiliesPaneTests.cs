@@ -694,6 +694,23 @@ public class FamiliesPaneTests
     }
 
     [Test]
+    public async Task Publish_OldServerWithoutIterations_NoIterationMode()
+    {
+        using var setup = new Setup();
+        setup.Api.Library = setup.Api.Library with { CanPublish = true, IterationsFolder = null };
+        setup.Revit.Document = new ActiveDocument("Клапан.rfa", true, @"C:\Work\Клапан.rfa");
+        await setup.Model.ActivateAsync();
+        var publish = setup.Model.Publish;
+
+        publish.IterationsAvailable.ShouldBeFalse();
+        publish.IsIteration = true;
+        await publish.PublishCommand.ExecuteAsync(null);
+
+        publish.Result.ShouldContain("ToadFlow 3.4");
+        setup.Revit.Saved.ShouldBeEmpty();
+    }
+
+    [Test]
     public async Task Designer_CannotPublish()
     {
         using var setup = new Setup();
