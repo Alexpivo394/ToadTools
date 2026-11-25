@@ -28,7 +28,8 @@
 
         <DockPanel DockPanel.Dock="Bottom" Margin="0,14,0,0" LastChildFill="False">
             <toad:Button DockPanel.Dock="Right" Content="Запуск" Icon="Rocket" Variant="Filled"
-                         Command="{Binding StartCommand}" />        </DockPanel>
+                         Command="{Binding StartCommand}" />
+        </DockPanel>
 
         <Border Margin="0,12,0,0" Padding="4" BorderThickness="1"
                 BorderBrush="{DynamicResource Toad.Brush.Border}"

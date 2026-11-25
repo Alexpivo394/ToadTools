@@ -13,7 +13,7 @@
     <UserControl.Resources>
         <!-- Column captions of the model and rule tables -->
         <Style x:Key="Caption" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontSize" Value="{DynamicResource Toad.FontSize.Caption}" />
             <Setter Property="FontWeight" Value="Bold" />
             <Setter Property="Foreground" Value="{DynamicResource Toad.Brush.TextDimmed}" />
         </Style>

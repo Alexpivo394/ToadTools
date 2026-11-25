@@ -24,7 +24,8 @@
         <DockPanel DockPanel.Dock="Bottom" Margin="0,14,0,0" LastChildFill="False">
             <toad:Button DockPanel.Dock="Right" Content="Начать перенос" Icon="Rocket" Variant="Filled"
                          Command="{Binding TransferElementsCommand}"
-                         IsEnabled="{Binding IsBusy, Converter={converters:InverseBoolConverter}}" />        </DockPanel>
+                         IsEnabled="{Binding IsBusy, Converter={converters:InverseBoolConverter}}" />
+        </DockPanel>
 
         <StackPanel>
             <TextBlock Text="Исходная модель" FontWeight="SemiBold" Margin="0,0,0,6" />
