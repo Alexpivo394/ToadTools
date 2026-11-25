@@ -725,7 +725,11 @@ public sealed partial class PaneViewModel : ObservableObject
         }
         catch (Exception exception)
         {
-            ToadLog.Debug("Коллизии", $"ошибка шага панели: {exception.GetType().Name}: {exception.Message}");
+            // Ожидаемые ответы сервера — в обычный журнал; всё остальное — ошибка со стеком
+            if (exception is ToadFlowUnavailableException or ToadFlowRequestException)
+                ToadLog.Debug("Коллизии", $"ошибка шага панели: {exception.GetType().Name}: {exception.Message}");
+            else
+                ToadLog.Error("Коллизии", exception);
             if (version == _version) Show(PaneScreen.Error, ToadFlowErrors.Describe(exception));
         }
         finally
