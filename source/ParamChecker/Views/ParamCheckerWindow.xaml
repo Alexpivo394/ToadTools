@@ -5,7 +5,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:toad="urn:toaddesign"
-    xmlns:sys="clr-namespace:System;assembly=mscorlib"
+    xmlns:ui="clr-namespace:ToadTools.UI.Controls;assembly=ToadTools.UI"
     xmlns:viewModels="clr-namespace:ParamChecker.ViewModels"
     xmlns:views="clr-namespace:ParamChecker.Views"
     xmlns:uiConverters="clr-namespace:ToadTools.UI.Converters;assembly=ToadTools.UI"
@@ -20,10 +20,9 @@
     TitleIcon="FileSearch"
     Fill="Background">
 
-    <toad:ToadWindow.Resources>
-        <!-- Dense window: buttons and fields 34 px high, as in the large ParamChecker windows -->
-        <sys:Double x:Key="Toad.Size.Control">34</sys:Double>
-    </toad:ToadWindow.Resources>
+    <toad:ToadWindow.TitleBarContent>
+        <ui:SettingsButton />
+    </toad:ToadWindow.TitleBarContent>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -48,7 +47,7 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <Grid Grid.Row="0" Margin="4,0,0,8" MinHeight="34">
+                <Grid Grid.Row="0" Margin="4,0,0,8" MinHeight="{DynamicResource Toad.Size.Control}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
@@ -85,7 +84,7 @@
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" FontWeight="SemiBold"
                                                        ToolTip="{Binding DisplayName}" />
-                                            <TextBlock Text="{Binding Summary}" FontSize="12" Foreground="{DynamicResource Toad.Brush.TextDimmed}" />
+                                            <TextBlock Text="{Binding Summary}" FontSize="{DynamicResource Toad.FontSize.Small}" Foreground="{DynamicResource Toad.Brush.TextDimmed}" />
                                         </StackPanel>
                                     </Grid>
                                 </DataTemplate>

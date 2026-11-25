@@ -282,7 +282,7 @@
                         <DataTemplate DataType="{x:Type vm:KeyItemViewModel}">
                             <StackPanel>
                                 <TextBlock Text="{Binding Title}" TextWrapping="Wrap" />
-                                <TextBlock FontSize="11" Opacity="0.6">
+                                <TextBlock FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.6">
                                     <Run Text="{Binding KindTitle, Mode=OneWay}" /><Run Text=" · " /><Run Text="{Binding Key, Mode=OneWay}" />
                                 </TextBlock>
                             </StackPanel>
@@ -567,7 +567,7 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     <TextBlock Text="Правка (JSON)" FontWeight="Bold" Margin="0,0,0,4" />
-                    <TextBox Grid.Row="1" AcceptsReturn="True" AcceptsTab="True" FontFamily="Consolas" FontSize="12"
+                    <TextBox Grid.Row="1" AcceptsReturn="True" AcceptsTab="True" FontFamily="Consolas" FontSize="{DynamicResource Toad.FontSize.Small}"
                              VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Text="{Binding JsonText, UpdateSourceTrigger=PropertyChanged}" />
                     <TextBlock Grid.Row="2" Margin="0,6,0,0" Foreground="IndianRed" TextWrapping="Wrap" Text="{Binding ApplyError}"
                                Visibility="{Binding ApplyError, Converter={uiConverters:StringVisibilityConverter}}" />

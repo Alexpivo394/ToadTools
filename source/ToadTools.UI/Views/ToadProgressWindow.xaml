@@ -42,7 +42,7 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0"
                            Text="{Binding Stage}"
-                           FontSize="16"
+                           FontSize="{DynamicResource Toad.FontSize.Heading}"
                            FontWeight="SemiBold"
                            TextTrimming="CharacterEllipsis"
                            ToolTip="{Binding Stage}" />

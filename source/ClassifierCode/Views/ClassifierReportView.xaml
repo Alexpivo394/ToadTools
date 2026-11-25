@@ -36,7 +36,7 @@
 
             <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
                 <toad:Icon Symbol="CircleCheck" Width="24" Height="24" Margin="0,0,10,0" VerticalAlignment="Center" />
-                <TextBlock Text="Готово" FontSize="18" FontWeight="Bold" VerticalAlignment="Center" />
+                <TextBlock Text="Готово" FontSize="{DynamicResource Toad.FontSize.Heading}" FontWeight="Bold" VerticalAlignment="Center" />
             </StackPanel>
 
             <!-- Summary -->

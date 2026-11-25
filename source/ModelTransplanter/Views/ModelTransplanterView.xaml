@@ -5,7 +5,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:toad="urn:toaddesign"
-    xmlns:themes="clr-namespace:ToadTools.UI.Services;assembly=ToadTools.UI"
+    xmlns:ui="clr-namespace:ToadTools.UI.Controls;assembly=ToadTools.UI"
     xmlns:converters="clr-namespace:ToadTools.UI.Converters;assembly=ToadTools.UI"
     mc:Ignorable="d"
     Title="Копирование элементов"
@@ -16,14 +16,15 @@
     MinWidth="350"
     TitleIcon="CirclePlus">
 
+    <toad:ToadWindow.TitleBarContent>
+        <ui:SettingsButton />
+    </toad:ToadWindow.TitleBarContent>
+
     <DockPanel Margin="20,6,20,18">
         <DockPanel DockPanel.Dock="Bottom" Margin="0,14,0,0" LastChildFill="False">
             <toad:Button DockPanel.Dock="Right" Content="Начать перенос" Icon="Rocket" Variant="Filled"
                          Command="{Binding TransferElementsCommand}"
-                         IsEnabled="{Binding IsBusy, Converter={converters:InverseBoolConverter}}" />
-            <toad:Switch Content="Тёмная тема" VerticalAlignment="Center"
-                         IsChecked="{Binding IsDark, Source={x:Static themes:ThemePreference.Instance}}" />
-        </DockPanel>
+                         IsEnabled="{Binding IsBusy, Converter={converters:InverseBoolConverter}}" />        </DockPanel>
 
         <StackPanel>
             <TextBlock Text="Исходная модель" FontWeight="SemiBold" Margin="0,0,0,6" />

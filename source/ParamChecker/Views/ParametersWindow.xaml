@@ -82,7 +82,7 @@
             </Grid>
         </toad:Card>
 
-        <TextBlock Grid.Row="3" Margin="20,6,10,0" FontSize="12" TextWrapping="Wrap" Opacity="0.75"
+        <TextBlock Grid.Row="3" Margin="20,6,10,0" FontSize="{DynamicResource Toad.FontSize.Small}" TextWrapping="Wrap" Opacity="0.75"
                    Text="Подсказки — из ФОП, открытого проекта и системных параметров Revit. ⚠ — имени нет нигде из них (сверка работает, когда в Revit подключён ФОП). Параметр ищется у экземпляра, а если его там нет — у типа." />
 
         <Grid Grid.Row="4" Margin="16,14,16,16">

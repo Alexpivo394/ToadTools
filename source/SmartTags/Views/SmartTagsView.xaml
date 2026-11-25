@@ -5,8 +5,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:toad="urn:toaddesign"
-    xmlns:themes="clr-namespace:ToadTools.UI.Services;assembly=ToadTools.UI"
-    xmlns:sys="clr-namespace:System;assembly=mscorlib"
+    xmlns:ui="clr-namespace:ToadTools.UI.Controls;assembly=ToadTools.UI"
     xmlns:viewModels="clr-namespace:SmartTags.ViewModels"
     xmlns:models="clr-namespace:SmartTags.Models"
     xmlns:layout="clr-namespace:SmartTags.Layout"
@@ -23,10 +22,9 @@
     TitleIcon="Tags"
     Fill="Background">
 
-    <toad:ToadWindow.Resources>
-        <!-- Dense window: buttons and fields 34 px high, as in the large ParamChecker windows -->
-        <sys:Double x:Key="Toad.Size.Control">34</sys:Double>
-    </toad:ToadWindow.Resources>
+    <toad:ToadWindow.TitleBarContent>
+        <ui:SettingsButton />
+    </toad:ToadWindow.TitleBarContent>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -244,11 +242,11 @@
                             <Slider Minimum="0" Maximum="2" TickFrequency="1" IsSnapToTickEnabled="True"
                                     TickPlacement="BottomRight" Value="{Binding Quality}" />
                             <Grid Opacity="0.7">
-                                <TextBlock Text="Быстро" HorizontalAlignment="Left" FontSize="12" />
-                                <TextBlock Text="Стандарт" HorizontalAlignment="Center" FontSize="12" />
-                                <TextBlock Text="Максимум" HorizontalAlignment="Right" FontSize="12" />
+                                <TextBlock Text="Быстро" HorizontalAlignment="Left" FontSize="{DynamicResource Toad.FontSize.Small}" />
+                                <TextBlock Text="Стандарт" HorizontalAlignment="Center" FontSize="{DynamicResource Toad.FontSize.Small}" />
+                                <TextBlock Text="Максимум" HorizontalAlignment="Right" FontSize="{DynamicResource Toad.FontSize.Small}" />
                             </Grid>
-                            <TextBlock Margin="0,10,0,0" Opacity="0.7" FontSize="12" TextWrapping="Wrap"
+                            <TextBlock Margin="0,10,0,0" Opacity="0.7" FontSize="{DynamicResource Toad.FontSize.Small}" TextWrapping="Wrap"
                                        Text="Все отмеченные категории раскладываются за один проход — марки разных категорий не перекроют друг друга." />
                         </StackPanel>
                     </toad:Card>
@@ -312,10 +310,6 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                <toad:Switch Content="Тёмная тема" VerticalAlignment="Center"
-                         IsChecked="{Binding IsDark, Source={x:Static themes:ThemePreference.Instance}}" />
-            </StackPanel>
             <toad:Button Grid.Column="1"
                        Content="Запустить"
                        Icon="Rocket"

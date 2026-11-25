@@ -5,8 +5,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:toad="urn:toaddesign"
-    xmlns:themes="clr-namespace:ToadTools.UI.Services;assembly=ToadTools.UI"
-    xmlns:sys="clr-namespace:System;assembly=mscorlib"
+    xmlns:ui="clr-namespace:ToadTools.UI.Controls;assembly=ToadTools.UI"
     xmlns:viewModels="clr-namespace:ToadExporter.ViewModels"
     xmlns:tree="clr-namespace:ToadExporter.ViewModels.Tree"
     xmlns:views="clr-namespace:ToadExporter.Views"
@@ -22,9 +21,11 @@
     TitleIcon="FileExport"
     Fill="Background">
 
+    <toad:ToadWindow.TitleBarContent>
+        <ui:SettingsButton />
+    </toad:ToadWindow.TitleBarContent>
+
     <toad:ToadWindow.Resources>
-        <!-- Dense window: buttons and fields 34 px high, as in the large ParamChecker windows -->
-        <sys:Double x:Key="Toad.Size.Control">34</sys:Double>
         <!-- Строка дерева на всю ширину: отступ уровня — внутри строки, поэтому колонки RVT/NWC ровные -->
         <Style x:Key="ModelTreeItem" TargetType="TreeViewItem">
             <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
@@ -183,9 +184,9 @@
                                         <ColumnDefinition Width="56" />
                                         <ColumnDefinition Width="56" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Папка / модель" Opacity="0.7" FontSize="12" />
-                                    <TextBlock Grid.Column="1" Text="RVT" Opacity="0.7" FontSize="12" HorizontalAlignment="Center" />
-                                    <TextBlock Grid.Column="2" Text="NWC" Opacity="0.7" FontSize="12" HorizontalAlignment="Center" />
+                                    <TextBlock Text="Папка / модель" Opacity="0.7" FontSize="{DynamicResource Toad.FontSize.Small}" />
+                                    <TextBlock Grid.Column="1" Text="RVT" Opacity="0.7" FontSize="{DynamicResource Toad.FontSize.Small}" HorizontalAlignment="Center" />
+                                    <TextBlock Grid.Column="2" Text="NWC" Opacity="0.7" FontSize="{DynamicResource Toad.FontSize.Small}" HorizontalAlignment="Center" />
                                 </Grid>
                             </Border>
 
@@ -265,7 +266,7 @@
                         </Grid>
                     </toad:Card>
 
-                    <TextBlock Grid.Row="2" Margin="10,6,0,0" Opacity="0.7" FontSize="12" Text="{Binding SelectionText}" />
+                    <TextBlock Grid.Row="2" Margin="10,6,0,0" Opacity="0.7" FontSize="{DynamicResource Toad.FontSize.Small}" Text="{Binding SelectionText}" />
                 </Grid>
 
                 <!-- Настройки -->
@@ -284,7 +285,7 @@
                                     <toad:Button Grid.Column="1" Icon="FolderOpen" Margin="8,0,0,0" VerticalAlignment="Stretch"
                                                ToolTip="Обзор" Command="{Binding BrowseOutputCommand}"/>
                                 </Grid>
-                                <TextBlock Margin="0,6,0,0" Opacity="0.7" FontSize="12" TextWrapping="Wrap"
+                                <TextBlock Margin="0,6,0,0" Opacity="0.7" FontSize="{DynamicResource Toad.FontSize.Small}" TextWrapping="Wrap"
                                            Text="Имя как у оригинала, существующие файлы перезаписываются" />
                             </StackPanel>
                         </toad:Card>
@@ -293,7 +294,7 @@
                             <StackPanel>
                                 <TextBlock Text="Открытие" FontWeight="SemiBold" Margin="0,0,0,4" />
                                 <CheckBox Content="Не загружать связи" IsChecked="{Binding Settings.SkipLinks}" />
-                                <TextBlock Margin="28,0,0,4" Opacity="0.7" FontSize="12" TextWrapping="Wrap"
+                                <TextBlock Margin="28,0,0,4" Opacity="0.7" FontSize="{DynamicResource Toad.FontSize.Small}" TextWrapping="Wrap"
                                            Text="Модель копируется во временную папку, связи в копии помечаются «не загружать». Исходник не меняется. Неудалённые связи сохраняются в RVT выгруженными, в NWC их нет." />
                                 <CheckBox Content="Проверка" IsChecked="{Binding Settings.Audit}"
                                           ToolTip="Revit проверит и исправит модель при открытии — заметно дольше" />
@@ -313,7 +314,7 @@
                                           IsEnabled="{Binding PurgeAvailable}" ToolTip="{Binding PurgeHint}"
                                           ToolTipService.ShowOnDisabled="True" />
                                 <CheckBox Content="Сжать файл" IsChecked="{Binding Settings.Compact}" Margin="0,4,0,0" />
-                                <TextBlock Margin="0,8,0,0" Opacity="0.7" FontSize="12" TextWrapping="Wrap"
+                                <TextBlock Margin="0,8,0,0" Opacity="0.7" FontSize="{DynamicResource Toad.FontSize.Small}" TextWrapping="Wrap"
                                            Text="Модель совместной работы сохраняется локальной копией с рабочими наборами (как createLocalRVT); её файл хранилища не сохраняется" />
                             </StackPanel>
                         </toad:CardExpander>
@@ -378,9 +379,7 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                <toad:Switch Content="Тёмная тема" VerticalAlignment="Center"
-                         IsChecked="{Binding IsDark, Source={x:Static themes:ThemePreference.Instance}}" />
-                <TextBlock Text="Конфигурация:" VerticalAlignment="Center" Margin="20,0,10,0" />
+                <TextBlock Text="Конфигурация:" VerticalAlignment="Center" Margin="0,0,10,0" />
                 <toad:Button Content="Загрузить"
                            Icon="FolderOpen"
                            ToolTip="Загружает настройки и отмеченные модели из файла .json"

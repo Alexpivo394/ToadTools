@@ -239,11 +239,11 @@
                                 <toad:Button Grid.Column="1" Icon="FolderOpen" Margin="8,0,0,0" VerticalAlignment="Stretch"
                                              ToolTip="Обзор" Command="{Binding BrowseFolderCommand}" />
                             </Grid>
-                            <TextBlock Margin="0,6,0,0" Opacity="0.7" FontSize="12" TextWrapping="Wrap"
+                            <TextBlock Margin="0,6,0,0" Opacity="0.7" FontSize="{DynamicResource Toad.FontSize.Small}" TextWrapping="Wrap"
                                        Text="Повторная выгрузка обновляет модели и набор, но не трогает работу агента (work, profile.classifier.json, REVIEW.md)" />
                             <TextBlock Text="Профиль-основа" Opacity="0.8" Margin="0,10,0,4" />
                             <ComboBox ItemsSource="{Binding Profiles}" SelectedItem="{Binding BaseProfile}" DisplayMemberPath="Title" />
-                            <TextBlock Margin="0,6,0,0" Opacity="0.7" FontSize="12" TextWrapping="Wrap"
+                            <TextBlock Margin="0,6,0,0" Opacity="0.7" FontSize="{DynamicResource Toad.FontSize.Small}" TextWrapping="Wrap"
                                        Text="Агент собирает профиль объекта из этого: берёт его правила и меняет под модели и таблицу кодов заказчика" />
                         </StackPanel>
                     </toad:Card>

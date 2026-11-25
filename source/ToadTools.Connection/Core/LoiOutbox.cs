@@ -20,7 +20,7 @@ public sealed record SendResult(int Sent, int Pending, string? Error);
 /// <param name="post">Отправка одного итога на сервер.</param>
 public sealed class LoiOutbox(string folder, Func<bool> enabled, Func<bool> connected, Func<JsonObject, CancellationToken, Task> post)
 {
-    public const string SignInAgain = "Подключение к ToadFlow устарело — войдите заново (ToadTools → Подключение к ToadFlow)";
+    public const string SignInAgain = "Подключение к ToadFlow устарело — войдите заново (ToadTools → Настройки)";
 
     public const string NotEnoughRights =
         "Недостаточно прав: статистику LOI в ToadFlow отправляют только координаторы и администраторы. Итоги отложены в outbox\forbidden";

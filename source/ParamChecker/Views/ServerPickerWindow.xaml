@@ -101,7 +101,7 @@
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
                 <toad:Loader Width="16" Height="16" Margin="0,0,8,0"
                                  Visibility="{Binding IsRefreshing, Converter={uiConverters:BooleanCollapsedVisibilityConverter}}" />
-                <TextBlock Text="{Binding Status}" Opacity="0.7" FontSize="12" MaxWidth="320" TextTrimming="CharacterEllipsis"
+                <TextBlock Text="{Binding Status}" Opacity="0.7" FontSize="{DynamicResource Toad.FontSize.Small}" MaxWidth="320" TextTrimming="CharacterEllipsis"
                            ToolTip="{Binding Status}" />
             </StackPanel>
         </Grid>
@@ -154,7 +154,7 @@
                                     <toad:Loader Width="12" Height="12" Margin="8,0,0,0"
                                                      Visibility="{Binding IsLoading, Converter={uiConverters:BooleanCollapsedVisibilityConverter}}" />
                                 </StackPanel>
-                                <TextBlock Grid.Column="1" Text="{Binding Hint}" FontSize="12" Opacity="0.6" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="{Binding Hint}" FontSize="{DynamicResource Toad.FontSize.Small}" Opacity="0.6" VerticalAlignment="Center" />
                             </Grid>
                         </HierarchicalDataTemplate>
                     </TreeView.ItemTemplate>
@@ -180,9 +180,9 @@
                                               IsEnabled="{Binding IsExisting, Converter={uiConverters:InverseBooleanConverter}}" />
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
-                                        <TextBlock Text="{Binding FolderPath}" FontSize="12" Opacity="0.6" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{Binding FolderPath}" FontSize="{DynamicResource Toad.FontSize.Small}" Opacity="0.6" TextTrimming="CharacterEllipsis" />
                                     </StackPanel>
-                                    <TextBlock Grid.Column="2" Text="{Binding Hint}" FontSize="12" Opacity="0.6" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="2" Text="{Binding Hint}" FontSize="{DynamicResource Toad.FontSize.Small}" Opacity="0.6" VerticalAlignment="Center" />
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -199,7 +199,7 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <toad:Button Grid.Column="0" Content="Снять все" Variant="Subtle" Command="{Binding ClearSelectionCommand}" />
-            <TextBlock Grid.Column="1" Margin="12,0" VerticalAlignment="Center" Opacity="0.7" FontSize="12" TextWrapping="Wrap"
+            <TextBlock Grid.Column="1" Margin="12,0" VerticalAlignment="Center" Opacity="0.7" FontSize="{DynamicResource Toad.FontSize.Small}" TextWrapping="Wrap"
                        Text="Галочка на папке отмечает все модели в ней и во вложенных папках." />
             <toad:Button Grid.Column="2" Content="Отмена" Icon="X" IsCancel="True" Click="OnCancel" />
             <toad:Button Grid.Column="3" Margin="8,0,0,0" Content="{Binding AddText}" Icon="Plus" Variant="Filled"

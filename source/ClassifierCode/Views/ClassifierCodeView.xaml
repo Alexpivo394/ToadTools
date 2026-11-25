@@ -5,7 +5,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:toad="urn:toaddesign"
-    xmlns:themes="clr-namespace:ToadTools.UI.Services;assembly=ToadTools.UI"
+    xmlns:ui="clr-namespace:ToadTools.UI.Controls;assembly=ToadTools.UI"
     xmlns:viewModels="clr-namespace:ClassifierCode.ViewModels"
     xmlns:models="clr-namespace:ClassifierCode.Models"
     xmlns:profile="clr-namespace:ClassifierCode.Engine.Profile"
@@ -20,6 +20,10 @@
     MinHeight="580"
     MinWidth="560"
     TitleIcon="Tag">
+
+    <toad:ToadWindow.TitleBarContent>
+        <ui:SettingsButton />
+    </toad:ToadWindow.TitleBarContent>
 
     <toad:ToadWindow.Resources>
         <Style x:Key="SectionHeader" TargetType="TextBlock">
@@ -109,7 +113,7 @@
                     <DataTemplate DataType="{x:Type profile:ModeDef}">
                         <StackPanel Margin="0,3">
                             <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
-                            <TextBlock Text="{Binding Hint}" FontSize="12" Opacity="0.7" TextWrapping="Wrap" Margin="0,2,0,0" />
+                            <TextBlock Text="{Binding Hint}" FontSize="{DynamicResource Toad.FontSize.Small}" Opacity="0.7" TextWrapping="Wrap" Margin="0,2,0,0" />
                         </StackPanel>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
@@ -153,8 +157,6 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <toad:Switch Content="Тёмная тема" VerticalAlignment="Center"
-                         IsChecked="{Binding IsDark, Source={x:Static themes:ThemePreference.Instance}}" />
             <toad:Button Grid.Column="1"
                          Content="Заполнить"
                          Icon="Rocket"

@@ -5,14 +5,13 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:toad="urn:toaddesign"
-    xmlns:themes="clr-namespace:ToadTools.UI.Services;assembly=ToadTools.UI"
     xmlns:viewModels="clr-namespace:ParamChecker.ViewModels"
     d:DataContext="{d:DesignInstance Type=viewModels:MainViewModel}"
     mc:Ignorable="d">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel MaxWidth="760" HorizontalAlignment="Left" Margin="0,0,8,0">
-            <TextBlock Text="Настройки" FontSize="20" FontWeight="SemiBold" Margin="10,0,0,10" />
+            <TextBlock Text="Настройки" FontSize="{DynamicResource Toad.FontSize.Heading}" FontWeight="SemiBold" Margin="10,0,0,10" />
 
             <toad:Card Padding="14,10" Margin="0,0,0,8">
                 <StackPanel>
@@ -30,12 +29,12 @@
                         <toad:Button Grid.Column="2" Icon="ExternalLink" Margin="8,0,0,0" VerticalAlignment="Stretch"
                                    ToolTip="Открыть папку" Command="{Binding OpenReportsCommand}" />
                     </Grid>
-                    <TextBlock Margin="0,6,0,0" Opacity="0.7" FontSize="12" TextWrapping="Wrap"
+                    <TextBlock Margin="0,6,0,0" Opacity="0.7" FontSize="{DynamicResource Toad.FontSize.Small}" TextWrapping="Wrap"
                                Text="Отчёты раскладываются по папкам профилей: &lt;папка&gt;\&lt;профиль&gt;\&lt;модель&gt;_LOIReport.xlsx. Здесь же — журнал каждого запуска." />
 
                     <CheckBox Margin="0,10,0,0" Content="В листах правил — только элементы с незаполненными параметрами"
                               IsChecked="{Binding Settings.ProblemsOnly}" />
-                    <TextBlock Margin="28,0,0,0" Opacity="0.7" FontSize="12" TextWrapping="Wrap"
+                    <TextBlock Margin="28,0,0,0" Opacity="0.7" FontSize="{DynamicResource Toad.FontSize.Small}" TextWrapping="Wrap"
                                Text="Отчёты по большим моделям становятся в разы меньше и сразу показывают, что исправлять. Итоги и проценты считаются по всем элементам." />
                 </StackPanel>
             </toad:Card>
@@ -44,7 +43,7 @@
                 <StackPanel>
                     <TextBlock Text="Открытие моделей" FontWeight="SemiBold" Margin="0,0,0,6" />
                     <CheckBox Content="Не загружать связи RVT" IsChecked="{Binding Settings.SkipLinks}" />
-                    <TextBlock Margin="28,0,0,0" Opacity="0.7" FontSize="12" TextWrapping="Wrap"
+                    <TextBlock Margin="28,0,0,0" Opacity="0.7" FontSize="{DynamicResource Toad.FontSize.Small}" TextWrapping="Wrap"
                                Text="Модель копируется во временную папку, и в копии связи отключаются — так она открывается быстрее, а закрывать рабочие наборы связей не нужно. Исходная модель не меняется." />
                 </StackPanel>
             </toad:Card>
@@ -53,7 +52,7 @@
                 <StackPanel>
                     <TextBlock Text="База для дашбордов (Power BI, Excel)" FontWeight="SemiBold" Margin="0,0,0,6" />
                     <CheckBox Content="Дописывать итоги каждого запуска в базу" IsChecked="{Binding Settings.HistoryEnabled}" />
-                    <TextBlock Margin="28,0,0,8" Opacity="0.7" FontSize="12" TextWrapping="Wrap"
+                    <TextBlock Margin="28,0,0,8" Opacity="0.7" FontSize="{DynamicResource Toad.FontSize.Small}" TextWrapping="Wrap"
                                Text="Одна книга Excel с таблицами Models, Rules и Parameters: каждый запуск добавляет строки с датой, поэтому копится история заполнения. Её удобно подключить к Power BI один раз и обновлять." />
                     <Grid IsEnabled="{Binding Settings.HistoryEnabled}">
                         <Grid.ColumnDefinitions>
@@ -76,7 +75,7 @@
                 <StackPanel>
                     <TextBlock Text="Аналитика ToadFlow" FontWeight="SemiBold" Margin="0,0,0,6" />
                     <CheckBox Content="Отправлять итоги проверенных моделей в ToadFlow" IsChecked="{Binding Settings.ToadFlowEnabled}" />
-                    <TextBlock Margin="28,0,0,8" Opacity="0.7" FontSize="12" TextWrapping="Wrap"
+                    <TextBlock Margin="28,0,0,8" Opacity="0.7" FontSize="{DynamicResource Toad.FontSize.Small}" TextWrapping="Wrap"
                                Text="Ручные проверки попадут на страницу «Аналитика LOI» сервиса ToadFlow рядом с проверками по расписанию. Отправляются только итоги — без элементов. Если сервер недоступен, итоги ждут в очереди и уходят при следующей проверке." />
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -86,16 +85,9 @@
                         <TextBlock Text="{Binding ToadFlowStatus}" VerticalAlignment="Center" TextWrapping="Wrap" />
                         <toad:Button Grid.Column="1" Content="Подключение…" Margin="8,0,0,0" Command="{Binding ConnectToadFlowCommand}" />
                     </Grid>
-                    <TextBlock Margin="0,6,0,0" Opacity="0.7" FontSize="12" TextWrapping="Wrap"
-                               Text="Вход общий для всех плагинов ToadTools: ToadTools → Подключение к ToadFlow." />
-                    <TextBlock Margin="0,4,0,0" FontSize="12" Text="{Binding ToadFlowQueue}" />
-                </StackPanel>
-            </toad:Card>
-
-            <toad:Card Padding="14,10" Margin="0,0,0,8">
-                <StackPanel Orientation="Horizontal">
-                    <toad:Switch Content="Тёмная тема" VerticalAlignment="Center"
-                         IsChecked="{Binding IsDark, Source={x:Static themes:ThemePreference.Instance}}" />
+                    <TextBlock Margin="0,6,0,0" Opacity="0.7" FontSize="{DynamicResource Toad.FontSize.Small}" TextWrapping="Wrap"
+                               Text="Вход общий для всех плагинов ToadTools: ToadTools → Настройки." />
+                    <TextBlock Margin="0,4,0,0" FontSize="{DynamicResource Toad.FontSize.Small}" Text="{Binding ToadFlowQueue}" />
                 </StackPanel>
             </toad:Card>
 

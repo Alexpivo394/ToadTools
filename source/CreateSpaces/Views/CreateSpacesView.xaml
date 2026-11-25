@@ -5,7 +5,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:toad="urn:toaddesign"
-    xmlns:themes="clr-namespace:ToadTools.UI.Services;assembly=ToadTools.UI"
+    xmlns:ui="clr-namespace:ToadTools.UI.Controls;assembly=ToadTools.UI"
     xmlns:conv="clr-namespace:ToadTools.UI.Converters;assembly=ToadTools.UI"
     mc:Ignorable="d"
     Title="Создание пространств"
@@ -15,6 +15,9 @@
     MinHeight="400"
     MinWidth="800"
     TitleIcon="CirclePlus">
+    <toad:ToadWindow.TitleBarContent>
+        <ui:SettingsButton />
+    </toad:ToadWindow.TitleBarContent>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -107,7 +110,7 @@
                                             Grid.Column="1" ItemsSource="{Binding RoomParameters}" 
                                             DisplayMemberPath="Name"
                                             SelectedItem="{Binding SelectedRoomParameter, Mode=TwoWay}"
-                                            Height="35"
+                                            Height="{DynamicResource Toad.Size.Control}"
                                             Margin="10,0,0,0"/>
                                     </Grid>
                                 </DataTemplate>
@@ -133,13 +136,9 @@
             </Grid.ColumnDefinitions>
             
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="10,0,0,10">
-                <toad:Switch Content="Тёмная тема" VerticalAlignment="Center"
-                         IsChecked="{Binding IsDark, Source={x:Static themes:ThemePreference.Instance}}"/>
-                
                 <toad:Button Content="Экспорт"
                            Icon="FileExport"
-                           Command="{Binding ExportCommand}"
-                           Margin="20,0,0,0" />
+                           Command="{Binding ExportCommand}" />
                 
                 <toad:Button Content="Импорт"
                            Icon="FileImport"
