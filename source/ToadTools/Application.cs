@@ -76,7 +76,7 @@ namespace ToadTools
             var panel = CreatePanel("ToadTools", MediaColor.FromRgb(173, 216, 230));
             panel.AddPushButton<Commands.SettingsCommand>("Настройки")
                 .WithIcon("Settings")
-                .WithInfo("Вход в ToadFlow, тема, компактный режим,\nжурнал и диагностика — для всех\nинструментов ToadTools.", "ToadFlow");
+                .WithInfo("Вход в ToadFlow, тема, компактный режим,\nжурнал и диагностика — для всех\nинструментов ToadTools.", "Settings");
         }
 
         private void CreateBimPanel()

@@ -1,8 +1,9 @@
 ### [🏠 Главная](Home)
 - [Установка и обновление](Install)
 
-**Вход**
-- [Подключение к ToadFlow](ToadFlow)
+**ToadTools**
+- [Настройки](Settings)
+- [ToadFlow в ToadTools](ToadFlow)
 
 **BIM**
 - [ParamChecker](ParamChecker)
