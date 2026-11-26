@@ -43,25 +43,26 @@
 
             <!-- Действия: те же, что в веб-карточке. Подписи короткие, редкие действия — только значком; полный смысл в подсказке -->
             <WrapPanel Margin="0,8,0,0">
-                <toad:Button Icon="HandStop" Content="Беру" ToolTip="Беру — правлю я" Command="{Binding TakeCommand}" Margin="0,0,4,4"
+                <toad:Button Icon="HandStop" Padding="8,0" Content="Беру" ToolTip="Беру — правлю я" Command="{Binding TakeCommand}" Margin="0,0,4,4"
                            Visibility="{Binding CanTake, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
-                <toad:Button Icon="ArrowForwardUp" Content="Передать…" ToolTip="Передать другой стороне" Command="{Binding PassCommand}" Margin="0,0,4,4"
+                <toad:Button Icon="ArrowForwardUp" Padding="8,0" Content="Передать…" ToolTip="Передать другой стороне" Command="{Binding PassCommand}" Margin="0,0,4,4"
                            Visibility="{Binding CanPass, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
-                <toad:Button Icon="Check" Content="Исправлена" Command="{Binding FixedCommand}" Margin="0,0,4,4"
-                           ToolTip="{x:Static vm:CardViewModel.FixedHint}"
-                           Visibility="{Binding CanFixed, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
-                <toad:Button Icon="Ghost" Content="Фиктивная…" ToolTip="Пометить коллизию фиктивной — с причиной" Command="{Binding FakeCommand}" Margin="0,0,4,4"
-                           Visibility="{Binding CanFake, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
-                <toad:Button Icon="GhostOff" Content="Не фиктивная" ToolTip="Снять отметку «фиктивная»" Command="{Binding UnfakeCommand}" Margin="0,0,4,4"
-                           Visibility="{Binding CanUnfake, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
+                <!-- Значки — сразу за «Передать…»: узкие, встают в первую строку и не занимают свою -->
                 <toad:Button Icon="Note" ToolTip="Примечание…" Command="{Binding NoteCommand}" Margin="0,0,4,4"
                            Visibility="{Binding CanNote, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
                 <toad:Button Icon="Cube" ToolTip="Показать в ToadFlow — 3D коллизии в браузере" Command="{Binding OpenIn3DCommand}" Margin="0,0,4,4" />
+                <toad:Button Icon="Check" Padding="8,0" Content="Исправлена" Command="{Binding FixedCommand}" Margin="0,0,4,4"
+                           ToolTip="{x:Static vm:CardViewModel.FixedHint}"
+                           Visibility="{Binding CanFixed, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
+                <toad:Button Icon="Ghost" Padding="8,0" Content="Фиктивная…" ToolTip="Пометить коллизию фиктивной — с причиной" Command="{Binding FakeCommand}" Margin="0,0,4,4"
+                           Visibility="{Binding CanFake, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
+                <toad:Button Icon="GhostOff" Padding="8,0" Content="Не фиктивная" ToolTip="Снять отметку «фиктивная»" Command="{Binding UnfakeCommand}" Margin="0,0,4,4"
+                           Visibility="{Binding CanUnfake, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
             </WrapPanel>
             <WrapPanel>
                 <TextBlock Text="Выделить:" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.7" VerticalAlignment="Center" Margin="0,0,6,4" />
-                <toad:Button Icon="Pointer" Content="Свой" ToolTip="Выделить в Revit только свой элемент" Command="{Binding SelectOwnCommand}" Margin="0,0,4,4" />
-                <toad:Button Icon="Pointer" Content="Второй" ToolTip="Выделить в Revit только второй элемент" Command="{Binding SelectOtherCommand}" Margin="0,0,4,4" />
+                <toad:Button Icon="Pointer" Padding="8,0" Content="Свой" ToolTip="Выделить в Revit только свой элемент" Command="{Binding SelectOwnCommand}" Margin="0,0,4,4" />
+                <toad:Button Icon="Pointer" Padding="8,0" Content="Второй" ToolTip="Выделить в Revit только второй элемент" Command="{Binding SelectOtherCommand}" Margin="0,0,4,4" />
             </WrapPanel>
             <TextBlock Text="{Binding Hint}" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.7" TextWrapping="Wrap"
                        Visibility="{Binding Hint, Converter={views:TextVisibilityConverter}}" />

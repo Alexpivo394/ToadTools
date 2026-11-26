@@ -34,6 +34,9 @@ public sealed class PaneSplitter : GridSplitter
     public static readonly DependencyProperty BottomMinHeightProperty = DependencyProperty.Register(
         nameof(BottomMinHeight), typeof(double), typeof(PaneSplitter), new PropertyMetadata(100.0, OnLayoutChanged));
 
+    private double _heightAtDragStart = double.NaN;
+    private bool _resetInDrag;
+
     public PaneSplitter()
     {
         Template = BuildTemplate();
@@ -46,8 +49,20 @@ public sealed class PaneSplitter : GridSplitter
         Cursor = Cursors.SizeNS;
         ToolTip = "Потяните, чтобы поменять высоту; двойной щелчок — как было";
 
-        DragCompleted += (_, _) => Remember();
-        MouseDoubleClick += (_, _) => Reset();
+        // Запоминается, только если зона и правда поменяла высоту: простой щелчок — тоже «перетаскивание». Второй щелчок
+        // двойного не запоминается вовсе: сброс приходит посреди него, и высота зоны меняется уже от сброса.
+        DragStarted += (_, _) => _heightAtDragStart = TryGetRows(out var top, out _) ? top.ActualHeight : double.NaN;
+        DragCompleted += (sender, e) =>
+        {
+            var reset = _resetInDrag;
+            _resetInDrag = false;
+            if (!reset && !e.Canceled && TryGetRows(out var top, out _) && Math.Abs(top.ActualHeight - _heightAtDragStart) >= 1) Remember();
+        };
+        MouseDoubleClick += (_, _) =>
+        {
+            _resetInDrag = true; // этот же щелчок закончится DragCompleted — его пропустить
+            Reset();
+        };
         Loaded += (_, _) =>
         {
             ThemePreference.Instance.PropertyChanged += OnThemeChanged;

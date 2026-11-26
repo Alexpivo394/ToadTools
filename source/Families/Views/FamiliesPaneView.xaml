@@ -312,7 +312,7 @@
                            Visibility="{Binding BlockedReason, Converter={views:ShownConverter}}" />
                 <!-- «Загрузить» — с подписью; остальное значками, смысл в подсказке -->
                 <WrapPanel Margin="0,6,0,0">
-                    <toad:Button Icon="Download" Content="Загрузить" Variant="Filled" IsEnabled="{Binding CanLoad}" Margin="0,0,4,4"
+                    <toad:Button Icon="Download" Padding="8,0" Content="Загрузить" Variant="Filled" IsEnabled="{Binding CanLoad}" Margin="0,0,4,4"
                                  Command="{Binding DataContext.LoadCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                     <toad:Button Icon="Folder" Margin="0,0,4,4"
                                  Command="{Binding DataContext.ShowInFolderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}">
