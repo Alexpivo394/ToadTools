@@ -36,6 +36,9 @@ public sealed partial class CardViewModel : ObservableObject
     /// <summary>Кнопка «исправлена» — как в карточке веба: статус ждёт подтверждения следующим прогоном.</summary>
     public const string FixedLabel = "Исправлена (ожидает подтверждения)";
 
+    /// <summary>Подсказка короткой кнопки «Исправлена»: полный статус веба и что будет дальше.</summary>
+    public const string FixedHint = FixedLabel + " — следующий прогон подтвердит: коллизии не будет";
+
     private readonly IClashApi _api;
     private readonly ModelCollisionRow _row;
     private readonly UserInfo _me;

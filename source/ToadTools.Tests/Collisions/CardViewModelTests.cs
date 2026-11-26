@@ -398,7 +398,7 @@ public class CardViewModelTests
     [Test]
     public void Card_FixedLabelSameAsWeb()
     {
-        // Как кнопка в карточке веба (CollisionCard.tsx); статус в строке — «исправлена (ждёт)», как StatusBadge веба.
+        // Полный текст кнопки веба (CollisionCard.tsx) — в подсказке короткой кнопки и в подтверждении; статус в строке — «исправлена (ждёт)», как StatusBadge веба.
         CardViewModel.FixedLabel.ShouldBe("Исправлена (ожидает подтверждения)");
         CollisionItemViewModel.StatusLabel(CollisionStatus.FixedPending).ShouldBe("исправлена (ждёт)");
     }

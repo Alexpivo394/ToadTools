@@ -41,25 +41,27 @@
                        Foreground="{DynamicResource Toad.Brush.Danger}"
                        Visibility="{Binding Error, Converter={views:TextVisibilityConverter}}" />
 
-            <!-- Действия: те же, что в веб-карточке -->
+            <!-- Действия: те же, что в веб-карточке. Подписи короткие, редкие действия — только значком; полный смысл в подсказке -->
             <WrapPanel Margin="0,8,0,0">
-                <toad:Button Content="Беру" Command="{Binding TakeCommand}" Margin="0,0,6,6"
+                <toad:Button Icon="HandStop" Content="Беру" ToolTip="Беру — правлю я" Command="{Binding TakeCommand}" Margin="0,0,4,4"
                            Visibility="{Binding CanTake, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
-                <toad:Button Content="Передать…" Command="{Binding PassCommand}" Margin="0,0,6,6"
+                <toad:Button Icon="ArrowForwardUp" Content="Передать…" ToolTip="Передать другой стороне" Command="{Binding PassCommand}" Margin="0,0,4,4"
                            Visibility="{Binding CanPass, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
-                <toad:Button Content="{x:Static vm:CardViewModel.FixedLabel}" ToolTip="Подтвердит следующий прогон: коллизии не будет — статус «исправлена»" Command="{Binding FixedCommand}"
-                           Margin="0,0,6,6" Visibility="{Binding CanFixed, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
-                <toad:Button Content="Фиктивная…" Command="{Binding FakeCommand}" Margin="0,0,6,6"
+                <toad:Button Icon="Check" Content="Исправлена" Command="{Binding FixedCommand}" Margin="0,0,4,4"
+                           ToolTip="{x:Static vm:CardViewModel.FixedHint}"
+                           Visibility="{Binding CanFixed, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
+                <toad:Button Icon="Ghost" Content="Фиктивная…" ToolTip="Пометить коллизию фиктивной — с причиной" Command="{Binding FakeCommand}" Margin="0,0,4,4"
                            Visibility="{Binding CanFake, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
-                <toad:Button Content="Снять «фиктивная»" Command="{Binding UnfakeCommand}" Margin="0,0,6,6"
+                <toad:Button Icon="GhostOff" Content="Не фиктивная" ToolTip="Снять отметку «фиктивная»" Command="{Binding UnfakeCommand}" Margin="0,0,4,4"
                            Visibility="{Binding CanUnfake, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
-                <toad:Button Content="Примечание…" Command="{Binding NoteCommand}" Margin="0,0,6,6"
+                <toad:Button Icon="Note" ToolTip="Примечание…" Command="{Binding NoteCommand}" Margin="0,0,4,4"
                            Visibility="{Binding CanNote, Converter={conv:BooleanCollapsedVisibilityConverter}}" />
-                <toad:Button Content="Показать в ToadFlow" ToolTip="3D коллизии в ToadFlow — в браузере" Command="{Binding OpenIn3DCommand}" Margin="0,0,6,6" />
+                <toad:Button Icon="Cube" ToolTip="Показать в ToadFlow — 3D коллизии в браузере" Command="{Binding OpenIn3DCommand}" Margin="0,0,4,4" />
             </WrapPanel>
             <WrapPanel>
-                <toad:Button Content="Выбрать свой" ToolTip="Выделить в Revit только свой элемент" Command="{Binding SelectOwnCommand}" Margin="0,0,6,6" />
-                <toad:Button Content="Выбрать второй" ToolTip="Выделить в Revit только второй элемент" Command="{Binding SelectOtherCommand}" Margin="0,0,6,6" />
+                <TextBlock Text="Выделить:" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.7" VerticalAlignment="Center" Margin="0,0,6,4" />
+                <toad:Button Icon="Pointer" Content="Свой" ToolTip="Выделить в Revit только свой элемент" Command="{Binding SelectOwnCommand}" Margin="0,0,4,4" />
+                <toad:Button Icon="Pointer" Content="Второй" ToolTip="Выделить в Revit только второй элемент" Command="{Binding SelectOtherCommand}" Margin="0,0,4,4" />
             </WrapPanel>
             <TextBlock Text="{Binding Hint}" FontSize="{DynamicResource Toad.FontSize.Caption}" Opacity="0.7" TextWrapping="Wrap"
                        Visibility="{Binding Hint, Converter={views:TextVisibilityConverter}}" />

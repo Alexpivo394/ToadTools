@@ -46,15 +46,17 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <!-- Список и карточка: высоты ставит разделитель — как пользователь перетащил или по умолчанию -->
+            <RowDefinition MinHeight="200" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="0" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <!-- Шапка: заявки с новостями, «Обновить», настройки -->
         <DockPanel Grid.Row="0" Margin="0,0,0,6">
             <ui:SettingsButton DockPanel.Dock="Right" Margin="4,0,0,0" VerticalAlignment="Top" />
-            <toad:Button DockPanel.Dock="Right" Content="Обновить" Command="{Binding RefreshCommand}" Margin="6,0,0,0" VerticalAlignment="Top" />
+            <toad:Button DockPanel.Dock="Right" Icon="Refresh" Variant="Subtle" ToolTip="Обновить" Command="{Binding RefreshCommand}" Margin="6,0,0,0" VerticalAlignment="Top" />
             <toad:Loader DockPanel.Dock="Right" Width="18" Height="18" Visibility="{Binding IsBusy, Converter={views:ShownConverter}}" />
             <ItemsControl ItemsSource="{Binding RequestUpdates}" Visibility="{Binding RequestNews, Converter={views:ShownConverter}}">
                 <ItemsControl.Template>
@@ -136,7 +138,7 @@
                         </DockPanel>
                     </Grid>
 
-                    <ListBox x:Name="SearchList" Grid.Row="2" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}" BorderThickness="0" Background="Transparent"
+                    <ListBox Grid.Row="2" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}" BorderThickness="0" Background="Transparent"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.IsVirtualizing="True">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
@@ -251,14 +253,15 @@
             </TabItem>
         </TabControl>
 
-        <!-- Карточка выбранного семейства -->
-        <Border Grid.Row="3" Margin="0,8,0,0" Padding="8" CornerRadius="6" BorderThickness="1" BorderBrush="{DynamicResource Toad.Brush.Border}"
+        <ui:PaneSplitter Grid.Row="3" Key="Families" IsOpen="{Binding CardVisible}" DefaultShare="0.45" CompactShare="0.45" BottomMinHeight="120" />
+
+        <!-- Карточка выбранного семейства; длинная прокручивается -->
+        <Border Grid.Row="4" Padding="8" CornerRadius="6" BorderThickness="1" BorderBrush="{DynamicResource Toad.Brush.Border}"
                 Visibility="{Binding CardVisible, Converter={views:ShownConverter}}">
-            <!-- Высоту ограничивает код представления: списку остаётся место, длинная карточка прокручивается -->
-            <ScrollViewer x:Name="CardScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel DataContext="{Binding Card}">
                 <DockPanel>
-                    <toad:Button DockPanel.Dock="Right" Content="✕" Padding="6,0"
+                    <toad:Button DockPanel.Dock="Right" Icon="X" Variant="Subtle" ToolTip="Закрыть карточку"
                                  Command="{Binding DataContext.CloseCardCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                     <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="{DynamicResource Toad.FontSize}" TextWrapping="Wrap" />
                 </DockPanel>
@@ -307,14 +310,19 @@
                 </TextBlock>
                 <TextBlock Text="{Binding BlockedReason}" Foreground="{DynamicResource Toad.Brush.Warning}" TextWrapping="Wrap"
                            Visibility="{Binding BlockedReason, Converter={views:ShownConverter}}" />
+                <!-- «Загрузить» — с подписью; остальное значками, смысл в подсказке -->
                 <WrapPanel Margin="0,6,0,0">
-                    <toad:Button Content="Загрузить" Variant="Filled" IsEnabled="{Binding CanLoad}" Margin="0,0,6,0"
+                    <toad:Button Icon="Download" Content="Загрузить" Variant="Filled" IsEnabled="{Binding CanLoad}" Margin="0,0,4,4"
                                  Command="{Binding DataContext.LoadCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
-                    <toad:Button Content="Путь" Margin="0,0,6,0" ToolTip="{Binding FullPath}"
-                                 Command="{Binding DataContext.ShowInFolderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
-                    <toad:Button Content="В вебе" Margin="0,0,6,0"
+                    <toad:Button Icon="Folder" Margin="0,0,4,4"
+                                 Command="{Binding DataContext.ShowInFolderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                        <toad:Button.ToolTip>
+                            <TextBlock Text="{Binding FullPath, StringFormat=Показать в папке: {0}}" />
+                        </toad:Button.ToolTip>
+                    </toad:Button>
+                    <toad:Button Icon="World" ToolTip="Открыть в вебе ToadFlow" Margin="0,0,4,4"
                                  Command="{Binding DataContext.OpenInWebCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
-                    <toad:Button Content="Сообщить о проблеме" ToolTip="Заявка «исправить семейство» — откроется в браузере"
+                    <toad:Button Icon="Flag" ToolTip="Сообщить о проблеме — заявка «исправить семейство» откроется в браузере" Margin="0,0,4,4"
                                  Command="{Binding DataContext.ReportProblemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                 </WrapPanel>
                 <Expander Header="История" Margin="0,6,0,0">
@@ -331,7 +339,7 @@
         </Border>
 
         <!-- Строка состояния: итог загрузки, отказ сервера -->
-        <TextBlock x:Name="StatusLine" Grid.Row="4" Text="{Binding Status}" TextWrapping="Wrap" FontSize="{DynamicResource Toad.FontSize.Caption}" Margin="0,4,0,0"
+        <TextBlock Grid.Row="5" Text="{Binding Status}" TextWrapping="Wrap" FontSize="{DynamicResource Toad.FontSize.Caption}" Margin="0,4,0,0"
                    Foreground="{DynamicResource Toad.Brush.Warning}" Visibility="{Binding Status, Converter={views:ShownConverter}}" />
     </Grid>
 </UserControl>
